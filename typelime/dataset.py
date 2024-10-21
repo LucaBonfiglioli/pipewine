@@ -1,7 +1,9 @@
+import math
 import typing as t
 from abc import ABC, abstractmethod
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 
+from typelime.dataset import Dataset
 from typelime.sample import Sample
 
 
@@ -47,3 +49,29 @@ class ListDataset[T: Sample](Dataset[T]):
 
     def size(self) -> int:
         return len(self._samples)
+
+
+class _LazyDatasetWrapper[T: Sample](Dataset[T]):
+    def __init__(
+        self,
+        get_sample: Callable[[int], T],
+        size: int,
+        index_fn: Callable[[int], int] | None = None,
+    ) -> None:
+        self._get_sample_fn = get_sample
+        self._size = size
+        self._index_fn = index_fn
+
+    def size(self) -> int:
+        return self._size
+
+    def get_sample(self, idx: int) -> T:
+        return self._get_sample_fn(self._index_fn(idx) if self._index_fn else idx)
+
+    def get_slice(self, idx: slice) -> Dataset[T]:
+        start, stop, step = idx.indices(self.size())
+        return _LazyDatasetWrapper(
+            self.get_sample,
+            math.ceil((stop - start) / step),
+            lambda x: x * step + start,
+        )

@@ -1,39 +1,12 @@
-from collections.abc import Mapping, Sequence
+from abc import ABC, abstractmethod
 
-from typing_extensions import Self
-
-from typelime.bundle import Bundle
-from typelime.dataset import Dataset
-from typelime.sample import Sample
+from typelime._op_typing import AnyDataset
 
 
-class Setuppable:
-    def setup(self) -> None:
+class _DatasetOperator[T_IN: AnyDataset, T_OUT: AnyDataset](ABC):
+    @abstractmethod
+    def apply(self, x: T_IN) -> T_OUT:
         pass
 
-    def teardown(self) -> None:
-        pass
-
-    def __enter__(self) -> Self:
-        self.setup()
-        return self
-
-    def __exit__(self) -> None:
-        self.teardown()
-
-
-AnyDataset = (
-    Dataset
-    | tuple[Dataset, ...]
-    | Sequence[Dataset]
-    | Mapping[str, Dataset]
-    | Bundle[Dataset]
-)
-
-AnySample = (
-    Sample
-    | tuple[Sample, ...]
-    | Sequence[Sample]
-    | Mapping[str, Sample]
-    | Bundle[Sample]
-)
+    def __call__(self, x: T_IN) -> T_OUT:
+        return self.apply(x)

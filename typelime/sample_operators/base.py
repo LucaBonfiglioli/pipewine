@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
-from typelime.operators.base import Setuppable
-from typelime.operators.base import AnySample
+from typelime._setuppable import Setuppable
+from typelime._op_typing import AnySample
 
 
 class SampleOperator[T_IN: AnySample, T_OUT: AnySample](ABC, Setuppable):
