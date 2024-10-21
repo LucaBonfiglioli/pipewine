@@ -1,0 +1,54 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "typelime"
+authors = [
+    { name = "Luca Bonfiglioli", email = "luca.bonfiglioli@gmail.com" }
+]
+requires-python = ">=3.10"
+maintainers = [
+    { name = "Luca Bonfiglioli", email = "luca.bonfiglioli@gmail.com" },
+]
+description = "Data workflow automation"
+readme = "README.md"
+license = "UNLICENSE"
+keywords = [
+    "pipeline", "dataset", "dataflow", "workflow", "orchestration"
+]
+classifiers = [
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "License :: OSI Approved :: The Unlicense (Unlicense)",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Software Development",
+]
+dependencies = [
+    "numpy",
+    "pydantic",
+    "typing_extensions"
+]
+dynamic = ["version"]
+
+# Optional dependencies
+[project.optional-dependencies]
+dev = [
+    "black",
+    "flake8",
+    "pytest",
+    "pytest-cov",
+    "build",
+]
+
+[tool.hatch.version]
+path = "typelime/__init__.py"
+
+[tool.hatch.build]
+include = ["typelime/**/*.py", "LICENSE"]
