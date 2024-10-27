@@ -3,7 +3,6 @@ import typing as t
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Sequence
 
-from typelime.dataset import Dataset
 from typelime.sample import Sample
 
 

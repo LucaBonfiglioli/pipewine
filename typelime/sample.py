@@ -4,6 +4,7 @@ from collections.abc import Iterator, Mapping
 
 from typing_extensions import Self
 
+from typelime.bundle import Bundle
 from typelime.item import Item
 
 
@@ -75,15 +76,15 @@ class TypelessSample(Sample):
         return self.__class__({**self._data, **items})
 
 
-class TypedSample(Sample):
+class TypedSample(Sample, Bundle[Item]):
     def get_item(self, key: str) -> Item:
         return getattr(self, key)
 
     def size(self) -> int:
-        return len(self.__dict__)
+        return len(self.as_dict())
 
     def keys(self) -> Iterator[str]:
-        return iter(self.__dict__)
+        return iter(self.as_dict())
 
     def with_items(self, **items: Item) -> Self:
-        return self.__class__(**{**self.__dict__, **items})
+        return type(self).from_dict(**{**self.__dict__, **items})

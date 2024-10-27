@@ -1,8 +1,11 @@
+from abc import ABCMeta
 from dataclasses import dataclass
 from typing import Any
 
+from typing_extensions import Self
 
-class BundleMeta(type):
+
+class BundleMeta(ABCMeta):
     def __new__(
         cls,
         name: str,
@@ -24,3 +27,7 @@ class Bundle[T](metaclass=BundleMeta, _is_root=True):
 
     def as_dict(self) -> dict[str, T]:
         return self.__dict__
+
+    @classmethod
+    def from_dict(cls, **data: T) -> Self:
+        return cls(**data)

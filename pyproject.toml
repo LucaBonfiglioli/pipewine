@@ -21,8 +21,6 @@ classifiers = [
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "License :: OSI Approved :: The Unlicense (Unlicense)",
     "Natural Language :: English",
@@ -32,8 +30,12 @@ classifiers = [
 ]
 dependencies = [
     "numpy",
+    "PyYAML",
     "pydantic",
-    "typing_extensions"
+    "typing_extensions",
+    "imageio",
+    "tifffile",
+    "billiard",
 ]
 dynamic = ["version"]
 

@@ -1,7 +1,7 @@
 import typing as t
 from abc import ABC, abstractmethod
 
-from typelime.parser import Parser
+from typelime.parsers import Parser
 from typelime.storage import Storage
 
 

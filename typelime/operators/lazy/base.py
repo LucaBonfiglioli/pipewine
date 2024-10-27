@@ -3,7 +3,7 @@ from functools import partial
 
 from typelime._op_typing import AnyDataset
 from typelime.dataset import Dataset, _LazyDatasetWrapper
-from typelime.operators.eager.base import _DatasetOperator
+from typelime.operators.base import DatasetOperator
 from typelime.sample import Sample
 
 
@@ -22,7 +22,7 @@ class _LazyOpInterface[T_IN: AnyDataset, T_SAMPLE_OUT: Sample, T_STATE](ABC):
 
 
 class LazyDatasetOperator[T_IN: AnyDataset, T_SAMPLE_OUT: Sample, T_STATE](
-    _DatasetOperator[T_IN, Dataset[T_SAMPLE_OUT]],
+    DatasetOperator[T_IN, Dataset[T_SAMPLE_OUT]],
     _LazyOpInterface[T_IN, T_SAMPLE_OUT, T_STATE],
 ):
     def apply(self, x: T_IN) -> Dataset[T_SAMPLE_OUT]:
