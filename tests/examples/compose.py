@@ -41,35 +41,40 @@ class MySample5(TypedSample):
     hello: Item[str]
 
 
-class Mapper12(Mapper[MySample1, MySample2]):
+class Mapper1To2(Mapper[MySample1, MySample2]):
     def apply(self, x: MySample1) -> MySample2:
         abc = MemoryItem(len(x.metadata().email), YAMLParser())
         return MySample2(image=x.image, metadata=x.metadata, abc=abc)
 
 
-class Mapper23(Mapper[MySample2, MySample3]):
+class Mapper2To3(Mapper[MySample2, MySample3]):
     def apply(self, x: MySample2) -> MySample3:
         return MySample3(image=x.image, abc=x.abc)
 
 
-class Mapper34(Mapper[MySample3, MySample4]):
+class Mapper3To4(Mapper[MySample3, MySample4]):
     def apply(self, x: MySample3) -> MySample4:
         return MySample4(abc=x.abc)
 
 
-class Mapper45(Mapper[MySample4, MySample5]):
+class Mapper4To5(Mapper[MySample4, MySample5]):
     def apply(self, x: MySample4) -> MySample5:
         hello = MemoryItem(str(x.abc()), YAMLParser())
         return MySample5(abc=x.abc, hello=hello)
 
 
-mapper_one = ComposeMapper(Mapper12())
-mapper_two = ComposeMapper((Mapper12(), Mapper23()))
-mapper_three = ComposeMapper((Mapper12(), Mapper23(), Mapper34(), Mapper45()))
+composite_mapper = ComposeMapper(
+    (
+        Mapper1To2(),
+        Mapper2To3(),
+        Mapper3To4(),
+        Mapper4To5(),
+    )
+)
 
 my_sample = UnderfolderSource[MySample1](
     Path("tests/sample_data/underfolder_0")
 ).generate()[0]
 
-out = mapper_three(my_sample)
+out = composite_mapper(my_sample)
 print(out.abc(), out.hello())
