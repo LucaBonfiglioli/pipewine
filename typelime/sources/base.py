@@ -1,9 +1,8 @@
 from abc import ABC, abstractmethod
 
 from typelime._op_typing import AnyDataset
-from typelime.dataset import Dataset, _LazyDatasetWrapper
+from typelime.dataset import Dataset, LazyDataset
 from typelime.sample import Sample
-from typelime.sources.base import DatasetSource
 
 
 class DatasetSource[T: AnyDataset](ABC):
@@ -33,4 +32,4 @@ class LazyDatasetSource[T_SAMPLE: Sample](
 ):
     def generate(self) -> Dataset[T_SAMPLE]:
         self._prepare()
-        return _LazyDatasetWrapper(self._get_sample, size=self._size())
+        return LazyDataset(self._size(), self._get_sample)

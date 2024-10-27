@@ -2,7 +2,6 @@ from collections.abc import Mapping, Sequence
 
 from typelime.bundle import Bundle
 from typelime.dataset import Dataset
-from typelime.sample import Sample
 
 
 AnyDataset = (
@@ -13,10 +12,8 @@ AnyDataset = (
     | Bundle[Dataset]
 )
 
-AnySample = (
-    Sample
-    | tuple[Sample, ...]
-    | Sequence[Sample]
-    | Mapping[str, Sample]
-    | Bundle[Sample]
-)
+
+class _RetrieveGeneric:
+    @property
+    def _genargs(self) -> tuple[type, ...]:
+        return self.__orig_class__.__args__  # type: ignore

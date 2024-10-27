@@ -18,11 +18,13 @@ class MySample(TypedSample):
     metadata: Item[MyMetadata]
 
 
-source = UnderfolderSource(
-    Path("tests/sample_data/underfolder_0"), sample_type=MySample
-)
+folder = Path("tests/sample_data/underfolder_0")
 
-dataset = source.generate()
+dataset = UnderfolderSource[MySample](folder).generate()
 
-
+print(dataset[0].metadata().username)
 print(dataset[0].metadata().email)
+print(dataset[1].metadata().username)
+print(dataset[1].metadata().email)
+print(dataset[2].metadata().username)
+print(dataset[2].metadata().email)

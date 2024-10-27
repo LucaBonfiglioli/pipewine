@@ -50,15 +50,15 @@ class ListDataset[T: Sample](Dataset[T]):
         return len(self._samples)
 
 
-class _LazyDatasetWrapper[T: Sample](Dataset[T]):
+class LazyDataset[T: Sample](Dataset[T]):
     def __init__(
         self,
-        get_sample: Callable[[int], T],
         size: int,
+        get_sample_fn: Callable[[int], T],
         index_fn: Callable[[int], int] | None = None,
     ) -> None:
-        self._get_sample_fn = get_sample
         self._size = size
+        self._get_sample_fn = get_sample_fn
         self._index_fn = index_fn
 
     def size(self) -> int:
@@ -69,8 +69,8 @@ class _LazyDatasetWrapper[T: Sample](Dataset[T]):
 
     def get_slice(self, idx: slice) -> Dataset[T]:
         start, stop, step = idx.indices(self.size())
-        return _LazyDatasetWrapper(
-            self.get_sample,
+        return LazyDataset(
             math.ceil((stop - start) / step),
+            self.get_sample,
             lambda x: x * step + start,
         )

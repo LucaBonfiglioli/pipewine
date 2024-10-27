@@ -2,6 +2,7 @@ import os
 import warnings
 from pathlib import Path
 
+from typelime._op_typing import _RetrieveGeneric
 from typelime.item import StoredItem
 from typelime.parsers import ParserRegistry
 from typelime.sample import Sample, TypelessSample
@@ -9,20 +10,19 @@ from typelime.sources.base import LazyDatasetSource
 from typelime.storage import LocalFileStorage
 
 
-class UnderfolderSource[T: Sample](LazyDatasetSource[T]):
-    def __init__(
-        self,
-        folder: Path,
-        sample_type: type[T] | None = None,
-    ) -> None:
+class UnderfolderSource[T: Sample](LazyDatasetSource[T], _RetrieveGeneric):
+    def __init__(self, folder: Path) -> None:
         self._folder = folder
-        self._sample_type = sample_type
         self._root_items: dict[str, Path] = {}
         self._samples: list[dict[str, Path]] = []
 
     @classmethod
     def data_path(cls, root_folder: Path) -> Path:
         return root_folder / "data"
+
+    @property
+    def sample_type(self) -> type[T]:
+        return self._genargs[0]
 
     @property
     def folder(self) -> Path:
@@ -100,13 +100,13 @@ class UnderfolderSource[T: Sample](LazyDatasetSource[T]):
                 continue
             storage = LocalFileStorage(v)
             annotated_type = None
-            if self._sample_type is not None:
-                annotation = self._sample_type.__annotations__.get(k)
+            if self.sample_type is not None:
+                annotation = self.sample_type.__annotations__.get(k)
                 if annotation is not None and len(annotation.__args__) > 0:
                     annotated_type = annotation.__args__[0]
             parser = parser_type(type_=annotated_type)
             data[k] = StoredItem(storage, parser)
-        if self._sample_type is None:
+        if self.sample_type is None:
             return TypelessSample(data)  # type: ignore
         else:
-            return self._sample_type(**data)
+            return self.sample_type(**data)
