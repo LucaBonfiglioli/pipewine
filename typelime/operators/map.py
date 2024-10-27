@@ -6,7 +6,7 @@ from typelime.operators.base import DatasetOperator
 from typelime.sample import Sample
 
 
-class MapOpSingle[T_IN: Sample, T_OUT: Sample](
+class MapOp[T_IN: Sample, T_OUT: Sample](
     DatasetOperator[Dataset[T_IN], LazyDataset[T_OUT]]
 ):
     def __init__(self, mapper: Mapper[T_IN, T_OUT]) -> None:
