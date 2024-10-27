@@ -21,7 +21,7 @@ class MySample(TypedSample):
 
 
 class VeryLongMapper(Mapper[MySample, MySample]):
-    def apply(self, x: MySample) -> MySample:
+    def apply(self, idx: int, x: MySample) -> MySample:
         import time
 
         print("LONG CALL")

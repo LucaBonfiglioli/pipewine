@@ -24,8 +24,8 @@ class ComposeMapper[T_IN: Sample, T_OUT: Sample](Mapper[T_IN, T_OUT]):
             mappers_t = mappers
         self._mappers = mappers_t
 
-    def apply(self, x: T_IN) -> T_OUT:
+    def apply(self, idx: int, x: T_IN) -> T_OUT:
         temp = x
         for mapper in self._mappers:
-            temp = mapper(temp)  # type: ignore
+            temp = mapper(idx, temp)  # type: ignore
         return cast(T_OUT, temp)

@@ -13,7 +13,7 @@ class MapOp[T_IN: Sample, T_OUT: Sample](
         self._mapper = mapper
 
     def _get_sample(self, x: Dataset[T_IN], idx: int) -> T_OUT:
-        return self._mapper(x[idx])
+        return self._mapper(idx, x[idx])
 
     def apply(self, x: Dataset[T_IN]) -> LazyDataset[T_OUT]:
         return LazyDataset(len(x), partial(self._get_sample, x))
