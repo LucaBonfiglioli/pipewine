@@ -2,17 +2,13 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 
 
-class Storage(ABC):
+class ReadStorage(ABC):
     @abstractmethod
     def read(self) -> bytes:
         pass
 
-    @abstractmethod
-    def write(self, data: bytes) -> None:
-        pass
 
-
-class LocalFileStorage(Storage):
+class LocalFileReadStorage(ReadStorage):
     def __init__(self, path: Path):
         self._path = path
 
@@ -21,6 +17,6 @@ class LocalFileStorage(Storage):
             result = fp.read()
         return result
 
-    def write(self, data: bytes) -> None:
-        with open(self._path, "wb") as fp:
-            fp.write(data)
+    @property
+    def path(self) -> Path:
+        return self._path

@@ -1,11 +1,13 @@
-from typelime.item import MemoryItem
+from typelime.item import CachedItem
 from typelime.mappers.base import Mapper
 from typelime.sample import Sample
 
 
 class CacheMapper[T: Sample](Mapper[T, T]):
     def apply(self, idx: int, x: T) -> T:
-        new_items = {}
-        for k, v in x.items():
-            new_items[k] = MemoryItem(v(), v.get_parser())
-        return x.with_items(**new_items)
+        return x.with_items(
+            **{
+                k: v if isinstance(v, CachedItem) else CachedItem(v)
+                for k, v in x.items()
+            }
+        )

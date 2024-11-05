@@ -1,28 +1,30 @@
 import os
 import warnings
+from itertools import chain
 from pathlib import Path
 
-from typelime._op_typing import _RetrieveGeneric
 from typelime.item import StoredItem
 from typelime.parsers import ParserRegistry
-from typelime.sample import Sample, TypelessSample
+from typelime.sample import Sample, TypelessSample, TypedSample
 from typelime.sources.base import LazyDatasetSource
-from typelime.storage import LocalFileStorage
+from typelime.storage import LocalFileReadStorage
 
 
-class UnderfolderSource[T: Sample](LazyDatasetSource[T], _RetrieveGeneric):
-    def __init__(self, folder: Path) -> None:
+class UnderfolderSource[T: Sample](LazyDatasetSource[T]):
+    def __init__(self, folder: Path, sample_type: type[T] | None = None) -> None:
         self._folder = folder
-        self._root_items: dict[str, Path] = {}
-        self._samples: list[dict[str, Path]] = []
+        self._root_files: dict[str, Path] = {}
+        self._root_items: dict[str, StoredItem] = {}
+        self._sample_files: list[dict[str, Path]] = []
+        self._sample_type = sample_type or TypelessSample
 
     @classmethod
     def data_path(cls, root_folder: Path) -> Path:
         return root_folder / "data"
 
     @property
-    def sample_type(self) -> type[T]:
-        return self._genargs[0]
+    def sample_type(self) -> type[T] | type[TypelessSample]:
+        return self._sample_type
 
     @property
     def folder(self) -> Path:
@@ -61,52 +63,69 @@ class UnderfolderSource[T: Sample](LazyDatasetSource[T], _RetrieveGeneric):
                     key = self._extract_key(entry.name)
                     if key:
                         root_items[key] = Path(entry.path)
-        self._root_items = root_items
+        self._root_files = root_items
 
     def _scan_sample_files(self):
         data_folder = self.data_folder
         if not data_folder.exists():
             raise NotADirectoryError(f"Folder {data_folder} does not exist.")
 
-        samples: list[dict[str, Path]] = []
+        sample_files: list[dict[str, Path]] = []
         with os.scandir(str(data_folder)) as it:
             for entry in it:
                 if entry.is_file():
                     id_key = self._extract_id_key(entry.name)
                     if id_key:
-                        samples.extend(
-                            ({} for _ in range(id_key[0] - len(samples) + 1))
+                        sample_files.extend(
+                            ({} for _ in range(id_key[0] - len(sample_files) + 1))
                         )
-                        samples[id_key[0]][id_key[1]] = Path(entry.path)
-        self._samples = samples
+                        sample_files[id_key[0]][id_key[1]] = Path(entry.path)
+        self._sample_files = sample_files
 
     def _prepare(self) -> None:
         self._scan_root_files()
         self._scan_sample_files()
 
     def _size(self) -> int:
-        return len(self._samples)
+        return len(self._sample_files)
+
+    def _get_item(self, k: str, v: Path) -> StoredItem | None:
+        maybe_root = self._root_items.get(k)
+        if maybe_root is not None:
+            return maybe_root
+        ext = v.suffix
+        parser_type = ParserRegistry.get(ext)
+        if parser_type is None:
+            warnings.warn(
+                f"No parser found for extension {ext}, make sure the extension "
+                "is correct and/or implement a custom Parser for it.",
+            )
+            return
+        storage = LocalFileReadStorage(v)
+        annotated_type = None
+        if issubclass(self.sample_type, TypedSample):
+            annotation = self.sample_type.__annotations__.get(k)
+            if (
+                annotation is not None
+                and hasattr(annotation, "__args__")
+                and len(annotation.__args__) > 0
+            ):
+                annotated_type = annotation.__args__[0]
+        parser = parser_type(type_=annotated_type)
+        if k in self._root_files:
+            result = StoredItem(storage, parser, shared=True)
+            self._root_items[k] = result
+        else:
+            result = StoredItem(storage, parser, shared=False)
+        return result
 
     def _get_sample(self, idx: int) -> T:
         data = {}
-        for k, v in self._samples[idx].items():
-            ext = v.suffix
-            parser_type = ParserRegistry.get(ext)
-            if parser_type is None:
-                warnings.warn(
-                    f"No parser found for extension {ext}, make sure the extension "
-                    "is correct and/or implement a custom Parser for it.",
-                )
-                continue
-            storage = LocalFileStorage(v)
-            annotated_type = None
-            if self.sample_type is not None:
-                annotation = self.sample_type.__annotations__.get(k)
-                if annotation is not None and len(annotation.__args__) > 0:
-                    annotated_type = annotation.__args__[0]
-            parser = parser_type(type_=annotated_type)
-            data[k] = StoredItem(storage, parser)
-        if self.sample_type is None:
+        for k, v in chain(self._sample_files[idx].items(), self._root_files.items()):
+            item = self._get_item(k, v)
+            if item is not None:
+                data[k] = item
+        if not issubclass(self.sample_type, TypedSample):
             return TypelessSample(data)  # type: ignore
         else:
             return self.sample_type(**data)

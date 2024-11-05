@@ -1,0 +1,111 @@
+import os
+import shutil
+from collections.abc import Callable
+from enum import Enum
+from pathlib import Path
+
+from typelime.item import CachedItem, Item, StoredItem
+from typelime.storage import LocalFileReadStorage
+
+
+class CopyPolicy(str, Enum):
+    """How to handle cases in which a replication of existing data is detected. In these
+    cases, some operations may be avoided, trading off data consistency for speed.
+    """
+
+    SERIALIZE_AND_WRITE = "SERIALIZE_AND_WRITE"
+    """Do not copy anything, ever, even if the data is untouched. Treat every write
+    alike: serialize the object, encode it and write to a new file. This is the slowest
+    option but also the safest."""
+
+    REPLICATE = "REPLICATE"
+    """Avoid the serialization (which can be expensive), and simply copy the existing 
+    file, replicating all of its content. This option is significantly faster than 
+    re-serializing everything every time, but may cause data corruption in case of
+    read-write-read races. E.g. typelime reads the file, some other process modifies it,
+    then typelime copies the modified file assuming it was not modified. Typelime
+    datasets should not be modified inplace, and typelime never does so unless 
+    explicitly configured to do so, making this option relatively safe to use."""
+
+    SYMBOLIC_LINK = "SYMBOLIC_LINK"
+    """Symbolic links (a.k.a. soft links) are simply a reference to another file in any
+    of the mounted file systems. They are virtually inexpensive, but do not actually
+    contain any replicated data. They are prone to cause data loss, because every
+    time the original file is modified/deleted/renamed/moved, the symbolic link will 
+    point to a modified/deleted file. A symbolic link can point to a file on another 
+    file system. This option is extremely unsafe, use at your own risk."""
+
+    HARD_LINK = "HARD_LINK"
+    """Hard links are similar to symbolic links in terms of speed and safety, the
+    difference is that they point to the same inode of the linked file.
+
+    Soft link:  `MY_LINK` --> `MY_FILE` --> `INODE`
+
+    Hard link:  `MY_FILE` --> `INODE` <-- `MY_LINK`
+
+    While this does not offer any protection against modifications of the original file 
+    (because the data is not actually replicated), it prevents links from breaking in
+    case the original file is moved/renamed or even deleted. Hard link are also faster
+    than symbolic links, making this option preferable. The only limitation is that
+    hard links can only be created when both link and linked files exist on the same
+    filesystem.
+    """
+
+
+def _try_copy(
+    copy_fn: Callable[[str, str], None], src: str, dst: str, errors: list
+) -> bool:
+    try:
+        copy_fn(src, dst)
+        return True
+    except Exception as e:
+        errors.append((copy_fn, src, dst, e))
+    return False
+
+
+def write_item_to_file(item: Item, file: Path, copy_policy: CopyPolicy) -> None:
+    data = item.parser.dump(item())
+
+    if isinstance(item, CachedItem):
+        item = item.source_recursive()
+
+    errors = []
+    if (
+        isinstance(item, StoredItem)
+        and isinstance(item.storage, LocalFileReadStorage)
+        and item.storage.path.is_file()
+    ):
+        src = item.storage.path
+        if copy_policy == CopyPolicy.HARD_LINK:
+            if _try_copy(os.link, str(src), str(file), errors):
+                return
+            else:
+                copy_policy = CopyPolicy.REPLICATE
+
+        if copy_policy == CopyPolicy.SYMBOLIC_LINK:
+            if _try_copy(os.symlink, str(src), str(file), errors):
+                return
+            else:
+                copy_policy = CopyPolicy.REPLICATE
+
+        if copy_policy == CopyPolicy.REPLICATE:
+            if _try_copy(shutil.copy, str(src), str(file), errors):
+                return
+            else:
+                copy_policy = CopyPolicy.SERIALIZE_AND_WRITE
+
+    try:
+        with open(file, "wb") as fp:
+            fp.write(data)
+    except Exception as e:
+        errors.append(e)
+
+        msg = f"Failed to write to file {file}. Failed attempts: \n"
+        substr = []
+        for err in errors:
+            modname, fname = err[0].__module__, err[0].__name__
+            substr.append(
+                f" - Calling {modname}.{fname}({err[1]}, {err[2]}) -> {err[3]}"
+            )
+        msg += "\n".join(substr)
+        raise IOError(msg)

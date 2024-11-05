@@ -93,8 +93,8 @@ class _GrabContext[T: Sample]:
         self._pool = billiard.pool.Pool(
             self._grabber.num_workers if self._grabber.num_workers > 0 else None,
             initializer=_GrabContext.wrk_init,
-            initargs=(self._worker_init_fn),
-            context=billiard.context.SpawnContext(),
+            initargs=(self._worker_init_fn,),
+            # context=billiard.context.SpawnContext(),
         )
         runner = self._pool.__enter__()
 
@@ -115,4 +115,4 @@ class _GrabContext[T: Sample]:
 
     def __exit__(self, exc_type, exc_value, traceback):
         if self._pool is not None:
-            self._pool.__exit__(exc_type, exc_value, traceback)  # type: ignore
+            self._pool.__exit__(exc_type, exc_value, traceback)

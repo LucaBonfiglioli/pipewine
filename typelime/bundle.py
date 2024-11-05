@@ -31,3 +31,10 @@ class Bundle[T](metaclass=BundleMeta, _is_root=True):
     @classmethod
     def from_dict(cls, **data: T) -> Self:
         return cls(**data)
+
+    def __getstate__(self) -> dict[str, T]:
+        return self.as_dict()
+
+    def __setstate__(self, data: dict[str, T]) -> None:
+        for k, v in data.items():
+            setattr(self, k, v)
