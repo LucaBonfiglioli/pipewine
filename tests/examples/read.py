@@ -38,18 +38,15 @@ if __name__ == "__main__":
 
     dataset = UnderfolderSource(folder, sample_type=MySample).generate()
     dataset = MapOp(VeryLongMapper())(dataset)
-    # dataset = MapOp(CacheMapper())(dataset)
     dataset = CacheOp[MySample]()(dataset)
+    dataset[1]
     print(dataset[0].metadata().email)
     print(dataset[0].metadata().email)
     print(dataset[0].metadata().email)
     print(dataset[0].shared())
 
-    # grabber = Grabber(4, 1)
-    # grabber.grab_all(dataset)
-
     UnderfolderSink(
         Path("/tmp/cursed"),
-        grabber=Grabber(4, 1),
+        grabber=Grabber(8, 1),
         overwrite_policy=OverwritePolicy.OVERWRITE_FOLDER,
     )(dataset)

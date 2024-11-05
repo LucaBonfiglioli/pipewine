@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
+from functools import partial
 from threading import RLock
+from typing import Any
 
 from typelime.dataset import Dataset, LazyDataset
 from typelime.mappers import CacheMapper
@@ -20,9 +22,6 @@ class Cache[K, V](ABC):
     @abstractmethod
     def _put(self, key: K, value: V) -> None: ...
 
-    @abstractmethod
-    def _params(self) -> tuple: ...
-
     def clear(self) -> None:
         with self._lock:
             self._clear()
@@ -34,6 +33,16 @@ class Cache[K, V](ABC):
     def put(self, key: K, value: V) -> None:
         with self._lock:
             self._put(key, value)
+
+    def __getstate__(self) -> dict[str, Any]:
+        data = {**self.__dict__}
+        del data["_lock"]
+        return data
+
+    def __setstate__(self, data: dict[str, Any]) -> None:
+        self._lock = RLock()
+        for k, v in data.items():
+            setattr(self, k, v)
 
 
 class MemoCache[K, V](Cache[K, V]):
@@ -49,9 +58,6 @@ class MemoCache[K, V](Cache[K, V]):
 
     def _put(self, key: K, value: V) -> None:
         self._memo[key] = value
-
-    def _params(self) -> tuple:
-        return tuple()
 
 
 class LRUCache[K, V](Cache[K, V]):
@@ -100,37 +106,19 @@ class LRUCache[K, V](Cache[K, V]):
             link = [last, self._dll, key, value]
             last[self._NEXT] = self._dll[self._PREV] = self._mp[key] = link
 
-    def _params(self) -> tuple:
-        return (self._maxsize,)
-
 
 class CacheOp[T: Sample](DatasetOperator[Dataset[T], LazyDataset[T]]):
-    class _CacheState:
-        def __init__(self, dataset: Dataset[T], cache: Cache[int, T]) -> None:
-            super().__init__()
-            self._dataset = dataset
-            self._cache = cache
-            self._cache_mapper = CacheMapper[T]()
+    def __init__(self) -> None:
+        super().__init__()
+        self._cache_mapper: CacheMapper[T] = CacheMapper()
 
-        def __call__(self, idx: int) -> T:
-            result = self._cache.get(idx)
-            if result is None:
-                result = self._cache_mapper(idx, self._dataset[idx])
-                self._cache.put(idx, result)
-            return result
-
-        def __getstate__(self):  # pragma: no cover
-            return {
-                "_dataset": self._dataset,
-                "_cache": (type(self._cache), self._cache._params()),
-            }
-
-        def __setstate__(self, state):  # pragma: no cover
-            self._dataset = state["_dataset"]
-            cache_t, cache_prm = state["_cache"]
-            self._cache = cache_t(*cache_prm)
-            self._cache_mapper = CacheMapper()
+    def _get_sample(self, dataset: Dataset[T], cache: Cache[int, T], idx: int) -> T:
+        result = cache.get(idx)
+        if result is None:
+            result = self._cache_mapper(idx, dataset[idx])
+            cache.put(idx, result)
+        return result
 
     def apply(self, x: Dataset[T]) -> LazyDataset[T]:
-        cachestate = CacheOp._CacheState(x, MemoCache[int, T]())
-        return LazyDataset(len(x), cachestate)
+        cache: MemoCache[int, T] = MemoCache()
+        return LazyDataset(len(x), partial(self._get_sample, x, cache))
