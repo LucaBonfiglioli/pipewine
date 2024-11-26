@@ -1,12 +1,14 @@
 from abc import ABC, abstractmethod
 
+from typelime._register import RegisterMeta
 from typelime.sample import Sample
 
 
-class Mapper[T_IN: Sample, T_OUT: Sample](ABC):
-    @abstractmethod
-    def apply(self, idx: int, x: T_IN) -> T_OUT:
-        pass
+class MapperMeta(RegisterMeta):
+    def _type(self) -> str:
+        return "mapper"
 
-    def __call__(self, idx: int, x: T_IN) -> T_OUT:
-        return self.apply(idx, x)
+
+class Mapper[T_IN: Sample, T_OUT: Sample](ABC, metaclass=MapperMeta):
+    @abstractmethod
+    def __call__(self, idx: int, x: T_IN) -> T_OUT: ...

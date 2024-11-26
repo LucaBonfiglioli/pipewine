@@ -1,12 +1,18 @@
 from abc import ABC, abstractmethod
 
-from typelime._op_typing import AnyDataset
+from typelime._op_typing import AnyDataset, origin_type
+from typelime._register import RegisterMeta
 
 
-class DatasetSink[T: AnyDataset](ABC):
+class DatasetSinkMeta(RegisterMeta):
+    def _type(self) -> str:
+        return "sink"
+
+
+class DatasetSink[T: AnyDataset](ABC, metaclass=DatasetSinkMeta):
     @abstractmethod
-    def consume(self, data: T) -> None:
-        pass
+    def __call__(self, data: T) -> None: ...
 
-    def __call__(self, data: T) -> None:
-        self.consume(data)
+    @property
+    def input_type(self):
+        return origin_type(self.__call__.__annotations__["data"])

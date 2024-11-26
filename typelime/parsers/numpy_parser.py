@@ -8,11 +8,13 @@ from typelime.parsers.base import Parser
 
 class NumpyNpyParser(Parser[np.ndarray]):
     def parse(self, data: bytes) -> np.ndarray:
-        return np.load(data)
+        buffer = io.BytesIO(data)
+        return np.load(buffer)
 
     def dump(self, data: np.ndarray) -> bytes:
         buffer = io.BytesIO()
         np.save(buffer, data)
+        buffer.seek(0)
         return buffer.read()
 
     @classmethod

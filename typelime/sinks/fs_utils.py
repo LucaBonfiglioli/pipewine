@@ -64,12 +64,10 @@ def _try_copy(
 
 
 def write_item_to_file(item: Item, file: Path, copy_policy: CopyPolicy) -> None:
-    data = item.parser.dump(item())
-
     if isinstance(item, CachedItem):
         item = item.source_recursive()
 
-    errors = []
+    errors: list[tuple] = []
     if (
         isinstance(item, StoredItem)
         and isinstance(item.storage, LocalFileReadStorage)
@@ -94,12 +92,11 @@ def write_item_to_file(item: Item, file: Path, copy_policy: CopyPolicy) -> None:
             else:
                 copy_policy = CopyPolicy.SERIALIZE_AND_WRITE
 
+    data = item.parser.dump(item())
     try:
         with open(file, "wb") as fp:
             fp.write(data)
-    except Exception as e:
-        errors.append(e)
-
+    except Exception:
         msg = f"Failed to write to file {file}. Failed attempts: \n"
         substr = []
         for err in errors:

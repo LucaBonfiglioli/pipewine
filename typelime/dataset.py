@@ -2,6 +2,7 @@ import math
 import typing as t
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Sequence
+from functools import partial
 
 from typelime.sample import Sample
 
@@ -67,10 +68,13 @@ class LazyDataset[T: Sample](Dataset[T]):
     def get_sample(self, idx: int) -> T:
         return self._get_sample_fn(self._index_fn(idx) if self._index_fn else idx)
 
+    def _slice_fn(self, step: int, start: int, x: int) -> int:
+        return x * step + start
+
     def get_slice(self, idx: slice) -> Dataset[T]:
         start, stop, step = idx.indices(self.size())
         return LazyDataset(
-            math.ceil((stop - start) / step),
+            max(0, math.ceil((stop - start) / step)),
             self.get_sample,
-            lambda x: x * step + start,
+            partial(self._slice_fn, step, start),
         )

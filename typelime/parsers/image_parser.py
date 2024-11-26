@@ -52,7 +52,7 @@ class JpegParser(ImageParser):
 
 class TiffParser(ImageParser):
     def _save_options(self) -> Mapping[str, Any]:
-        return {"compression": "zlib"}
+        return {"compression": "zlib", "photometric": True}
 
     @classmethod
     def extensions(cls) -> Iterable[str]:
@@ -64,4 +64,5 @@ class TiffParser(ImageParser):
     def dump(self, data: np.ndarray) -> bytes:
         buffer = io.BytesIO()
         tifffile.imwrite(buffer, data, **self._save_options())
+        buffer.seek(0)
         return buffer.read()

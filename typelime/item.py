@@ -30,6 +30,22 @@ class Item[T: t.Any](ABC):
         return self._get()
 
 
+class MemoryItem[T: t.Any](Item[T]):
+    def __init__(self, data: T, parser: Parser[T], shared: bool = False) -> None:
+        self._data = data
+        self._parser = parser
+        self._shared = shared
+
+    def _get(self) -> T:
+        return self._data
+
+    def _get_parser(self) -> Parser[T]:
+        return self._parser
+
+    def _is_shared(self) -> bool:
+        return self._shared
+
+
 class StoredItem[T: t.Any](Item[T]):
     def __init__(
         self, storage: ReadStorage, parser: Parser[T], shared: bool = False
@@ -50,22 +66,6 @@ class StoredItem[T: t.Any](Item[T]):
     @property
     def storage(self) -> ReadStorage:
         return self._storage
-
-
-class MemoryItem[T: t.Any](Item[T]):
-    def __init__(self, data: T, parser: Parser[T], shared: bool = False) -> None:
-        self._data = data
-        self._parser = parser
-        self._shared = shared
-
-    def _get(self) -> T:
-        return self._data
-
-    def _get_parser(self) -> Parser[T]:
-        return self._parser
-
-    def _is_shared(self) -> bool:
-        return self._shared
 
 
 class CachedItem[T: t.Any](Item[T]):
@@ -89,7 +89,7 @@ class CachedItem[T: t.Any](Item[T]):
         return self._source
 
     def source_recursive(self) -> Item[T]:
-        source = self
+        source: Item[T] = self
         while isinstance(source, CachedItem):
             source = source.source
         return source

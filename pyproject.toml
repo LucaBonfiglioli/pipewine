@@ -4,9 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "typelime"
-authors = [
-    { name = "Luca Bonfiglioli", email = "luca.bonfiglioli@gmail.com" }
-]
+authors = [{ name = "Luca Bonfiglioli", email = "luca.bonfiglioli@gmail.com" }]
 requires-python = ">=3.10"
 maintainers = [
     { name = "Luca Bonfiglioli", email = "luca.bonfiglioli@gmail.com" },
@@ -14,9 +12,7 @@ maintainers = [
 description = "Data workflow automation"
 readme = "README.md"
 license = "UNLICENSE"
-keywords = [
-    "pipeline", "dataset", "dataflow", "workflow", "orchestration"
-]
+keywords = ["pipeline", "dataset", "dataflow", "workflow", "orchestration"]
 classifiers = [
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
@@ -41,16 +37,14 @@ dynamic = ["version"]
 
 # Optional dependencies
 [project.optional-dependencies]
-dev = [
-    "black",
-    "flake8",
-    "pytest",
-    "pytest-cov",
-    "build",
-]
+dev = ["black", "flake8", "pytest", "pytest-cov", "build", "mypy"]
 
 [tool.hatch.version]
 path = "typelime/__init__.py"
 
 [tool.hatch.build]
 include = ["typelime/**/*.py", "LICENSE"]
+
+[[tool.mypy.overrides]]
+module = "billiard.*"
+ignore_missing_imports = true

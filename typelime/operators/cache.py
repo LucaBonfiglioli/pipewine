@@ -66,7 +66,7 @@ class LRUCache[K, V](Cache[K, V]):
     def __init__(self, maxsize: int) -> None:
         super().__init__()
         self._maxsize = maxsize
-        self._dll = []
+        self._dll: list = []
         self._dll[:] = [self._dll, self._dll, None, None]
         self._mp: dict[K, list] = {}
 
@@ -86,6 +86,7 @@ class LRUCache[K, V](Cache[K, V]):
                 link[self._PREV] = last
                 link[self._NEXT] = self._dll
                 return value
+        return None
 
     def _put(self, key: K, value: V) -> None:
         if key in self._mp:
@@ -107,18 +108,22 @@ class LRUCache[K, V](Cache[K, V]):
             last[self._NEXT] = self._dll[self._PREV] = self._mp[key] = link
 
 
-class CacheOp[T: Sample](DatasetOperator[Dataset[T], LazyDataset[T]]):
-    def __init__(self) -> None:
+class CacheOp(DatasetOperator[Dataset, Dataset], title="cache"):
+    def __init__(self, cache_type: type[Cache], **cache_params) -> None:
         super().__init__()
-        self._cache_mapper: CacheMapper[T] = CacheMapper()
+        self._cache_mapper: CacheMapper = CacheMapper()
+        self._cache_type = cache_type
+        self._cache_params = cache_params
 
-    def _get_sample(self, dataset: Dataset[T], cache: Cache[int, T], idx: int) -> T:
+    def _get_sample[
+        T: Sample
+    ](self, dataset: Dataset[T], cache: Cache[int, T], idx: int) -> T:
         result = cache.get(idx)
         if result is None:
             result = self._cache_mapper(idx, dataset[idx])
             cache.put(idx, result)
         return result
 
-    def apply(self, x: Dataset[T]) -> LazyDataset[T]:
-        cache: MemoCache[int, T] = MemoCache()
+    def __call__[T: Sample](self, x: Dataset[T]) -> LazyDataset[T]:
+        cache = self._cache_type(**self._cache_params)
         return LazyDataset(len(x), partial(self._get_sample, x, cache))

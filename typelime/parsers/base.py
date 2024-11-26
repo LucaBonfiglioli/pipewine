@@ -21,11 +21,9 @@ class _ParserMeta(ABCMeta):
         **kwargs: Any,
     ):
         the_cls: type["Parser"] = super().__new__(cls, name, bases, namespace, **kwargs)  # type: ignore
-        extensions = the_cls.extensions()
+        extensions = the_cls.extensions()  # type: ignore
         if extensions is not None:
-            ParserRegistry._registered_parsers.update(
-                {k: the_cls for k in the_cls.extensions()}
-            )
+            ParserRegistry._registered_parsers.update({k: the_cls for k in extensions})
         return the_cls
 
 

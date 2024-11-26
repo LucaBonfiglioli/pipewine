@@ -1,5 +1,11 @@
 [run]
 branch = True
+omit = 
+    typelime/workflows/**
+    typelime/tracking.py
+concurrency = multiprocessing
+parallel = true
+sigterm = true
 
 [report]
 exclude_lines =
@@ -16,3 +22,4 @@ exclude_lines =
     # Don't complain about abstract methods, they aren't run:
     @(abc\.)?abstractmethod
     @(abc\.)?abstractclassmethod
+    @t.overload

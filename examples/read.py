@@ -4,8 +4,8 @@ import numpy as np
 from pydantic import BaseModel
 
 from typelime.item import Item
-from typelime.mappers import Mapper, CacheMapper
-from typelime.operators import CacheOp, MapOp
+from typelime.mappers import Mapper
+from typelime.operators import CacheOp, MapOp, CatOp, MemoCache
 from typelime.sample import TypedSample
 from typelime.sources import UnderfolderSource
 from typelime.sinks import UnderfolderSink, OverwritePolicy
@@ -24,7 +24,7 @@ class MySample(TypedSample):
 
 
 class VeryLongMapper(Mapper[MySample, MySample]):
-    def apply(self, idx: int, x: MySample) -> MySample:
+    def __call__(self, idx: int, x: MySample) -> MySample:
         print(f"LONG CALL {idx}")
         return x
 
@@ -36,14 +36,16 @@ def myfunc(x):
 if __name__ == "__main__":
     folder = Path("tests/sample_data/underfolder_0")
 
-    dataset = UnderfolderSource(folder, sample_type=MySample).generate()
+    dataset = UnderfolderSource(folder, sample_type=MySample)()
     dataset = MapOp(VeryLongMapper())(dataset)
-    dataset = CacheOp[MySample]()(dataset)
+    dataset = CacheOp(MemoCache)(dataset)
     dataset[1]
     print(dataset[0].metadata().email)
     print(dataset[0].metadata().email)
     print(dataset[0].metadata().email)
     print(dataset[0].shared())
+
+    dataset = CatOp()([dataset, dataset[:2], dataset[:1]])
 
     UnderfolderSink(
         Path("/tmp/cursed"),

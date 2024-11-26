@@ -2,7 +2,7 @@ from collections.abc import Mapping, Sequence
 
 from typelime.bundle import Bundle
 from typelime.dataset import Dataset
-
+from types import GenericAlias
 
 AnyDataset = (
     Dataset
@@ -13,9 +13,8 @@ AnyDataset = (
 )
 
 
-class _RetrieveGeneric:
-    @property
-    def _genargs(self) -> tuple[type, ...]:
-        if not hasattr(self, "__orig_class__"):
-            return tuple()
-        return self.__orig_class__.__args__  # type: ignore
+def origin_type(annotation) -> type:
+    if isinstance(annotation, GenericAlias):
+        return annotation.__origin__
+    else:
+        return annotation

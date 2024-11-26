@@ -6,8 +6,7 @@ from typelime.sample import Sample
 Ts = TypeVarTuple("Ts")
 
 
-class ComposeMapper[T_IN: Sample, T_OUT: Sample](Mapper[T_IN, T_OUT]):
-
+class ComposeMapper[T_IN: Sample, T_OUT: Sample](Mapper[T_IN, T_OUT], title="compose"):
     def __init__(
         self,
         mappers: (
@@ -21,10 +20,10 @@ class ComposeMapper[T_IN: Sample, T_OUT: Sample](Mapper[T_IN, T_OUT]):
         if not isinstance(mappers, tuple):
             mappers_t = (mappers,)
         else:
-            mappers_t = mappers
+            mappers_t = mappers  # type: ignore
         self._mappers = mappers_t
 
-    def apply(self, idx: int, x: T_IN) -> T_OUT:
+    def __call__(self, idx: int, x: T_IN) -> T_OUT:
         temp = x
         for mapper in self._mappers:
             temp = mapper(idx, temp)  # type: ignore

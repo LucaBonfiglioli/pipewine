@@ -60,7 +60,7 @@ class _WriterMapper[T: Sample](Mapper[T, T]):
         self._overwrite_policy = overwrite_policy
         self._copy_policy = copy_policy
 
-    def apply(self, idx: int, x: T) -> T:
+    def __call__(self, idx: int, x: T) -> T:
         prefix = str(idx).zfill(self._zfill)
         fname_fmt = "{prefix}_{key}{ext}"
         for k, item in x.items():
@@ -68,23 +68,23 @@ class _WriterMapper[T: Sample](Mapper[T, T]):
                 continue
             ext = next(iter(item.parser.extensions()))
             fname = fname_fmt.format(prefix=prefix, key=k, ext=ext)
-            fname = self._data_folder / fname
-            if fname.is_file():
+            fpath = self._data_folder / fname
+            if fpath.is_file():
                 if self._overwrite_policy != OverwritePolicy.OVERWRITE_FILES:
                     raise FileExistsError(
-                        f"File {fname} already exists and policy "
+                        f"File {fpath} already exists and policy "
                         f"{self._overwrite_policy} is used. Either change the destination "
                         "path or set a weaker policy."
                     )
                 else:
-                    fname.unlink()
+                    fpath.unlink()
 
-            write_item_to_file(item, fname, self._copy_policy)
+            write_item_to_file(item, fpath, self._copy_policy)
 
         return x
 
 
-class UnderfolderSink[T: Sample](DatasetSink[Dataset[T]]):
+class UnderfolderSink(DatasetSink[Dataset]):
     def __init__(
         self,
         folder: Path,
@@ -98,7 +98,9 @@ class UnderfolderSink[T: Sample](DatasetSink[Dataset[T]]):
         self._overwrite_policy = overwrite_policy
         self._copy_policy = copy_policy
 
-    def consume(self, data: Dataset[T]) -> None:
+    def __call__[T: Sample](self, data: Dataset[T]) -> None:
+        if len(data) == 0:
+            return
         if self._folder.exists():
             if self._overwrite_policy == OverwritePolicy.FORBID:
                 raise FileExistsError(
@@ -125,16 +127,24 @@ class UnderfolderSink[T: Sample](DatasetSink[Dataset[T]]):
         best_zfill = len(str(len(data) - 1))
 
         root_items: set[str] = set()
-        if len(data) > 0:
-            data0 = data[0]
-            for k, item in data0.items():
-                if item.is_shared:
-                    root_items.add(k)
-                    ext = next(iter(item.parser.extensions()))
-                    fpath = self._folder / f"{k}{ext}"
-                    write_item_to_file(item, fpath, self._copy_policy)
+        data0 = data[0]
+        for k, item in data0.items():
+            if item.is_shared:
+                root_items.add(k)
+                ext = next(iter(item.parser.extensions()))
+                fpath = self._folder / f"{k}{ext}"
+                if fpath.is_file():
+                    if self._overwrite_policy != OverwritePolicy.OVERWRITE_FILES:
+                        raise FileExistsError(
+                            f"File {fpath} already exists and policy "
+                            f"{self._overwrite_policy} is used. Either change the "
+                            "destination path or set a weaker policy."
+                        )
+                    else:
+                        fpath.unlink()
+                write_item_to_file(item, fpath, self._copy_policy)
 
-        writer = _WriterMapper(
+        writer: _WriterMapper[T] = _WriterMapper(
             self._folder,
             inner_folder,
             best_zfill,

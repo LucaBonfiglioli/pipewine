@@ -1,6 +1,6 @@
 import typing as t
 from abc import ABC, abstractmethod
-from collections.abc import Iterator, Mapping
+from collections.abc import Iterator, Mapping, KeysView
 
 from typing_extensions import Self
 
@@ -18,7 +18,7 @@ class Sample(ABC, Mapping[str, Item]):
         pass
 
     @abstractmethod
-    def keys(self) -> Iterator[str]:  # type: ignore
+    def keys(self) -> KeysView[str]:
         pass
 
     @abstractmethod
@@ -31,36 +31,34 @@ class Sample(ABC, Mapping[str, Item]):
 
     def without(self, *keys: str) -> "Sample":
         data = {k: self.get_item(k) for k in self.keys() if k not in keys}
-        return TypelessSample(data)
+        return TypelessSample(**data)
 
     def with_only(self, *keys: str) -> "Sample":
         data = {k: self.get_item(k) for k in self.keys() if k in keys}
-        return TypelessSample(data)
+        return TypelessSample(**data)
 
-    def remapped(
-        self, remapping: t.Mapping[str, str], exclude: bool = False
-    ) -> "Sample":
+    def remap(self, fromto: t.Mapping[str, str], exclude: bool = False) -> "Sample":
         if exclude:
-            data = {}
+            data = {k: self.get_item(k) for k in self.keys() if k in fromto}
         else:
             data = {k: self.get_item(k) for k in self.keys()}
-        for k_from, k_to in remapping.items():
+        for k_from, k_to in fromto.items():
             if k_from in data:
                 data[k_to] = data.pop(k_from)
-        return TypelessSample(data)
+        return TypelessSample(**data)
 
     def __getitem__(self, key: str) -> Item:
         return self.get_item(key)
 
     def __iter__(self) -> Iterator[str]:
-        return self.keys()
+        return iter(self.keys())
 
     def __len__(self) -> int:
         return self.size()
 
 
 class TypelessSample(Sample):
-    def __init__(self, data: Mapping[str, Item]) -> None:
+    def __init__(self, **data: Item) -> None:
         self._data = data
 
     def get_item(self, key: str) -> Item:
@@ -69,22 +67,22 @@ class TypelessSample(Sample):
     def size(self) -> int:
         return len(self._data)
 
-    def keys(self) -> Iterator[str]:
-        return iter(self._data)
+    def keys(self) -> KeysView[str]:
+        return self._data.keys()
 
     def with_items(self, **items: Item) -> Self:
-        return self.__class__({**self._data, **items})
+        return self.__class__(**{**self._data, **items})
 
 
-class TypedSample(Sample, Bundle[Item]):
+class TypedSample(Bundle[Item], Sample):
     def get_item(self, key: str) -> Item:
         return getattr(self, key)
 
     def size(self) -> int:
         return len(self.as_dict())
 
-    def keys(self) -> Iterator[str]:
-        return iter(self.as_dict())
+    def keys(self) -> KeysView[str]:
+        return self.as_dict().keys()
 
     def with_items(self, **items: Item) -> Self:
         return type(self).from_dict(**{**self.__dict__, **items})

@@ -52,9 +52,9 @@ class UnderfolderSource[T: Sample](LazyDatasetSource[T]):
             )
             return None
 
-    def _scan_root_files(self):
+    def _scan_root_files(self) -> None:
         if not self._folder.exists():
-            raise RuntimeError(f"Folder {self._folder} does not exist.")
+            raise NotADirectoryError(f"Folder {self._folder} does not exist.")
 
         root_items: dict[str, Path] = {}
         with os.scandir(str(self._folder)) as it:
@@ -65,7 +65,7 @@ class UnderfolderSource[T: Sample](LazyDatasetSource[T]):
                         root_items[key] = Path(entry.path)
         self._root_files = root_items
 
-    def _scan_sample_files(self):
+    def _scan_sample_files(self) -> None:
         data_folder = self.data_folder
         if not data_folder.exists():
             raise NotADirectoryError(f"Folder {data_folder} does not exist.")
@@ -100,7 +100,7 @@ class UnderfolderSource[T: Sample](LazyDatasetSource[T]):
                 f"No parser found for extension {ext}, make sure the extension "
                 "is correct and/or implement a custom Parser for it.",
             )
-            return
+            return None
         storage = LocalFileReadStorage(v)
         annotated_type = None
         if issubclass(self.sample_type, TypedSample):
@@ -125,7 +125,4 @@ class UnderfolderSource[T: Sample](LazyDatasetSource[T]):
             item = self._get_item(k, v)
             if item is not None:
                 data[k] = item
-        if not issubclass(self.sample_type, TypedSample):
-            return TypelessSample(data)  # type: ignore
-        else:
-            return self.sample_type(**data)
+        return self.sample_type(**data)  # type: ignore
