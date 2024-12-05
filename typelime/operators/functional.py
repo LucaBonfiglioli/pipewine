@@ -15,7 +15,7 @@ class FilterOp[T: Sample](DatasetOperator[Dataset[T], Dataset[T]], title="filter
         self,
         fn: Callable[[int, T], bool],
         negate: bool = False,
-        grabber: Grabber[T] | None = None,
+        grabber: Grabber | None = None,
     ) -> None:
         super().__init__()
         self._fn = fn
@@ -24,10 +24,9 @@ class FilterOp[T: Sample](DatasetOperator[Dataset[T], Dataset[T]], title="filter
 
     def __call__(self, x: Dataset[T]) -> Dataset[T]:
         new_index = []
-        with self._grabber(x) as ctx:
-            for i, sample in ctx:
-                if self._fn(i, sample) ^ self._negate:
-                    new_index.append(i)
+        for i, sample in self.loop(x, self._grabber, name="Filtering"):
+            if self._fn(i, sample) ^ self._negate:
+                new_index.append(i)
         return LazyDataset(len(new_index), x.get_sample, index_fn=new_index.__getitem__)
 
 
@@ -35,7 +34,7 @@ class GroupByOp[T: Sample](
     DatasetOperator[Dataset[T], Mapping[str, Dataset[T]]], title="groupby"
 ):
     def __init__(
-        self, fn: Callable[[int, T], str], grabber: Grabber[T] | None = None
+        self, fn: Callable[[int, T], str], grabber: Grabber | None = None
     ) -> None:
         super().__init__()
         self._fn = fn
@@ -43,10 +42,9 @@ class GroupByOp[T: Sample](
 
     def __call__(self, x: Dataset[T]) -> Mapping[str, Dataset[T]]:
         indexes: dict[str, list[int]] = defaultdict(list)
-        with self._grabber(x) as ctx:
-            for i, sample in ctx:
-                key = self._fn(i, sample)
-                indexes[key].append(i)
+        for i, sample in self.loop(x, self._grabber, name="Computing index"):
+            key = self._fn(i, sample)
+            indexes[key].append(i)
         return {
             k: LazyDataset(len(index), x.get_sample, index_fn=index.__getitem__)
             for k, index in indexes.items()
@@ -81,9 +79,8 @@ class SortOp[T: Sample](DatasetOperator[Dataset[T], Dataset[T]], title="sort"):
 
     def __call__(self, x: Dataset[T]) -> Dataset[T]:
         keys: list[tuple[ComparableT, int]] = []
-        with self._grabber(x) as ctx:
-            for i, sample in ctx:
-                keys.append((self._fn(i, sample), i))
+        for i, sample in self.loop(x, self._grabber, name="Sorting"):
+            keys.append((self._fn(i, sample), i))
 
         index = [x[1] for x in sorted(keys, reverse=self._reverse)]
         return LazyDataset(len(x), x.get_sample, index_fn=index.__getitem__)
@@ -93,6 +90,7 @@ class MapOp[T_IN: Sample, T_OUT: Sample](
     DatasetOperator[Dataset[T_IN], Dataset[T_OUT]], title="map"
 ):
     def __init__(self, mapper: Mapper[T_IN, T_OUT]) -> None:
+        super().__init__()
         self._mapper = mapper
 
     def _get_sample(self, x: Dataset[T_IN], idx: int) -> T_OUT:

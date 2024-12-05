@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 from typelime._op_typing import AnyDataset, origin_type
-from typelime._register import RegisterMeta
+from typelime._register import RegisterCallbackMixin, RegisterMeta
 from typelime.dataset import Dataset, LazyDataset
 from typelime.sample import Sample
 
@@ -11,7 +11,9 @@ class DatasetSourceMeta(RegisterMeta):
         return "source"
 
 
-class DatasetSource[T: AnyDataset](ABC, metaclass=DatasetSourceMeta):
+class DatasetSource[T: AnyDataset](
+    ABC, RegisterCallbackMixin, metaclass=DatasetSourceMeta
+):
     @abstractmethod
     def __call__(self) -> T: ...
 

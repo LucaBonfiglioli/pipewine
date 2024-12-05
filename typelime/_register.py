@@ -1,6 +1,10 @@
 from abc import ABCMeta
 from collections import defaultdict
-from typing import Any
+from collections.abc import Callable, Generator, Sequence
+from typing import Any, TypeVar
+from uuid import uuid1
+
+from typelime.grabber import Grabber
 
 
 class RegisterMeta(ABCMeta):
@@ -63,3 +67,30 @@ class RegisterMeta(ABCMeta):
     @property
     def namespace(self) -> str:
         return self.__typelime_namespace__
+
+
+T = TypeVar("T")
+
+CallbackType = Callable[[str, int, Sequence[T]], None]
+
+
+class RegisterCallbackMixin(metaclass=RegisterMeta):
+    def __init__(self) -> None:
+        super().__init__()
+        self._callbacks: list[CallbackType] = []
+
+    def register_callback(self, cb: CallbackType) -> None:
+        self._callbacks.append(cb)
+
+    def loop[
+        T
+    ](self, seq: Sequence[T], grabber: Grabber, name: str | None = None) -> Generator[
+        tuple[int, T]
+    ]:
+        if name is None:
+            name = self.__class__.title + uuid1().hex
+        with grabber(seq) as ctx:
+            for i, x in ctx:
+                for cb in self._callbacks:
+                    cb(name, i, seq)
+                yield i, x

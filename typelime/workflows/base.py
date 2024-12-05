@@ -3,12 +3,14 @@ from abc import ABC, abstractmethod
 from collections import defaultdict
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
+from functools import partial
 
 from typelime.bundle import Bundle, DefaultBundle
 from typelime.dataset import Dataset
 from typelime.operators import DatasetOperator
 from typelime.sinks import DatasetSink
 from typelime.sources import DatasetSource
+from typelime.workflows.tracking import TaskUpdateEvent, EventQueue
 
 
 class _DefaultList[T](Sequence[T]):
@@ -104,7 +106,42 @@ class Edge:
         return hash((self.src, self.dst))
 
 
-class Graph(ABC):
+class Workflow:
+    _INPUT_NAME = "input"
+    _OUTPUT_NAME = "output"
+
+    def __init__(self) -> None:
+        self._nodes: set[Node] = set()
+        self._nodes_by_name: dict[str, Node] = {}
+        self._inbound_edges: dict[Node, set[Edge]] = defaultdict(set)
+        self._outbound_edges: dict[Node, set[Edge]] = defaultdict(set)
+        self._name_counters: dict[str, int] = defaultdict(int)
+
+    def _gen_node_name(self, action: AnyAction) -> str:
+        title = action.__class__.title
+        self._name_counters[title] += 1
+        return f"{title}_{self._name_counters[title]}"
+
+    def get_nodes(self) -> set[Node]:
+        return self._nodes
+
+    def get_node(self, name: str) -> Node | None:
+        return self._nodes_by_name.get(name)
+
+    def get_inbound_edges(self, node: Node) -> set[Edge]:
+        if node not in self._inbound_edges:
+            msg = f"Node '{node.name}' not found"
+            raise ValueError(msg)
+
+        return self._inbound_edges[node]
+
+    def get_outbound_edges(self, node: Node) -> set[Edge]:
+        if node not in self._outbound_edges:
+            msg = f"Node '{node.name}' not found"
+            raise ValueError(msg)
+
+        return self._outbound_edges[node]
+
     @t.overload
     def node(
         self, action: DatasetSource[Dataset], name: str | None = None
@@ -217,75 +254,6 @@ class Graph(ABC):
         name: str | None = None,
     ) -> Node[InputEndpoint, Bundle[OutputEndpoint]]: ...
 
-    @abstractmethod
-    def node(self, action: AnyAction, name: str | None = None) -> Node:
-        pass
-
-    @abstractmethod
-    def node_remove(self, node: Node) -> None:
-        pass
-
-    @abstractmethod
-    def edge(self, src_endpoint: OutputEndpoint, dst_endpoint: InputEndpoint) -> Edge:
-        pass
-
-    @abstractmethod
-    def edge_remove(self, edge: Edge) -> None:
-        pass
-
-    @abstractmethod
-    def get_nodes(self) -> set[Node]:
-        pass
-
-    @abstractmethod
-    def get_node(self, name: str) -> Node | None:
-        pass
-
-    @abstractmethod
-    def get_inbound_edges(self, node: Node) -> set[Edge]:
-        pass
-
-    @abstractmethod
-    def get_outbound_edges(self, node: Node) -> set[Edge]:
-        pass
-
-
-class WorkflowBuilder(Graph):
-    _INPUT_NAME = "input"
-    _OUTPUT_NAME = "output"
-
-    def __init__(self) -> None:
-        self._nodes: set[Node] = set()
-        self._nodes_by_name: dict[str, Node] = {}
-        self._inbound_edges: dict[Node, set[Edge]] = defaultdict(set)
-        self._outbound_edges: dict[Node, set[Edge]] = defaultdict(set)
-        self._name_counters: dict[str, int] = defaultdict(int)
-
-    def _gen_node_name(self, action: AnyAction) -> str:
-        title = action.__class__.title
-        self._name_counters[title] += 1
-        return f"{title}_{self._name_counters[title]}"
-
-    def get_nodes(self) -> set[Node]:
-        return self._nodes
-
-    def get_node(self, name: str) -> Node | None:
-        return self._nodes_by_name.get(name)
-
-    def get_inbound_edges(self, node: Node) -> set[Edge]:
-        if node not in self._inbound_edges:
-            msg = f"Node '{node.name}' not found"
-            raise ValueError(msg)
-
-        return self._inbound_edges[node]
-
-    def get_outbound_edges(self, node: Node) -> set[Edge]:
-        if node not in self._outbound_edges:
-            msg = f"Node '{node.name}' not found"
-            raise ValueError(msg)
-
-        return self._outbound_edges[node]
-
     def node(self, action: AnyAction, name: str | None = None) -> Node:
         name = name or self._gen_node_name(action)
         node = Node(name=name, action=action, input=None, output=None)
@@ -388,36 +356,103 @@ class WorkflowBuilder(Graph):
 
 class WorkflowExecutor(ABC):
     @abstractmethod
-    def execute(self, workflow: Graph) -> None:
+    def execute(self, workflow: Workflow) -> None:
         pass
 
 
-# class NaiveWorkflowExecutor(WorkflowExecutor):
-#     def execute(self, workflow: Graph) -> None:
-#         return super().execute(workflow)
+class NaiveWorkflowExecutor(WorkflowExecutor):
+    def __init__(self, event_queue: EventQueue) -> None:
+        super().__init__()
+        self._event_q = event_queue
 
-#     def _detect_cycles(self) -> bool:
-#         pass
+    def execute(self, workflow: Workflow) -> None:
+        self._check(workflow)
+        sorted_graph = self._topological_sort(workflow)
+        state: dict[OutputEndpoint, Dataset] = {}
+        for node in sorted_graph:
+            self._execute_node(workflow, node, state)
 
-#     def _check(self) -> None:
-#         # Check that all input sockets are connected
-#         disc_set: set[InputEndpoint] = set()
-#         for node in list(self._nodes):
-#             if isinstance(node.input, InputEndpoint):
-#                 node_endpoints = {node.input}
-#             elif isinstance(node.input, Sequence):
-#                 node_endpoints = {*node.input}
-#             else:
-#                 assert isinstance(node.input, Bundle)
-#                 node_endpoints = {*node.input.as_dict().values()}
-#             edge_endpoints = {x.dst for x in self._inbound_edges[node]}
-#             disc_set.update(node_endpoints - edge_endpoints)
+    def _progress_callback(
+        self, node: Node, loop_id: str, idx: int, seq: Sequence
+    ) -> None:
+        task = f"{node.name}/{loop_id}"
+        event = TaskUpdateEvent(task, idx, len(seq))
+        self._event_q.emit(event)
 
-#         if disc_set:
-#             disc_repr = {f"{x.node.name}.{x.socket.name}" for x in disc_set}
-#             msg = f"Disconnected input sockets: {disc_repr}"
-#             raise ValueError(msg)
+    def _execute_node(
+        self,
+        workflow: Workflow,
+        node: Node[AnyInput, AnyOutput],
+        state: dict[OutputEndpoint, Dataset],
+    ) -> None:
+        node.action.register_callback(partial(self._progress_callback, node))
+        if node.input is None:
+            assert isinstance(node.action, DatasetSource)
+            outputs = node.action()
+        elif isinstance(node.input, InputEndpoint):
+            ep = next(iter(workflow.get_inbound_edges(node))).src
+            outputs = node.action(state[ep])  # type: ignore
+        elif isinstance(node.input, Sequence):
+            edges = workflow.get_inbound_edges(node)
+            input_map = {x.dst: x.src for x in edges}
+            inputs = [input_map[x] for x in node.input]
+            outputs = node.action(inputs)  # type: ignore
+        else:
+            edges = workflow.get_inbound_edges(node)
+            input_map = {x.dst: x.src for x in edges}
+            inputs = {k: input_map[v] for k, v in node.input.as_dict().items()}
+            outputs = node.action(inputs)  # type: ignore
 
-#         # Check that the graph does not contain cycles
-#         if self._detect_cycles():
-#             raise ValueError("Graph contains a cycle")
+        if outputs is None:
+            return
+        if isinstance(outputs, Dataset):
+            assert isinstance(node.output, OutputEndpoint)
+            state[node.output] = outputs
+        elif isinstance(outputs, Sequence):
+            assert isinstance(node.output, Sequence)
+            for ep, data in zip(node.output, outputs):
+                state[ep] = data
+        else:
+            assert isinstance(node.output, Bundle)
+            for k, v in node.output.as_dict().items():
+                state[v] = outputs[k]
+
+    def _topological_sort(self, workflow: Workflow) -> list[Node]:
+        result: list[Node] = []
+        mark: dict[Node, int] = {}
+
+        def visit(node: Node) -> None:
+            mark_of_node = mark.get(node, 0)
+            if mark_of_node == 1:
+                raise ValueError("The graph contains cycles.")
+            if mark_of_node == 2:
+                return
+            mark[node] = 1
+            for edge in workflow.get_outbound_edges(node):
+                visit(edge.dst.node)
+            mark[node] = 2
+            result.append(node)
+
+        for node in workflow.get_nodes():
+            visit(node)
+        return result[::-1]
+
+    def _check(self, workflow: Workflow) -> None:
+        disc_set: set[InputEndpoint] = set()
+        for node in workflow.get_nodes():
+            if node.input is None:
+                continue
+            if isinstance(node.input, InputEndpoint):
+                node_endpoints = {node.input}
+            elif isinstance(node.input, Sequence):
+                node_endpoints = {*node.input}
+            else:
+                assert isinstance(node.input, Bundle)
+                node_endpoints = {*node.input.as_dict().values()}
+            edge_endpoints = {x.dst for x in workflow.get_inbound_edges(node)}
+            disc_set.update(node_endpoints - edge_endpoints)
+
+        if disc_set:
+            disc_repr = {f"{x.node.name}.{x.socket.name}" for x in disc_set}
+            msg = f"Disconnected input sockets: {disc_repr}"
+            raise ValueError(msg)

@@ -84,7 +84,7 @@ class _WriterMapper[T: Sample](Mapper[T, T]):
         return x
 
 
-class UnderfolderSink(DatasetSink[Dataset]):
+class UnderfolderSink(DatasetSink[Dataset], title="underfolder_sink"):
     def __init__(
         self,
         folder: Path,
@@ -154,4 +154,5 @@ class UnderfolderSink(DatasetSink[Dataset]):
         )
         data = MapOp(writer)(data)
 
-        self._grabber.grab_all(data)
+        for _ in self.loop(data, self._grabber, name="Writing"):
+            pass

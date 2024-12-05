@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 from typelime._op_typing import AnyDataset, origin_type
-from typelime._register import RegisterMeta
+from typelime._register import RegisterMeta, RegisterCallbackMixin
 
 
 class DatasetSinkMeta(RegisterMeta):
@@ -9,7 +9,7 @@ class DatasetSinkMeta(RegisterMeta):
         return "sink"
 
 
-class DatasetSink[T: AnyDataset](ABC, metaclass=DatasetSinkMeta):
+class DatasetSink[T: AnyDataset](ABC, RegisterCallbackMixin, metaclass=DatasetSinkMeta):
     @abstractmethod
     def __call__(self, data: T) -> None: ...
 

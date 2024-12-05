@@ -12,6 +12,7 @@ from typelime.storage import LocalFileReadStorage
 
 class UnderfolderSource[T: Sample](LazyDatasetSource[T]):
     def __init__(self, folder: Path, sample_type: type[T] | None = None) -> None:
+        super().__init__()
         self._folder = folder
         self._root_files: dict[str, Path] = {}
         self._root_items: dict[str, StoredItem] = {}

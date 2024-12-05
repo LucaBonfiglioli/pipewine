@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 from typelime._op_typing import AnyDataset, origin_type
-from typelime._register import RegisterMeta
+from typelime._register import RegisterMeta, RegisterCallbackMixin
 
 
 class DatasetOperatorMeta(RegisterMeta):
@@ -10,7 +10,7 @@ class DatasetOperatorMeta(RegisterMeta):
 
 
 class DatasetOperator[T_IN: AnyDataset, T_OUT: AnyDataset](
-    ABC, metaclass=DatasetOperatorMeta
+    ABC, RegisterCallbackMixin, metaclass=DatasetOperatorMeta
 ):
     @abstractmethod
     def __call__(self, x: T_IN) -> T_OUT: ...

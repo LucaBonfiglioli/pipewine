@@ -50,7 +50,7 @@ class TestGrabber:
             _elem_fn_called += 1
             return x
 
-        grabber: Grabber[int] = Grabber(
+        grabber: Grabber = Grabber(
             num_workers=workers, prefetch=prefetch, keep_order=keep_order
         )
         kwargs: dict[str, Any] = {}

@@ -1,54 +1,67 @@
+from typelime import *
 from pathlib import Path
 
-import numpy as np
-from pydantic import BaseModel
-
-from typelime.item import Item
-from typelime.mappers import Mapper
-from typelime.operators import CacheOp, MapOp, CatOp, MemoCache
-from typelime.sample import TypedSample
-from typelime.sources import UnderfolderSource
-from typelime.sinks import UnderfolderSink, OverwritePolicy
-from typelime.grabber import Grabber
+from examples.mapper import SlowMapper
+from collections.abc import Callable
 
 
-class MyMetadata(BaseModel):
-    username: str
-    email: str
+def wrapper(fn: Callable[[Workflow], None]):
+    workflow = Workflow()
+    fn(workflow)
+    eq = InMemoryEventQueue()
+    executor = NaiveWorkflowExecutor(eq)
+    tracker = ProgressGUITracker()
+    error: KeyboardInterrupt | Exception | None = None
+    try:
+        tracker.attach(eq)
+        executor.execute(workflow)
+    except (KeyboardInterrupt, Exception) as e:
+        error = e
+
+    try:
+        tracker.detach()
+        eq.close()
+    except Exception as e:
+        if error is not None:
+            raise e from error
+        else:
+            raise e
+
+    if error is not None and not isinstance(error, KeyboardInterrupt):
+        raise error
 
 
-class MySample(TypedSample):
-    image: Item[np.ndarray]
-    metadata: Item[MyMetadata]
-    shared: Item
+def main(workflow: Workflow):
+    input_path = Path("tests/sample_data/underfolders/underfolder_0")
+    output_path = Path("/tmp/out")
+
+    read_node = workflow.node(UnderfolderSource(folder=input_path))
+
+    repeat = workflow.node(RepeatOp(1000))
+    workflow.edge(read_node.output, repeat.input)
+
+    slice_ = workflow.node(SliceOp(None, None, 2))
+    workflow.edge(repeat.output, slice_.input)
+
+    slownode = workflow.node(MapOp(SlowMapper()))
+    workflow.edge(slice_.output, slownode.input)
+
+    write_node = workflow.node(
+        UnderfolderSink(output_path, grabber=Grabber(num_workers=10, prefetch=2))
+    )
+    workflow.edge(slownode.output, write_node.input)
 
 
-class VeryLongMapper(Mapper[MySample, MySample]):
-    def __call__(self, idx: int, x: MySample) -> MySample:
-        print(f"LONG CALL {idx}")
-        return x
+def main_no_wf():
+    input_path = Path("tests/sample_data/underfolders/underfolder_0")
+    output_path = Path("/tmp/out")
 
-
-def myfunc(x):
-    return x
+    data = UnderfolderSource(folder=input_path)()
+    repeat = RepeatOp(20)(data)
+    slice_ = SliceOp(None, None, 2)(repeat)
+    slownode = MapOp(SlowMapper())(slice_)
+    UnderfolderSink(output_path, grabber=Grabber(num_workers=4))(slownode)
 
 
 if __name__ == "__main__":
-    folder = Path("tests/sample_data/underfolder_0")
-
-    dataset = UnderfolderSource(folder, sample_type=MySample)()
-    dataset = MapOp(VeryLongMapper())(dataset)
-    dataset = CacheOp(MemoCache)(dataset)
-    dataset[1]
-    print(dataset[0].metadata().email)
-    print(dataset[0].metadata().email)
-    print(dataset[0].metadata().email)
-    print(dataset[0].shared())
-
-    dataset = CatOp()([dataset, dataset[:2], dataset[:1]])
-
-    UnderfolderSink(
-        Path("/tmp/cursed"),
-        grabber=Grabber(8, 1),
-        overwrite_policy=OverwritePolicy.OVERWRITE_FOLDER,
-    )(dataset)
+    wrapper(main)
