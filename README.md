@@ -28,8 +28,8 @@ Development rationale behind Typelime:
 - Rely on the standard library as much as possible. 
 - The library should be installable in most python environments.
 - Renounce Pydantic, and all its works, and all its temptations.
-- A type error should imply user error.
-- The user should be able to rely on the intellisense before having to resort the documentation. 
+- A type error should always imply user error.
+- The user should be able to rely on the intellisense before having to resort the documentation (or even reading the library code). 
 - The user shouldn't feel the need to disable the type-checker.
 - Typelime should not interfere too much with the user code. 
 - Typelime should be able to read data written by Pipelime.
