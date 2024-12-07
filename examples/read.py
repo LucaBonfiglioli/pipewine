@@ -1,7 +1,7 @@
 from typelime import *
 from pathlib import Path
 
-from examples.mapper import SlowMapper
+from examples.custom_mapper import SlowMapper
 from collections.abc import Callable
 
 
@@ -31,28 +31,7 @@ def wrapper(fn: Callable[[Workflow], None]):
         raise error
 
 
-def main(workflow: Workflow):
-    input_path = Path("tests/sample_data/underfolders/underfolder_0")
-    output_path = Path("/tmp/out")
-
-    read_node = workflow.node(UnderfolderSource(folder=input_path))
-
-    repeat = workflow.node(RepeatOp(1000))
-    workflow.edge(read_node.output, repeat.input)
-
-    slice_ = workflow.node(SliceOp(None, None, 2))
-    workflow.edge(repeat.output, slice_.input)
-
-    slownode = workflow.node(MapOp(SlowMapper()))
-    workflow.edge(slice_.output, slownode.input)
-
-    write_node = workflow.node(
-        UnderfolderSink(output_path, grabber=Grabber(num_workers=10, prefetch=2))
-    )
-    workflow.edge(slownode.output, write_node.input)
-
-
-def main_no_wf():
+def main():
     input_path = Path("tests/sample_data/underfolders/underfolder_0")
     output_path = Path("/tmp/out")
 
@@ -63,5 +42,20 @@ def main_no_wf():
     UnderfolderSink(output_path, grabber=Grabber(num_workers=4))(slownode)
 
 
+# if __name__ == "__main__":
+#     main()
+
+
+def main_with_workflow(wf: Workflow):
+    input_path = Path("tests/sample_data/underfolders/underfolder_0")
+    output_path = Path("/tmp/out")
+
+    data = wf.node(UnderfolderSource(folder=input_path))()
+    repeat = wf.node(RepeatOp(1000))(data)
+    slice_ = wf.node(SliceOp(None, None, 2))(repeat)
+    slownode = wf.node(MapOp(SlowMapper()))(slice_)
+    wf.node(UnderfolderSink(output_path, grabber=Grabber(num_workers=10)))(slownode)
+
+
 if __name__ == "__main__":
-    wrapper(main)
+    wrapper(main_with_workflow)

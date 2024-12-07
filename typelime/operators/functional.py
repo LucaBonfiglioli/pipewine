@@ -1,5 +1,5 @@
 from collections import defaultdict
-from collections.abc import Callable, Mapping
+from collections.abc import Callable
 from functools import partial
 from typing import Any, Protocol, TypeVar
 
@@ -31,7 +31,7 @@ class FilterOp[T: Sample](DatasetOperator[Dataset[T], Dataset[T]], title="filter
 
 
 class GroupByOp[T: Sample](
-    DatasetOperator[Dataset[T], Mapping[str, Dataset[T]]], title="groupby"
+    DatasetOperator[Dataset[T], dict[str, Dataset[T]]], title="groupby"
 ):
     def __init__(
         self, fn: Callable[[int, T], str], grabber: Grabber | None = None
@@ -40,7 +40,7 @@ class GroupByOp[T: Sample](
         self._fn = fn
         self._grabber = grabber or Grabber()
 
-    def __call__(self, x: Dataset[T]) -> Mapping[str, Dataset[T]]:
+    def __call__(self, x: Dataset[T]) -> dict[str, Dataset[T]]:
         indexes: dict[str, list[int]] = defaultdict(list)
         for i, sample in self.loop(x, self._grabber, name="Computing index"):
             key = self._fn(i, sample)

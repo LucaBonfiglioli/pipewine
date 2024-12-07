@@ -5,11 +5,7 @@ from typelime.dataset import Dataset
 from types import GenericAlias
 
 AnyDataset = (
-    Dataset
-    | tuple[Dataset, ...]
-    | Sequence[Dataset]
-    | Mapping[str, Dataset]
-    | Bundle[Dataset]
+    Dataset | tuple[Dataset, ...] | list[Dataset] | dict[str, Dataset] | Bundle[Dataset]
 )
 
 

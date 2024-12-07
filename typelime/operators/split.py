@@ -5,13 +5,13 @@ from typelime.operators.base import DatasetOperator
 from typelime.sample import Sample
 
 
-class BatchOp(DatasetOperator[Dataset, Sequence[Dataset]], title="batch"):
+class BatchOp(DatasetOperator[Dataset, list[Dataset]], title="batch"):
     def __init__(self, batch_size: int) -> None:
         super().__init__()
         self._batch_size = batch_size
         assert self._batch_size > 0, "Batch size must be greater than 0."
 
-    def __call__[T: Sample](self, x: Dataset[T]) -> Sequence[Dataset[T]]:
+    def __call__[T: Sample](self, x: Dataset[T]) -> list[Dataset[T]]:
         start = 0
         batches = []
         while start < len(x):
@@ -21,13 +21,13 @@ class BatchOp(DatasetOperator[Dataset, Sequence[Dataset]], title="batch"):
         return batches
 
 
-class ChunkOp(DatasetOperator[Dataset, Sequence[Dataset]], title="chunk"):
+class ChunkOp(DatasetOperator[Dataset, list[Dataset]], title="chunk"):
     def __init__(self, chunks: int) -> None:
         super().__init__()
         self._chunks = chunks
         assert self._chunks > 0, "Number of chunks must be greater than 0."
 
-    def __call__[T: Sample](self, x: Dataset[T]) -> Sequence[Dataset[T]]:
+    def __call__[T: Sample](self, x: Dataset[T]) -> list[Dataset[T]]:
         size_floor = len(x) // self._chunks
         sizes = [size_floor] * self._chunks
         remainder = len(x) % self._chunks
@@ -41,7 +41,7 @@ class ChunkOp(DatasetOperator[Dataset, Sequence[Dataset]], title="chunk"):
         return chunks
 
 
-class SplitOp(DatasetOperator[Dataset, Sequence[Dataset]], title="split"):
+class SplitOp(DatasetOperator[Dataset, list[Dataset]], title="split"):
     def __init__(self, sizes: Sequence[int | float | None]) -> None:
         super().__init__()
         self._sizes = sizes
@@ -58,7 +58,7 @@ class SplitOp(DatasetOperator[Dataset, Sequence[Dataset]], title="split"):
             else:
                 self._total += size
 
-    def __call__(self, x: Dataset) -> Sequence[Dataset]:
+    def __call__(self, x: Dataset) -> list[Dataset]:
         sizes: list[int] = []
         for size in self._sizes:
             if isinstance(size, float):
