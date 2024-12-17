@@ -27,7 +27,7 @@ class TaskCompleteEvent(TrackingEvent):
 
 class Tracker(ABC):
     @abstractmethod
-    def attach(self, manager: EventQueue) -> None: ...
+    def attach(self, event_queue: EventQueue) -> None: ...
 
     @abstractmethod
     def detach(self) -> None: ...
@@ -47,28 +47,36 @@ class TaskGroup:
     tasks: OrderedDict[str, Task] = field(default_factory=OrderedDict)
 
 
-class ProgressGUITracker(Tracker):
+class NoTracker(Tracker):
+    def attach(self, event_queue: EventQueue) -> None:
+        return
+
+    def detach(self) -> None:
+        return
+
+
+class CursesTracker(Tracker):
     def __init__(self) -> None:
         super().__init__()
-        self._em: EventQueue | None = None
+        self._eq: EventQueue | None = None
         self._thread: Thread | None = None
         self._stop_flag = False
 
-    def attach(self, manager: EventQueue) -> None:
-        if self._em is not None or self._thread is not None:
-            raise RuntimeError("Already attached to another event manager.")
-        self._em = manager
+    def attach(self, event_queue: EventQueue) -> None:
+        if self._eq is not None or self._thread is not None:
+            raise RuntimeError("Already attached to another event queue.")
+        self._eq = event_queue
         self._thread = Thread(target=self._loop)
         self._stop_flag = False
         self._thread.start()
 
     def detach(self) -> None:
-        if self._em is None or self._thread is None:
-            raise RuntimeError("Not attached to any event manager.")
+        if self._eq is None or self._thread is None:
+            raise RuntimeError("Not attached to any event queue.")
         self._stop_flag = True
         self._thread.join()
         self._thread = None
-        self._em = None
+        self._eq = None
 
     def _get_task(self, group: TaskGroup, path: str, total: int) -> Task:
         path_chunks = path.split("/")
@@ -101,7 +109,7 @@ class ProgressGUITracker(Tracker):
             c = int((float(i + 1) / C) * M)
             curses.init_color(i + 1, c, c, c)
             curses.init_pair(i + 1, i + 1, -1)
-        em = self._em
+        em = self._eq
         assert em is not None
         root = TaskGroup("__root__")
         global_step = -1

@@ -35,7 +35,7 @@ class OverwritePolicy(str, Enum):
     make the dataset unreadable or change its format. Use at your own risk.
     """
 
-    OVERWRITE_FOLDER = "OVERWRITE_FOLDER"
+    OVERWRITE = "OVERWRITE"
     """Weakest policy: completely delete and rewrite the folder. This will result in
     major data loss but ensures that the final dataset is readable and with the expected
     format. Use at your own risk.
@@ -84,7 +84,7 @@ class _WriterMapper[T: Sample](Mapper[T, T]):
         return x
 
 
-class UnderfolderSink(DatasetSink[Dataset], title="underfolder_sink"):
+class UnderfolderSink(DatasetSink[Dataset]):
     def __init__(
         self,
         folder: Path,
@@ -109,7 +109,7 @@ class UnderfolderSink(DatasetSink[Dataset], title="underfolder_sink"):
                     "path or set a weaker policy."
                 )
 
-            elif self._overwrite_policy == OverwritePolicy.OVERWRITE_FOLDER:
+            elif self._overwrite_policy == OverwritePolicy.OVERWRITE:
                 shutil.rmtree(self._folder, ignore_errors=True)
 
         self._folder.mkdir(parents=True, exist_ok=True)

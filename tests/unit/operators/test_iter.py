@@ -20,9 +20,12 @@ class MyDataset(LazyDataset[TypelessSample]):
         self,
         size: int,
     ) -> None:
+        self._the_size = size
         super().__init__(size, self._make_sample)
 
     def _make_sample(self, idx: int) -> TypelessSample:
+        if idx < 0:
+            idx = self._the_size + idx
         return TypelessSample(number=MemoryItem(idx, parser=PickleParser()))
 
 
@@ -131,24 +134,20 @@ class TestReverseOp(TestAllIterOp):
 
 
 class TestPadOp(TestAllIterOp):
-    @pytest.mark.parametrize(
-        "pad_with", [TypelessSample(number=MemoryItem(-76329, PickleParser()))]
-    )
+    @pytest.mark.parametrize("pad_with", [-1])
     @pytest.mark.parametrize(
         ["dataset_size", "length", "expected"],
         [
-            [0, 0, []],
-            [0, 5, [-76329, -76329, -76329, -76329, -76329]],
             [4, 4, [0, 1, 2, 3]],
             [4, 2, [0, 1]],
-            [4, 6, [0, 1, 2, 3, -76329, -76329]],
+            [4, 6, [0, 1, 2, 3, 3, 3]],
         ],
     )
     def test_op(
         self,
         dataset_size: int,
         length: int,
-        pad_with: TypelessSample,
+        pad_with: int,
         expected: list[int],
     ) -> None:
         dataset = MyDataset(dataset_size)

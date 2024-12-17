@@ -10,11 +10,11 @@ from typelime.item import Item
 
 class Sample(ABC, Mapping[str, Item]):
     @abstractmethod
-    def get_item(self, key: str) -> Item:
+    def _get_item(self, key: str) -> Item:
         pass
 
     @abstractmethod
-    def size(self) -> int:
+    def _size(self) -> int:
         pass
 
     @abstractmethod
@@ -26,45 +26,45 @@ class Sample(ABC, Mapping[str, Item]):
         pass
 
     def with_data(self, **data: t.Any) -> Self:
-        dict_data = {k: self.get_item(k).with_data(v) for k, v in data.items()}
+        dict_data = {k: self._get_item(k).with_data(v) for k, v in data.items()}
         return self.with_items(**dict_data)
 
     def without(self, *keys: str) -> "Sample":
-        data = {k: self.get_item(k) for k in self.keys() if k not in keys}
+        data = {k: self._get_item(k) for k in self.keys() if k not in keys}
         return TypelessSample(**data)
 
     def with_only(self, *keys: str) -> "Sample":
-        data = {k: self.get_item(k) for k in self.keys() if k in keys}
+        data = {k: self._get_item(k) for k in self.keys() if k in keys}
         return TypelessSample(**data)
 
     def remap(self, fromto: t.Mapping[str, str], exclude: bool = False) -> "Sample":
         if exclude:
-            data = {k: self.get_item(k) for k in self.keys() if k in fromto}
+            data = {k: self._get_item(k) for k in self.keys() if k in fromto}
         else:
-            data = {k: self.get_item(k) for k in self.keys()}
+            data = {k: self._get_item(k) for k in self.keys()}
         for k_from, k_to in fromto.items():
             if k_from in data:
                 data[k_to] = data.pop(k_from)
         return TypelessSample(**data)
 
     def __getitem__(self, key: str) -> Item:
-        return self.get_item(key)
+        return self._get_item(key)
 
     def __iter__(self) -> Iterator[str]:
         return iter(self.keys())
 
     def __len__(self) -> int:
-        return self.size()
+        return self._size()
 
 
 class TypelessSample(Sample):
     def __init__(self, **data: Item) -> None:
         self._data = data
 
-    def get_item(self, key: str) -> Item:
+    def _get_item(self, key: str) -> Item:
         return self._data[key]
 
-    def size(self) -> int:
+    def _size(self) -> int:
         return len(self._data)
 
     def keys(self) -> KeysView[str]:
@@ -75,10 +75,10 @@ class TypelessSample(Sample):
 
 
 class TypedSample(Bundle[Item], Sample):
-    def get_item(self, key: str) -> Item:
+    def _get_item(self, key: str) -> Item:
         return getattr(self, key)
 
-    def size(self) -> int:
+    def _size(self) -> int:
         return len(self.as_dict())
 
     def keys(self) -> KeysView[str]:

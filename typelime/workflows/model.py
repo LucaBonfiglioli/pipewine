@@ -83,7 +83,7 @@ class Workflow:
         self._name_counters: dict[str, int] = defaultdict(int)
 
     def _gen_node_name(self, action: AnyAction) -> str:
-        title = action.__class__.title
+        title = action.__class__.__name__
         self._name_counters[title] += 1
         return f"{title}_{self._name_counters[title]}"
 

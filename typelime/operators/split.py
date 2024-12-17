@@ -5,7 +5,7 @@ from typelime.operators.base import DatasetOperator
 from typelime.sample import Sample
 
 
-class BatchOp(DatasetOperator[Dataset, list[Dataset]], title="batch"):
+class BatchOp(DatasetOperator[Dataset, list[Dataset]]):
     def __init__(self, batch_size: int) -> None:
         super().__init__()
         self._batch_size = batch_size
@@ -21,7 +21,7 @@ class BatchOp(DatasetOperator[Dataset, list[Dataset]], title="batch"):
         return batches
 
 
-class ChunkOp(DatasetOperator[Dataset, list[Dataset]], title="chunk"):
+class ChunkOp(DatasetOperator[Dataset, list[Dataset]]):
     def __init__(self, chunks: int) -> None:
         super().__init__()
         self._chunks = chunks
@@ -41,7 +41,7 @@ class ChunkOp(DatasetOperator[Dataset, list[Dataset]], title="chunk"):
         return chunks
 
 
-class SplitOp(DatasetOperator[Dataset, list[Dataset]], title="split"):
+class SplitOp(DatasetOperator[Dataset, list[Dataset]]):
     def __init__(self, sizes: Sequence[int | float | None]) -> None:
         super().__init__()
         self._sizes = sizes

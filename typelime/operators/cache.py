@@ -108,7 +108,7 @@ class LRUCache[K, V](Cache[K, V]):
             last[self._NEXT] = self._dll[self._PREV] = self._mp[key] = link
 
 
-class CacheOp(DatasetOperator[Dataset, Dataset], title="cache"):
+class CacheOp(DatasetOperator[Dataset, Dataset]):
     def __init__(self, cache_type: type[Cache], **cache_params) -> None:
         super().__init__()
         self._cache_mapper: CacheMapper = CacheMapper()

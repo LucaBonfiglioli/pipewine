@@ -15,14 +15,29 @@ from typelime.workflows.tracking import EventQueue, TaskUpdateEvent
 
 class WorkflowExecutor(ABC):
     @abstractmethod
-    def execute(self, workflow: Workflow) -> None:
-        pass
+    def execute(self, workflow: Workflow) -> None: ...
+
+    @abstractmethod
+    def attach(self, event_queue: EventQueue) -> None: ...
+
+    @abstractmethod
+    def detach(self) -> None: ...
 
 
 class NaiveWorkflowExecutor(WorkflowExecutor):
-    def __init__(self, event_queue: EventQueue) -> None:
+    def __init__(self) -> None:
         super().__init__()
-        self._event_q = event_queue
+        self._eq: EventQueue | None = None
+
+    def attach(self, event_queue: EventQueue) -> None:
+        if self._eq is not None:
+            raise RuntimeError("Already attached to another event queue.")
+        self._eq = event_queue
+
+    def detach(self) -> None:
+        if self._eq is None:
+            raise RuntimeError("Not attached to any event queue.")
+        self._eq = None
 
     def execute(self, workflow: Workflow) -> None:
         sorted_graph = self._topological_sort(workflow)
@@ -33,9 +48,10 @@ class NaiveWorkflowExecutor(WorkflowExecutor):
     def _progress_callback(
         self, node: Node, loop_id: str, idx: int, seq: Sequence
     ) -> None:
-        task = f"{node.name}/{loop_id}"
-        event = TaskUpdateEvent(task, idx, len(seq))
-        self._event_q.emit(event)
+        if self._eq is not None:
+            task = f"{node.name}/{loop_id}"
+            event = TaskUpdateEvent(task, idx, len(seq))
+            self._eq.emit(event)
 
     def _execute_node(
         self,

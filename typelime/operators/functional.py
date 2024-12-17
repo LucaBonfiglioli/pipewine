@@ -10,7 +10,7 @@ from typelime.operators.base import DatasetOperator
 from typelime.sample import Sample
 
 
-class FilterOp[T: Sample](DatasetOperator[Dataset[T], Dataset[T]], title="filter"):
+class FilterOp[T: Sample](DatasetOperator[Dataset[T], Dataset[T]]):
     def __init__(
         self,
         fn: Callable[[int, T], bool],
@@ -30,9 +30,7 @@ class FilterOp[T: Sample](DatasetOperator[Dataset[T], Dataset[T]], title="filter
         return LazyDataset(len(new_index), x.get_sample, index_fn=new_index.__getitem__)
 
 
-class GroupByOp[T: Sample](
-    DatasetOperator[Dataset[T], dict[str, Dataset[T]]], title="groupby"
-):
+class GroupByOp[T: Sample](DatasetOperator[Dataset[T], dict[str, Dataset[T]]]):
     def __init__(
         self, fn: Callable[[int, T], str], grabber: Grabber | None = None
     ) -> None:
@@ -65,7 +63,7 @@ class SupportsDunderGT(Protocol[_T_contravariant]):
 ComparableT = SupportsDunderLT[Any] | SupportsDunderGT[Any]
 
 
-class SortOp[T: Sample](DatasetOperator[Dataset[T], Dataset[T]], title="sort"):
+class SortOp[T: Sample](DatasetOperator[Dataset[T], Dataset[T]]):
     def __init__(
         self,
         fn: Callable[[int, T], ComparableT],
@@ -87,7 +85,7 @@ class SortOp[T: Sample](DatasetOperator[Dataset[T], Dataset[T]], title="sort"):
 
 
 class MapOp[T_IN: Sample, T_OUT: Sample](
-    DatasetOperator[Dataset[T_IN], Dataset[T_OUT]], title="map"
+    DatasetOperator[Dataset[T_IN], Dataset[T_OUT]]
 ):
     def __init__(self, mapper: Mapper[T_IN, T_OUT]) -> None:
         super().__init__()

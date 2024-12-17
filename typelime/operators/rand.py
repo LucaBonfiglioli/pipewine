@@ -6,7 +6,7 @@ from typelime.operators.base import DatasetOperator
 from typelime.sample import Sample
 
 
-class ShuffleOp(DatasetOperator[Dataset, Dataset], title="shuffle"):
+class ShuffleOp(DatasetOperator[Dataset, Dataset]):
     def _index_fn(self, index: list[int], x: int) -> int:
         return index[x]
 

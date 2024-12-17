@@ -1,13 +1,12 @@
 from collections.abc import Sequence
 from functools import partial
-from math import ceil
 
 from typelime.dataset import Dataset, LazyDataset
 from typelime.operators.base import DatasetOperator
 from typelime.sample import Sample
 
 
-class SliceOp(DatasetOperator[Dataset, Dataset], title="slice"):
+class SliceOp(DatasetOperator[Dataset, Dataset]):
     def __init__(
         self, start: int | None = None, stop: int | None = None, step: int | None = None
     ) -> None:
@@ -20,7 +19,7 @@ class SliceOp(DatasetOperator[Dataset, Dataset], title="slice"):
         return x[slice(self._start or 0, self._stop or len(x), self._step or 1)]
 
 
-class RepeatOp(DatasetOperator[Dataset, Dataset], title="repeat"):
+class RepeatOp(DatasetOperator[Dataset, Dataset]):
     def __init__(self, times: int, interleave: bool = False) -> None:
         super().__init__()
         self._times = times
@@ -41,7 +40,7 @@ class RepeatOp(DatasetOperator[Dataset, Dataset], title="repeat"):
         return LazyDataset(len(x) * self._times, x.get_sample, index_fn=index_fn)
 
 
-class CycleOp(DatasetOperator[Dataset, Dataset], title="cycle"):
+class CycleOp(DatasetOperator[Dataset, Dataset]):
     def __init__(self, n: int) -> None:
         super().__init__()
         self._n = n
@@ -56,7 +55,7 @@ class CycleOp(DatasetOperator[Dataset, Dataset], title="cycle"):
         )
 
 
-class IndexOp(DatasetOperator[Dataset, Dataset], title="index"):
+class IndexOp(DatasetOperator[Dataset, Dataset]):
     def __init__(self, index: Sequence[int], negate: bool = False) -> None:
         super().__init__()
         self._index = index
@@ -71,22 +70,22 @@ class IndexOp(DatasetOperator[Dataset, Dataset], title="index"):
         return LazyDataset(len(index), x.get_sample, index_fn=index.__getitem__)
 
 
-class ReverseOp(DatasetOperator[Dataset, Dataset], title="reverse"):
+class ReverseOp(DatasetOperator[Dataset, Dataset]):
     def __call__[T: Sample](self, x: Dataset[T]) -> Dataset[T]:
         return x[::-1]
 
 
-class PadOp[T: Sample](DatasetOperator[Dataset[T], Dataset[T]], title="pad"):
-    def __init__(self, length: int, pad_with: T) -> None:
+class PadOp(DatasetOperator[Dataset, Dataset]):
+    def __init__(self, length: int, pad_with: int = -1) -> None:
         super().__init__()
         self._length = length
         self._pad_with = pad_with
 
-    def _get_sample(self, x: Dataset[T], idx: int) -> T:
+    def _get_sample[T: Sample](self, x: Dataset[T], idx: int) -> T:
         if idx < len(x):
             return x[idx]
         else:
-            return self._pad_with
+            return x[self._pad_with]
 
-    def __call__(self, x: Dataset[T]) -> Dataset[T]:
+    def __call__[T: Sample](self, x: Dataset[T]) -> Dataset[T]:
         return LazyDataset(self._length, partial(self._get_sample, x))

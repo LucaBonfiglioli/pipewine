@@ -3,7 +3,7 @@ from typelime.mappers.base import Mapper
 from typelime.sample import Sample
 
 
-class CacheMapper[T: Sample](Mapper[T, T], title="cache"):
+class CacheMapper[T: Sample](Mapper[T, T]):
     def __call__(self, idx: int, x: T) -> T:
         return x.with_items(
             **{

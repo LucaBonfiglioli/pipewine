@@ -13,7 +13,7 @@ class CopyPolicy(str, Enum):
     cases, some operations may be avoided, trading off data consistency for speed.
     """
 
-    SERIALIZE_AND_WRITE = "SERIALIZE_AND_WRITE"
+    REWRITE = "SERIALIZE_AND_WRITE"
     """Do not copy anything, ever, even if the data is untouched. Treat every write
     alike: serialize the object, encode it and write to a new file. This is the slowest
     option but also the safest."""
@@ -90,7 +90,7 @@ def write_item_to_file(item: Item, file: Path, copy_policy: CopyPolicy) -> None:
             if _try_copy(shutil.copy, str(src), str(file), errors):
                 return
             else:
-                copy_policy = CopyPolicy.SERIALIZE_AND_WRITE
+                copy_policy = CopyPolicy.REWRITE
 
     data = item.parser.dump(item())
     try:

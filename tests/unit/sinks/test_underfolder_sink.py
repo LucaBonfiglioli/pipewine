@@ -66,7 +66,7 @@ class TestUnderfolderSink:
             OverwritePolicy.ALLOW_IF_EMPTY,
             OverwritePolicy.ALLOW_NEW_FILES,
             OverwritePolicy.OVERWRITE_FILES,
-            OverwritePolicy.OVERWRITE_FOLDER,
+            OverwritePolicy.OVERWRITE,
         ],
     )
     def test_call(
@@ -105,7 +105,7 @@ class TestUnderfolderSink:
             [OverwritePolicy.ALLOW_IF_EMPTY, False],
             [OverwritePolicy.ALLOW_NEW_FILES, False],
             [OverwritePolicy.OVERWRITE_FILES, False],
-            [OverwritePolicy.OVERWRITE_FOLDER, False],
+            [OverwritePolicy.OVERWRITE, False],
         ],
     )
     def test_fail_folder_already_exists(
@@ -128,7 +128,7 @@ class TestUnderfolderSink:
             [OverwritePolicy.ALLOW_IF_EMPTY, True],
             [OverwritePolicy.ALLOW_NEW_FILES, False],
             [OverwritePolicy.OVERWRITE_FILES, False],
-            [OverwritePolicy.OVERWRITE_FOLDER, False],
+            [OverwritePolicy.OVERWRITE, False],
         ],
     )
     def test_fail_folder_not_empty(
@@ -153,7 +153,7 @@ class TestUnderfolderSink:
             [OverwritePolicy.ALLOW_IF_EMPTY, True],
             [OverwritePolicy.ALLOW_NEW_FILES, True],
             [OverwritePolicy.OVERWRITE_FILES, False],
-            [OverwritePolicy.OVERWRITE_FOLDER, False],
+            [OverwritePolicy.OVERWRITE, False],
         ],
     )
     def test_fail_folder_root_file_exists(
@@ -178,7 +178,7 @@ class TestUnderfolderSink:
             [OverwritePolicy.ALLOW_IF_EMPTY, True],
             [OverwritePolicy.ALLOW_NEW_FILES, True],
             [OverwritePolicy.OVERWRITE_FILES, False],
-            [OverwritePolicy.OVERWRITE_FOLDER, False],
+            [OverwritePolicy.OVERWRITE, False],
         ],
     )
     def test_fail_folder_item_file_exists(

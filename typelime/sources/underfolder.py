@@ -5,7 +5,7 @@ from pathlib import Path
 
 from typelime.item import StoredItem
 from typelime.parsers import ParserRegistry
-from typelime.sample import Sample, TypelessSample, TypedSample
+from typelime.sample import Sample, TypedSample, TypelessSample
 from typelime.sources.base import LazyDatasetSource
 from typelime.storage import LocalFileReadStorage
 
@@ -42,20 +42,20 @@ class UnderfolderSource[T: Sample](LazyDatasetSource[T]):
         id_key_split = name.partition("_")
         if not id_key_split[2]:
             warnings.warn(
-                f"{self.__class__}: cannot parse file name {name} as <id>_<key>.<ext>"
+                f"{self.__class__}: cannot parse file name '{name}' as <id>_<key>.<ext>"
             )
             return None
         try:
             return (int(id_key_split[0]), self._extract_key(id_key_split[2]))
         except ValueError:
             warnings.warn(
-                f"{self.__class__}: file name `{name}` does not start with an integer"
+                f"{self.__class__}: file name '{name}' does not start with an integer"
             )
             return None
 
     def _scan_root_files(self) -> None:
         if not self._folder.exists():
-            raise NotADirectoryError(f"Folder {self._folder} does not exist.")
+            raise NotADirectoryError(f"Folder '{self._folder}' does not exist.")
 
         root_items: dict[str, Path] = {}
         with os.scandir(str(self._folder)) as it:
@@ -69,7 +69,7 @@ class UnderfolderSource[T: Sample](LazyDatasetSource[T]):
     def _scan_sample_files(self) -> None:
         data_folder = self.data_folder
         if not data_folder.exists():
-            raise NotADirectoryError(f"Folder {data_folder} does not exist.")
+            raise NotADirectoryError(f"Folder '{data_folder}' does not exist.")
 
         sample_files: list[dict[str, Path]] = []
         with os.scandir(str(data_folder)) as it:
@@ -98,7 +98,7 @@ class UnderfolderSource[T: Sample](LazyDatasetSource[T]):
         parser_type = ParserRegistry.get(ext)
         if parser_type is None:
             warnings.warn(
-                f"No parser found for extension {ext}, make sure the extension "
+                f"No parser found for extension '{ext}', make sure the extension "
                 "is correct and/or implement a custom Parser for it.",
             )
             return None

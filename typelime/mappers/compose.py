@@ -6,7 +6,7 @@ from typelime.sample import Sample
 Ts = TypeVarTuple("Ts")
 
 
-class ComposeMapper[T_IN: Sample, T_OUT: Sample](Mapper[T_IN, T_OUT], title="compose"):
+class ComposeMapper[T_IN: Sample, T_OUT: Sample](Mapper[T_IN, T_OUT]):
     def __init__(
         self,
         mappers: (

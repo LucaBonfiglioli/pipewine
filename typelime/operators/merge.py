@@ -7,7 +7,7 @@ from typelime.operators.base import DatasetOperator
 from typelime.sample import Sample, TypelessSample
 
 
-class CatOp(DatasetOperator[list[Dataset], Dataset], title="cat"):
+class CatOp(DatasetOperator[list[Dataset], Dataset]):
     def _get_sample[
         T: Sample
     ](self, datasets: list[Dataset[T]], index: list[int], i: int) -> T:
@@ -22,7 +22,7 @@ class CatOp(DatasetOperator[list[Dataset], Dataset], title="cat"):
         return LazyDataset(index[-1], partial(self._get_sample, x, index))
 
 
-class ZipOp[T: Sample](DatasetOperator[list[Dataset], Dataset[T]], title="zip"):
+class ZipOp[T: Sample](DatasetOperator[list[Dataset], Dataset[T]]):
     def __init__(self, out_type: type[T] | None = None) -> None:
         super().__init__()
         self._out_type = out_type or TypelessSample

@@ -51,7 +51,7 @@ class StringParser(Parser[str]):
             False,
             False,
             False,
-            CopyPolicy.SERIALIZE_AND_WRITE,
+            CopyPolicy.REWRITE,
         ],
         [
             CachedItem(CachedItem(MemoryItem("helloworld", StringParser()))),
@@ -59,7 +59,7 @@ class StringParser(Parser[str]):
             False,
             False,
             False,
-            CopyPolicy.SERIALIZE_AND_WRITE,
+            CopyPolicy.REWRITE,
         ],
         [
             StoredItem(LocalFileReadStorage(Path()), StringParser()),
@@ -83,7 +83,7 @@ class StringParser(Parser[str]):
             True,
             True,
             False,
-            CopyPolicy.SERIALIZE_AND_WRITE,
+            CopyPolicy.REWRITE,
         ],
         [
             StoredItem(LocalFileReadStorage(Path()), StringParser()),
@@ -115,7 +115,7 @@ class StringParser(Parser[str]):
             True,
             True,
             False,
-            CopyPolicy.SERIALIZE_AND_WRITE,
+            CopyPolicy.REWRITE,
         ],
         [
             StoredItem(LocalFileReadStorage(Path()), StringParser()),
@@ -139,7 +139,7 @@ class StringParser(Parser[str]):
             False,
             True,
             False,
-            CopyPolicy.SERIALIZE_AND_WRITE,
+            CopyPolicy.REWRITE,
         ],
         [
             StoredItem(LocalFileReadStorage(Path()), StringParser()),
@@ -151,15 +151,15 @@ class StringParser(Parser[str]):
         ],
         [
             StoredItem(LocalFileReadStorage(Path()), StringParser()),
-            CopyPolicy.SERIALIZE_AND_WRITE,
+            CopyPolicy.REWRITE,
             False,
             False,
             False,
-            CopyPolicy.SERIALIZE_AND_WRITE,
+            CopyPolicy.REWRITE,
         ],
         [
             StoredItem(LocalFileReadStorage(Path()), StringParser()),
-            CopyPolicy.SERIALIZE_AND_WRITE,
+            CopyPolicy.REWRITE,
             False,
             True,
             True,

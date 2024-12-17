@@ -39,6 +39,9 @@ dynamic = ["version"]
 [project.optional-dependencies]
 dev = ["black", "flake8", "pytest", "pytest-cov", "build", "mypy"]
 
+[project.scripts]
+typelime = "typelime.cli.main:main"
+
 [tool.hatch.version]
 path = "typelime/__init__.py"
 
