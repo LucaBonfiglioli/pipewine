@@ -25,19 +25,27 @@ class Sample(ABC, Mapping[str, Item]):
     def with_items(self, **items: Item) -> Self:
         pass
 
+    def with_item(self, key: str, item: Item) -> Self:
+        return self.with_items(**{key: item})
+
     def with_data(self, **data: t.Any) -> Self:
         dict_data = {k: self._get_item(k).with_data(v) for k, v in data.items()}
         return self.with_items(**dict_data)
 
-    def without(self, *keys: str) -> "Sample":
+    def without(self, *keys: str) -> "TypelessSample":
         data = {k: self._get_item(k) for k in self.keys() if k not in keys}
         return TypelessSample(**data)
 
-    def with_only(self, *keys: str) -> "Sample":
+    def with_only(self, *keys: str) -> "TypelessSample":
         data = {k: self._get_item(k) for k in self.keys() if k in keys}
         return TypelessSample(**data)
 
-    def remap(self, fromto: t.Mapping[str, str], exclude: bool = False) -> "Sample":
+    def typeless(self) -> "TypelessSample":
+        return TypelessSample(**self)
+
+    def remap(
+        self, fromto: t.Mapping[str, str], exclude: bool = False
+    ) -> "TypelessSample":
         if exclude:
             data = {k: self._get_item(k) for k in self.keys() if k in fromto}
         else:

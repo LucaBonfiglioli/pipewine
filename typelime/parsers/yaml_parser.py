@@ -6,10 +6,12 @@ import yaml
 from typelime.parsers.base import Parser
 
 
-class YAMLParser[T: pyd.BaseModel](Parser[T]):
+class YAMLParser[T: str | int | float | dict | list | pyd.BaseModel](Parser[T]):
     def parse(self, data: bytes) -> T:
         yaml_data = yaml.safe_load(data.decode())
-        if self._type:
+        if self._type in (str, int, float, dict, list):
+            return self._type(yaml_data)
+        elif self._type is not None and issubclass(self._type, pyd.BaseModel):
             return self._type.model_validate(yaml_data)
         return yaml_data
 
