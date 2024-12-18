@@ -41,6 +41,12 @@ target_help = "The target value (gets autocasted to the key value)."
 negate_help = "Invert the filtering criterion."
 
 
+@op_cli()
+def clone() -> IdentityOp:
+    """Copy a dataset, applying no changes to any sample."""
+    return IdentityOp()
+
+
 @op_cli(name="filter")
 def filter_(
     grabber: Grabber,
