@@ -56,8 +56,10 @@ class NoTracker(Tracker):
 
 
 class CursesTracker(Tracker):
-    def __init__(self) -> None:
+    def __init__(self, refresh_rate: float = 0.1) -> None:
         super().__init__()
+        self._refresh_rate = refresh_rate
+
         self._eq: EventQueue | None = None
         self._thread: Thread | None = None
         self._stop_flag = False
@@ -114,6 +116,7 @@ class CursesTracker(Tracker):
         root = TaskGroup("__root__")
         global_step = -1
         while not self._stop_flag:
+            time.sleep(self._refresh_rate)
             global_step = global_step + 1 % 10000
             while (event := em.capture()) is not None:
                 if isinstance(event, TaskCompleteEvent):
@@ -176,7 +179,6 @@ class CursesTracker(Tracker):
             title_pad.noutrefresh(max(0, TITLE_H - H), 0, 0, 0, H - 1, W - 1)
             prog_pad.noutrefresh(max(0, TITLE_H - H), 0, 0, TITLE_W, H - 1, W - 1)
             curses.doupdate()
-            time.sleep(0.1)
 
     def _loop(self) -> None:
         wrapper(self._curses)
