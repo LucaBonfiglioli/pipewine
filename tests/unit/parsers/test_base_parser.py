@@ -1,6 +1,6 @@
 from collections.abc import Iterable
 
-from typelime import Parser, ParserRegistry
+from pipewine import Parser, ParserRegistry
 
 
 class TestParserRegistry:

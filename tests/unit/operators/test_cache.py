@@ -1,6 +1,6 @@
 from typing import Literal, NamedTuple, Any
 import pytest
-from typelime import Cache, MemoCache, LRUCache, Dataset, TypelessSample, CacheOp
+from pipewine import Cache, MemoCache, LRUCache, Dataset, TypelessSample, CacheOp
 import pickle
 
 

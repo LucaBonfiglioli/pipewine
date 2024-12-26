@@ -1,7 +1,7 @@
 [run]
 branch = True
 omit = 
-    typelime/workflows/**
+    pipewine/workflows/**
 concurrency = multiprocessing
 parallel = true
 sigterm = true

@@ -1,4 +1,4 @@
-from typelime import Sample, TypedSample, TypelessSample, MemoryItem, JSONParser, Item
+from pipewine import Sample, TypedSample, TypelessSample, MemoryItem, JSONParser, Item
 import pytest
 from typing import Any
 from contextlib import nullcontext

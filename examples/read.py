@@ -1,8 +1,8 @@
-from typelime import *
+from pipewine import *
 from pathlib import Path
 
 from examples.custom_mapper import SlowMapper
-from typelime.cli.main import _run_cli_workflow
+from pipewine.cli.main import _run_cli_workflow
 
 
 def main():

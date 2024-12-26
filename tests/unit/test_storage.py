@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from typelime import LocalFileReadStorage
+from pipewine import LocalFileReadStorage
 
 
 class TestLocalFileReadStorage:

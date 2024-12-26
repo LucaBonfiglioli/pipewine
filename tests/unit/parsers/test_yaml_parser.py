@@ -1,4 +1,4 @@
-from typelime import YAMLParser
+from pipewine import YAMLParser
 
 from pydantic import BaseModel
 from datetime import datetime

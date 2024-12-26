@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from typelime import BmpParser, ImageParser, JpegParser, PngParser, TiffParser
+from pipewine import BmpParser, ImageParser, JpegParser, PngParser, TiffParser
 
 
 class TestImageParser:

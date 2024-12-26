@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "typelime"
+name = "pipewine"
 authors = [{ name = "Luca Bonfiglioli", email = "luca.bonfiglioli@gmail.com" }]
 requires-python = ">=3.10"
 maintainers = [
@@ -40,13 +40,13 @@ dynamic = ["version"]
 dev = ["black", "flake8", "pytest", "pytest-cov", "build", "mypy"]
 
 [project.scripts]
-typelime = "typelime.cli.main:main"
+pipewine = "pipewine.cli.main:main"
 
 [tool.hatch.version]
-path = "typelime/__init__.py"
+path = "pipewine/__init__.py"
 
 [tool.hatch.build]
-include = ["typelime/**/*.py", "LICENSE"]
+include = ["pipewine/**/*.py", "LICENSE"]
 
 [[tool.mypy.overrides]]
 module = "billiard.*"

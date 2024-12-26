@@ -1,5 +1,5 @@
-import typelime
+import pipewine
 
 
 def test_init():
-    assert isinstance(typelime.__version__, str)
+    assert isinstance(pipewine.__version__, str)

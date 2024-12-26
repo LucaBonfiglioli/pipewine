@@ -1,4 +1,4 @@
-from typelime._op_typing import origin_type
+from pipewine._op_typing import origin_type
 import pytest
 
 

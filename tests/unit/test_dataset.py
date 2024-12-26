@@ -7,7 +7,7 @@ import numpy as np
 import pytest
 from pydantic import BaseModel
 
-from typelime import (
+from pipewine import (
     Dataset,
     Item,
     JSONParser,

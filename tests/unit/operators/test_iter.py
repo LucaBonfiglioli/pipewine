@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typelime import (
+from pipewine import (
     LazyDataset,
     MemoryItem,
     PickleParser,

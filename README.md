@@ -1,4 +1,4 @@
-# [WIP] 🚧 Typelime 🚧 [WIP] 
+# [WIP] 🚧 Pipewine 🚧 [WIP] 
  
 > [!WARNING] 
 > This project is **under construction** and **not** ready for use yet.
@@ -9,7 +9,7 @@
 > - Proper testing
 > - Documentation
 
-Typelime is a complete rewrite of the [Pipelime](https://github.com/eyecan-ai/pipelime-python.git) library: a set of tools to manipulate multi-modal small and medium-sized datasets, intended mainly for research purposes in the CV/ML domain.
+Pipewine is a complete rewrite of the [Pipelime](https://github.com/eyecan-ai/pipelime-python.git) library: a set of tools to manipulate multi-modal small and medium-sized datasets, intended mainly for research purposes in the CV/ML domain.
 
 This rewrite aims at solving some major architectural issues of Pipelime, namely:
 - 💥 Large set of dependencies and constraints that cause installation conflicts.
@@ -23,7 +23,7 @@ This rewrite aims at solving some major architectural issues of Pipelime, namely
 - 😕 Old CLI is very powerful but also confusing to use and to maintain. 
 - 💀 Lots of features like streams, remotes, choixe add complexity but are mostly unused. 
 
-Development rationale behind Typelime:
+Development rationale behind Pipewine:
 
 - Rely on the standard library as much as possible. 
 - The library should be installable in most python environments.
@@ -31,6 +31,6 @@ Development rationale behind Typelime:
 - A type error should always imply user error.
 - The user should be able to rely on the intellisense before having to resort the documentation (or even reading the library code). 
 - The user shouldn't feel the need to disable the type-checker.
-- Typelime should not interfere too much with the user code. 
-- Typelime should be able to read data written by Pipelime.
+- Pipewine should not interfere too much with the user code. 
+- Pipewine should be able to read data written by Pipelime.
 - Avoid including complex features that no one is going to use. 

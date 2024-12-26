@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import math
 
-from typelime import NumpyNpyParser
+from pipewine import NumpyNpyParser
 
 
 class TestNumpyNpyParser:

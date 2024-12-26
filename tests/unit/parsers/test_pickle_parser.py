@@ -1,4 +1,4 @@
-from typelime import PickleParser
+from pipewine import PickleParser
 import pytest
 
 

@@ -3,7 +3,7 @@ from typing import Any
 
 import pytest
 
-from typelime import Bundle, DefaultBundle
+from pipewine import Bundle, DefaultBundle
 
 
 class EmptyBundle(Bundle[int]):

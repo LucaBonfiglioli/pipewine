@@ -1,4 +1,4 @@
-from typelime import JSONParser
+from pipewine import JSONParser
 
 from pydantic import BaseModel
 from datetime import datetime

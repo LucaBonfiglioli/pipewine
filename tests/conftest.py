@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 from pydantic import BaseModel
 
-from typelime import Item, TypedSample
+from pipewine import Item, TypedSample
 
 
 @pytest.fixture

@@ -3,7 +3,7 @@ from typing import Any
 
 import pytest
 
-from typelime import Grabber
+from pipewine import Grabber
 
 
 class RaisingSequence(Sequence[int]):

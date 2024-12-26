@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from typelime import (
+from pipewine import (
     UnderfolderSource,
     TypelessSample,
     Dataset,

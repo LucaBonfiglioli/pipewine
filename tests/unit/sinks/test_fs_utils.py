@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from typelime import (
+from pipewine import (
     CachedItem,
     CopyPolicy,
     Item,
@@ -16,7 +16,7 @@ from typelime import (
     StoredItem,
     write_item_to_file,
 )
-from typelime.parsers.base import Parser
+from pipewine.parsers.base import Parser
 
 
 def fail_on_purpose(*args, **kwargs) -> None:
