@@ -37,7 +37,8 @@ dynamic = ["version"]
 
 # Optional dependencies
 [project.optional-dependencies]
-dev = ["black", "flake8", "pytest", "pytest-cov", "build", "mypy"]
+dev = ["black", "flake8", "pytest", "pytest-cov", "build", "mypy", "hatch"]
+docs = ["mkdocs", "mkdocs-material"]
 
 [project.scripts]
 pipewine = "pipewine.cli.main:main"

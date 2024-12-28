@@ -1,0 +1,60 @@
+site_name: Pipewine
+site_url: https://github.com/lucabonfiglioli
+repo_name: lucabonfiglioli/pipewine
+repo_url: https://github.com/lucabonfiglioli/pipewine
+theme:
+  name: material
+  palette:
+    # Palette toggle for automatic mode
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/link
+        name: Switch to dark mode
+
+    # Palette toggle for automatic mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: pink
+      toggle:
+        icon: material/toggle-switch
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: pink
+      toggle:
+        icon: material/toggle-switch-off-outline
+        name: Switch to light mode
+
+  features:
+    - navigation.tabs
+    - content.code.copy
+
+extra_css:
+  - css/extra.css
+
+nav: 
+  - index.md
+  - 📖 Tutorial: 
+    - tutorial/installation.md
+    - tutorial/core.md
+    - tutorial/data.md
+    - tutorial/sources.md
+    - tutorial/sinks.md
+    - tutorial/operations.md
+    - tutorial/workflows.md
+    - tutorial/cli.md
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - admonition
+  - pymdownx.details

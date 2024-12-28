@@ -1,7 +1,5 @@
 [run]
 branch = True
-omit = 
-    pipewine/workflows/**
 concurrency = multiprocessing
 parallel = true
 sigterm = true
