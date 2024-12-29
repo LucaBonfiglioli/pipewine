@@ -19,4 +19,4 @@ class NumpyNpyParser(Parser[np.ndarray]):
 
     @classmethod
     def extensions(cls) -> Iterable[str]:
-        return [".npy"]
+        return ["npy"]

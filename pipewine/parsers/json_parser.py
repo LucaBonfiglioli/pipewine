@@ -22,4 +22,4 @@ class JSONParser[T: pyd.BaseModel](Parser[T]):
 
     @classmethod
     def extensions(cls) -> Iterable[str]:
-        return [".json"]
+        return ["json"]

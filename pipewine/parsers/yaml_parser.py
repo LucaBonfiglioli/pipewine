@@ -24,4 +24,4 @@ class YAMLParser[T: str | int | float | dict | list | pyd.BaseModel](Parser[T]):
 
     @classmethod
     def extensions(cls) -> Iterable[str]:
-        return [".yaml", ".yml"]
+        return ["yaml", "yml"]

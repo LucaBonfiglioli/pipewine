@@ -94,7 +94,7 @@ class UnderfolderSource[T: Sample](LazyDatasetSource[T]):
         maybe_root = self._root_items.get(k)
         if maybe_root is not None:
             return maybe_root
-        ext = v.suffix
+        ext = v.suffix[1:]
         parser_type = ParserRegistry.get(ext)
         if parser_type is None:
             warnings.warn(

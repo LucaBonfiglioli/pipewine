@@ -88,11 +88,11 @@ class TestUnderfolderSink:
             for k, v in sample.items():
                 ext = next(iter(v.parser.extensions()))
                 if v.is_shared:
-                    assert (folder / (k + ext)).is_file()
+                    assert (folder / (f"{k}.{ext}")).is_file()
                 else:
                     zfill = len(str(len(dataset) - 1))
                     fmt_idx = str(i).zfill(zfill)
-                    assert (data_folder / (fmt_idx + "_" + k + ext)).is_file()
+                    assert (data_folder / (f"{fmt_idx}_{k}.{ext}")).is_file()
 
     def test_input_type(self) -> None:
         sink = UnderfolderSink(Path("my_folder"))

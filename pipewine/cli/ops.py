@@ -16,6 +16,7 @@ from rich.table import Table
 from typer import Context, Option, Typer
 
 from pipewine._op_typing import origin_type
+from pipewine.parsers import ParserRegistry
 from pipewine.bundle import Bundle
 from pipewine.cli.sinks import SinkCLIRegistry
 from pipewine.cli.sources import SourceCLIRegistry
@@ -163,7 +164,7 @@ def _param_to_str(
 def _generate_op_command[
     **T, V: DatasetOperator
 ](fn: Callable[T, V], name: str | None = None) -> Callable[T, V]:
-    cmd_name = name or fn.__name__
+    cmd_name = name or fn.__name__.replace("_", "-")
     params = inspect.signature(fn).parameters
     fn_args_code: list[str] = []
     symbols: set[type] = set()
@@ -275,15 +276,37 @@ def op_cli[T](name: str | None = None) -> Callable[[T], T]:
 def _print_format_help_panel() -> None:
     console = Console()
     titles = ["Input Formats", "Output Formats"]
+    grid_expand = False
+    grid_padding = (0, 3)
+    key_style = "bold cyan"
+    title_align = "left"
+    panel_border_style = "dim"
     registries = [SourceCLIRegistry, SinkCLIRegistry]
     for title, registry in zip(titles, registries):
-        grid = Table.grid(expand=False, padding=(0, 3))
-        grid.add_column(style="bold cyan")
+        grid = Table.grid(expand=grid_expand, padding=grid_padding)
+        grid.add_column(style=key_style)
         grid.add_column()
         for name, fn in registry.registered.items():
             grid.add_row(name, fn.__doc__ or "")
-        panel = Panel(grid, title=title, title_align="left", border_style="dim")
+        panel = Panel(
+            grid, title=title, title_align=title_align, border_style=panel_border_style
+        )
         console.print(panel)
+    grid = Table.grid(expand=grid_expand, padding=grid_padding)
+    grid.add_column(style=key_style)
+    grid.add_column()
+    grid.add_column()
+    for k in ParserRegistry.keys():
+        ptype = ParserRegistry.get(k)
+        assert ptype is not None
+        grid.add_row(k, ptype.__module__, ptype.__name__)
+    panel = Panel(
+        grid,
+        title="Data Formats",
+        title_align=title_align,
+        border_style=panel_border_style,
+    )
+    console.print(panel)
 
 
 input_format_help = "The format of the input dataset/s."

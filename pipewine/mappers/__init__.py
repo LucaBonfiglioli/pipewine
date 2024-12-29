@@ -5,6 +5,7 @@ from pipewine.mappers.crypto import HashedSample, HashMapper
 from pipewine.mappers.key_transform import (
     DuplicateItemMapper,
     FilterKeysMapper,
-    KeyFormatMapper,
+    FormatKeysMapper,
     RenameMapper,
 )
+from pipewine.mappers.item_transform import ConvertMapper, ShareMapper

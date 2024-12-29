@@ -6,7 +6,7 @@ from pipewine.parsers import Parser
 from pipewine.sample import Sample
 
 
-class ChangeFormatMapper[T: Sample](Mapper[T, T]):
+class ConvertMapper[T: Sample](Mapper[T, T]):
     def __init__(self, parsers: Mapping[str, Parser]) -> None:
         super().__init__()
         self._parsers = parsers

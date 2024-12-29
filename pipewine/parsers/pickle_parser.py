@@ -13,4 +13,4 @@ class PickleParser[T](Parser[T]):
 
     @classmethod
     def extensions(cls) -> Iterable[str]:
-        return [".pkl"]
+        return ["pkl"]

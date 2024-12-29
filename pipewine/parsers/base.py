@@ -1,5 +1,5 @@
 from abc import ABC, ABCMeta, abstractmethod
-from collections.abc import Iterable
+from collections.abc import Iterable, KeysView
 from typing import Any
 
 
@@ -9,6 +9,10 @@ class ParserRegistry:
     @classmethod
     def get(cls, key: str) -> type["Parser"] | None:
         return cls._registered_parsers.get(key)
+
+    @classmethod
+    def keys(cls) -> KeysView[str]:
+        return cls._registered_parsers.keys()
 
 
 class _ParserMeta(ABCMeta):

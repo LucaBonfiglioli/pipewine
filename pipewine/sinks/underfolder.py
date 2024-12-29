@@ -62,7 +62,7 @@ class _WriterMapper[T: Sample](Mapper[T, T]):
 
     def __call__(self, idx: int, x: T) -> T:
         prefix = str(idx).zfill(self._zfill)
-        fname_fmt = "{prefix}_{key}{ext}"
+        fname_fmt = "{prefix}_{key}.{ext}"
         for k, item in x.items():
             if k in self._exclude:
                 continue
@@ -132,7 +132,7 @@ class UnderfolderSink(DatasetSink[Dataset]):
             if item.is_shared:
                 root_items.add(k)
                 ext = next(iter(item.parser.extensions()))
-                fpath = self._folder / f"{k}{ext}"
+                fpath = self._folder / f"{k}.{ext}"
                 if fpath.is_file():
                     if self._overwrite_policy != OverwritePolicy.OVERWRITE_FILES:
                         raise FileExistsError(

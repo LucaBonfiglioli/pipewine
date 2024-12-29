@@ -11,14 +11,14 @@ from pipewine.parsers.base import Parser
 
 class ImageParser(Parser[np.ndarray]):
     def parse(self, data: bytes) -> np.ndarray:
-        return np.array(iio.imread(data, extension=next(iter(self.extensions()))))
+        return np.array(iio.imread(data, extension="." + next(iter(self.extensions()))))
 
     def dump(self, data: np.ndarray) -> bytes:
         ext = next(iter(self.extensions()))
         return iio.imwrite(
             "<bytes>",
             data,
-            extension=ext,
+            extension="." + ext,
             **self._save_options(),
         )
 
@@ -29,13 +29,13 @@ class ImageParser(Parser[np.ndarray]):
 class BmpParser(ImageParser):
     @classmethod
     def extensions(cls) -> Iterable[str]:
-        return [".bmp"]
+        return ["bmp"]
 
 
 class PngParser(ImageParser):
     @classmethod
     def extensions(cls) -> Iterable[str]:
-        return [".png"]
+        return ["png"]
 
     def _save_options(self) -> Mapping[str, Any]:
         return {"compress_level": 4}
@@ -47,7 +47,7 @@ class JpegParser(ImageParser):
 
     @classmethod
     def extensions(cls) -> Iterable[str]:
-        return [".jpeg", ".jpg", ".jfif", ".jpe"]
+        return ["jpeg", "jpg", "jfif", "jpe"]
 
 
 class TiffParser(ImageParser):
@@ -56,7 +56,7 @@ class TiffParser(ImageParser):
 
     @classmethod
     def extensions(cls) -> Iterable[str]:
-        return [".tiff", ".tif"]
+        return ["tiff", "tif"]
 
     def parse(self, data: bytes) -> np.ndarray:
         return np.array(tifffile.imread(io.BytesIO(data)))
