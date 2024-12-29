@@ -31,7 +31,7 @@ class ShareMapper[T: Sample](Mapper[T, T]):
         to_modify: dict[str, Item] = {}
         for k, item in x.items():
             if not item.is_shared and k in self._share:
-                to_modify[k] = item.with_sharing(True)
+                to_modify[k] = item.with_sharedness(True)
             elif item.is_shared and k in self._unshare:
-                to_modify[k] = item.with_sharing(False)
+                to_modify[k] = item.with_sharedness(False)
         return x.with_items(**to_modify)

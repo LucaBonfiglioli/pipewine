@@ -2,7 +2,7 @@ from pipewine import *
 from pathlib import Path
 
 from examples.custom_mapper import SlowMapper
-from pipewine.cli.main import _run_cli_workflow
+from pipewine.cli.utils import run_cli_workflow
 
 
 def main():
@@ -28,7 +28,7 @@ def main_with_workflow():
     slice_ = wf.node(SliceOp(step=2))(repeat)
     slownode = wf.node(MapOp(SlowMapper()))(slice_)
     wf.node(UnderfolderSink(output_path, grabber=Grabber(num_workers=2)))(slownode)
-    _run_cli_workflow(wf)
+    run_cli_workflow(wf)
 
 
 if __name__ == "__main__":

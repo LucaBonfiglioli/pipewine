@@ -30,7 +30,7 @@ class Item[T: Any](ABC):
         return MemoryItem(self(), parser, shared=self.is_shared)
 
     @abstractmethod
-    def with_sharing(self, shared: bool) -> Self: ...
+    def with_sharedness(self, shared: bool) -> Self: ...
 
     def __call__(self) -> T:
         return self._get()
@@ -51,7 +51,7 @@ class MemoryItem[T: Any](Item[T]):
     def _is_shared(self) -> bool:
         return self._shared
 
-    def with_sharing(self, shared: bool) -> Self:
+    def with_sharedness(self, shared: bool) -> Self:
         return type(self)(self._data, self._parser, shared=shared)
 
 
@@ -72,7 +72,7 @@ class StoredItem[T: Any](Item[T]):
     def _is_shared(self) -> bool:
         return self._shared
 
-    def with_sharing(self, shared: bool) -> Self:
+    def with_sharedness(self, shared: bool) -> Self:
         return type(self)(self._storage, self._parser, shared=shared)
 
     @property
@@ -99,7 +99,7 @@ class CachedItem[T: Any](Item[T]):
             return self._source.is_shared
         return self._shared
 
-    def with_sharing(self, shared: bool) -> Self:
+    def with_sharedness(self, shared: bool) -> Self:
         return type(self)(self._source, shared=shared)
 
     @property
