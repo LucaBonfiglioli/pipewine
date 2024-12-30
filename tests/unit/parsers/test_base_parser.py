@@ -23,6 +23,7 @@ class TestParserRegistry:
 
         for x in exts:
             assert ParserRegistry.get(x) is MyParser
+            assert x in ParserRegistry.keys()
 
 
 class TestParser:
