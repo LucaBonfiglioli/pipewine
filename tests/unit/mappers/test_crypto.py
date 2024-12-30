@@ -1,22 +1,26 @@
+from typing import Any
+
 import pytest
-from pipewine import HashMapper, TypelessSample, MemoryItem, PickleParser, HashedSample
+
+from pipewine import HashedSample, HashMapper
 
 
 class TestHashMapper:
     @pytest.mark.parametrize(
-        "sample",
+        "data",
         [
-            TypelessSample(
-                a=MemoryItem("item_a", PickleParser()),
-                b=MemoryItem("item_b", PickleParser()),
-                c=MemoryItem("item_c", PickleParser()),
-                d=MemoryItem("item_d", PickleParser()),
-            ),
+            {
+                "a": "item_a",
+                "b": "item_b",
+                "c": "item_c",
+                "d": "item_d",
+            },
         ],
     )
     @pytest.mark.parametrize("keys", [[], "a", ["a"], ["b", "a", "d"], None])
-    def test_call(self, sample: TypelessSample, keys: list[str]) -> None:
+    def test_call(self, make_sample_fn, data: dict[str, Any], keys: list[str]) -> None:
         mapper = HashMapper(keys=keys)
+        sample = make_sample_fn(data)
         out = mapper(0, sample)
         assert isinstance(out, HashedSample)
         assert isinstance(out.hash(), str)
