@@ -10,6 +10,7 @@ from pipewine import (
     ReadStorage,
     JSONParser,
     MemoryItem,
+    PickleParser,
     Parser,
     StoredItem,
     YAMLParser,
@@ -41,6 +42,18 @@ class TestMemoryItem:
         assert new_item() == data
         assert new_item.parser == parser
         assert new_item.is_shared == shared
+
+    @pytest.mark.parametrize("parser", [JSONParser(), YAMLParser()])
+    def test_with_parser(self, parser: Parser) -> None:
+        item = MemoryItem(15, PickleParser())
+        new_item = item.with_parser(parser)
+        assert new_item.parser == parser
+
+    @pytest.mark.parametrize("sharedness", [True, False])
+    def test_with_sharedness(self, sharedness: bool) -> None:
+        item = MemoryItem(15, PickleParser())
+        new_item = item.with_sharedness(sharedness)
+        assert new_item.is_shared == sharedness
 
 
 class MockStorage(ReadStorage):
@@ -86,6 +99,12 @@ class TestStoredItem:
         item: StoredItem = StoredItem(MockStorage(b""), JSONParser(), shared=shared)
         assert item.is_shared == shared
 
+    @pytest.mark.parametrize("sharedness", [True, False])
+    def test_with_sharedness(self, sharedness: bool) -> None:
+        item = StoredItem(MockStorage(b""), JSONParser())
+        new_item = item.with_sharedness(sharedness)
+        assert new_item.is_shared == sharedness
+
 
 class MockItem(MemoryItem):
     def __init__(self, data: Any, parser: Parser, shared: bool = False) -> None:
@@ -114,10 +133,11 @@ class TestCachedItem:
         assert item.parser == parser
 
     @pytest.mark.parametrize("shared", [True, False])
-    def test_shared(self, shared: bool) -> None:
+    @pytest.mark.parametrize("cached_shared", [True, False, None])
+    def test_shared(self, shared: bool, cached_shared: bool | None) -> None:
         source_item = MockItem(10, JSONParser(), shared=shared)
-        item = CachedItem(source_item)
-        assert item.is_shared == shared
+        item = CachedItem(source_item, shared=cached_shared)
+        assert item.is_shared == (shared if (cached_shared is None) else cached_shared)
 
     @pytest.mark.parametrize("source_item", [MemoryItem(10, JSONParser())])
     def test_source(self, source_item: Item) -> None:
@@ -132,3 +152,9 @@ class TestCachedItem:
             item = CachedItem(item)
 
         assert item.source_recursive() == source_item
+
+    @pytest.mark.parametrize("sharedness", [True, False])
+    def test_with_sharedness(self, sharedness: bool) -> None:
+        item = CachedItem(MockItem(10, JSONParser()))
+        new_item = item.with_sharedness(sharedness)
+        assert new_item.is_shared == sharedness
