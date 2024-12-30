@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 from pydantic import BaseModel
 
-from pipewine import Item, TypedSample
+from pipewine import Item, TypedSample, Dataset, UnderfolderSource
 
 
 @pytest.fixture
@@ -21,8 +21,8 @@ class UnderfolderFixture:
 
 
 class Sample0Metadata(BaseModel):
-    username: str
-    email: str
+    letter: str
+    color: str
 
 
 class Sample0(TypedSample):
@@ -33,7 +33,7 @@ class Sample0(TypedSample):
 
 @pytest.fixture(
     params=[
-        ("underfolder_0", 3, Sample0),
+        ("underfolder_0", 26, Sample0),
     ]
 )
 def underfolder(request, sample_data: Path) -> UnderfolderFixture:
@@ -43,3 +43,8 @@ def underfolder(request, sample_data: Path) -> UnderfolderFixture:
         size=size,
         type_=type_,
     )
+
+
+@pytest.fixture()
+def dataset(underfolder: UnderfolderFixture) -> Dataset:
+    return UnderfolderSource(folder=underfolder.folder)()
