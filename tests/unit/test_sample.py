@@ -1,7 +1,9 @@
-from pipewine import Sample, TypedSample, TypelessSample, MemoryItem, JSONParser, Item
-import pytest
-from typing import Any
 from contextlib import nullcontext
+from typing import Any
+
+import pytest
+
+from pipewine import Item, JSONParser, MemoryItem, Sample, TypedSample, TypelessSample
 
 
 class TestSample:
@@ -26,6 +28,15 @@ class TestSample:
             if k not in items:
                 assert sample[k]() == v()
 
+    def _test_with_item(self, sample: Sample, key: str, item: Item) -> None:
+        old_sample = sample
+        sample = sample.with_item(key, item)
+        assert type(sample) is type(old_sample)
+        assert sample[key]() == item()
+        for k, v in old_sample.items():
+            if k != key:
+                assert sample[k]() == v()
+
     def _test_with_values(self, sample: Sample, values: dict[str, Any]) -> None:
         old_sample = sample
         old_keys = set(sample.keys())
@@ -41,6 +52,21 @@ class TestSample:
                 assert sample[k]() == v
             for k, v in old_sample.items():
                 if k not in values:
+                    assert sample[k]() == v()
+
+    def _test_with_value(self, sample: Sample, key: str, value: Any) -> None:
+        old_sample = sample
+        old_keys = set(sample.keys())
+        cm: Any = nullcontext()
+        if key not in old_keys:
+            cm = pytest.raises(Exception)
+        with cm:
+            old_type = type(sample)
+            sample = sample.with_value(key, value)
+            assert type(sample) is old_type
+            assert sample[key]() == value
+            for k, v in old_sample.items():
+                if k != key:
                     assert sample[k]() == v()
 
     def _test_without(self, sample: Sample, keys: list[str]) -> None:
@@ -177,9 +203,47 @@ class TestTypelessSample(TestSample):
             TypelessSample(),
         ],
     )
+    @pytest.mark.parametrize(
+        ["key", "item"],
+        [
+            ["a", MemoryItem(40, JSONParser())],
+            ["f", MemoryItem(303, JSONParser())],
+        ],
+    )
+    def test_with_item(self, sample: Sample, key: str, item: Item) -> None:
+        self._test_with_item(sample, key, item)
+
+    @pytest.mark.parametrize(
+        "sample",
+        [
+            TypelessSample(
+                a=MemoryItem(10, JSONParser()),
+                b=MemoryItem(20, JSONParser()),
+                c=MemoryItem(30, JSONParser()),
+                d=MemoryItem(40, JSONParser()),
+            ),
+            TypelessSample(),
+        ],
+    )
     @pytest.mark.parametrize("values", [{"a": 80, "f": 90}, {}, {"a": 90, "b": 40}])
     def test_with_values(self, sample: Sample, values: dict[str, Any]) -> None:
         self._test_with_values(sample, values)
+
+    @pytest.mark.parametrize(
+        "sample",
+        [
+            TypelessSample(
+                a=MemoryItem(10, JSONParser()),
+                b=MemoryItem(20, JSONParser()),
+                c=MemoryItem(30, JSONParser()),
+                d=MemoryItem(40, JSONParser()),
+            ),
+            TypelessSample(),
+        ],
+    )
+    @pytest.mark.parametrize(["key", "value"], [["a", 80], ["f", 90]])
+    def test_with_value(self, sample: Sample, key: str, value: Any) -> None:
+        self._test_with_value(sample, key, value)
 
     @pytest.mark.parametrize(
         "sample",
@@ -337,3 +401,20 @@ class TestTypedSample(TestSample):
     )
     def test_with_items(self, sample: Sample, items: dict[str, Item]) -> None:
         self._test_with_items(sample, items)
+
+    @pytest.mark.parametrize(
+        "sample",
+        [
+            MyTypedSample(
+                a=MemoryItem(10, JSONParser()),
+                b=MemoryItem(20, JSONParser()),
+                c=MemoryItem(30, JSONParser()),
+                d=MemoryItem(40, JSONParser()),
+            ),
+        ],
+    )
+    def test_typeless(self, sample: Sample) -> None:
+        tl = sample.typeless()
+        assert isinstance(tl, TypelessSample)
+        for k in sample.keys():
+            assert sample.get(k) == tl.get(k)
