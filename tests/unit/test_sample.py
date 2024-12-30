@@ -26,21 +26,21 @@ class TestSample:
             if k not in items:
                 assert sample[k]() == v()
 
-    def _test_with_data(self, sample: Sample, data: dict[str, Any]) -> None:
+    def _test_with_values(self, sample: Sample, values: dict[str, Any]) -> None:
         old_sample = sample
         old_keys = set(sample.keys())
-        new_keys = set(data.keys())
+        new_keys = set(values.keys())
         cm: Any = nullcontext()
         if not new_keys.issubset(old_keys):
             cm = pytest.raises(Exception)
         with cm:
             old_type = type(sample)
-            sample = sample.with_data(**data)
+            sample = sample.with_values(**values)
             assert type(sample) is old_type
-            for k, v in data.items():
+            for k, v in values.items():
                 assert sample[k]() == v
             for k, v in old_sample.items():
-                if k not in data:
+                if k not in values:
                     assert sample[k]() == v()
 
     def _test_without(self, sample: Sample, keys: list[str]) -> None:
@@ -177,9 +177,9 @@ class TestTypelessSample(TestSample):
             TypelessSample(),
         ],
     )
-    @pytest.mark.parametrize("data", [{"a": 80, "f": 90}, {}, {"a": 90, "b": 40}])
-    def test_with_data(self, sample: Sample, data: dict[str, Any]) -> None:
-        self._test_with_data(sample, data)
+    @pytest.mark.parametrize("values", [{"a": 80, "f": 90}, {}, {"a": 90, "b": 40}])
+    def test_with_values(self, sample: Sample, values: dict[str, Any]) -> None:
+        self._test_with_values(sample, values)
 
     @pytest.mark.parametrize(
         "sample",

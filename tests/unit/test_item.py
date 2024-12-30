@@ -19,9 +19,9 @@ from pipewine import (
 
 class TestMemoryItem:
     def test_get(self) -> None:
-        data = 15
-        item = MemoryItem(data, JSONParser(), shared=False)
-        assert item() == data
+        value = 15
+        item = MemoryItem(value, JSONParser(), shared=False)
+        assert item() == value
 
     def test_get_parser(self) -> None:
         parser: JSONParser = JSONParser()
@@ -33,13 +33,13 @@ class TestMemoryItem:
         item = MemoryItem(15, JSONParser(), shared=shared)
         assert item.is_shared == shared
 
-    @pytest.mark.parametrize("data", [50, "hello", 8.5])
+    @pytest.mark.parametrize("value", [50, "hello", 8.5])
     @pytest.mark.parametrize("parser", [JSONParser(), YAMLParser()])
     @pytest.mark.parametrize("shared", [True, False])
-    def test_with_data(self, data: Any, parser: Parser, shared: bool) -> None:
+    def test_with_value(self, value: Any, parser: Parser, shared: bool) -> None:
         item = MemoryItem(10, parser, shared=shared)
-        new_item = item.with_data(data)
-        assert new_item() == data
+        new_item = item.with_value(value)
+        assert new_item() == value
         assert new_item.parser == parser
         assert new_item.is_shared == shared
 
@@ -70,21 +70,21 @@ class MockStorage(ReadStorage):
 class TestStoredItem:
     def test_get(self) -> None:
         parser: JSONParser = JSONParser()
-        data = {"a": 10, "b": "hello", "c": [10, 20, 30]}
-        storage = MockStorage(parser.dump(data))
+        value = {"a": 10, "b": "hello", "c": [10, 20, 30]}
+        storage = MockStorage(parser.dump(value))
         item = StoredItem(storage, parser, shared=False)
         assert storage.read_called == 0
-        assert item() == data
+        assert item() == value
         assert storage.read_called == 1
-        assert item() == data
+        assert item() == value
         assert storage.read_called == 2
-        assert item() == data
+        assert item() == value
         assert storage.read_called == 3
 
     def test_storage(self) -> None:
         parser: JSONParser = JSONParser()
-        data = {"a": 10, "b": "hello", "c": [10, 20, 30]}
-        storage = MockStorage(parser.dump(data))
+        value = {"a": 10, "b": "hello", "c": [10, 20, 30]}
+        storage = MockStorage(parser.dump(value))
         item = StoredItem(storage, parser, shared=False)
         assert isinstance(item.storage, MockStorage)
         assert item.storage is storage
@@ -107,8 +107,8 @@ class TestStoredItem:
 
 
 class MockItem(MemoryItem):
-    def __init__(self, data: Any, parser: Parser, shared: bool = False) -> None:
-        super().__init__(data, parser, shared)
+    def __init__(self, value: Any, parser: Parser, shared: bool = False) -> None:
+        super().__init__(value, parser, shared)
         self.get_called = 0
 
     def _get(self) -> Any:

@@ -28,13 +28,13 @@ class TestHashMapper:
             sample2 = sample
             for k in sample2:
                 if k not in keys:
-                    sample2 = sample2.with_data(**{k: sample2[k]() + "different"})
+                    sample2 = sample2.with_values(**{k: sample2[k]() + "different"})
             out2 = mapper(0, sample2)
             assert out2.hash() == out.hash()
 
         for k in sample:
             if keys is None or k in keys:
-                sample2 = sample.with_data(**{k: sample[k]() + "different"})
+                sample2 = sample.with_values(**{k: sample[k]() + "different"})
                 out2 = mapper(0, sample2)
                 assert out2.hash() != out.hash()
 

@@ -23,8 +23,8 @@ class Item[T: Any](ABC):
     def is_shared(self) -> bool:
         return self._is_shared()
 
-    def with_data(self, data: T) -> "MemoryItem[T]":
-        return MemoryItem(data, self._get_parser(), shared=self.is_shared)
+    def with_value(self, value: T) -> "MemoryItem[T]":
+        return MemoryItem(value, self._get_parser(), shared=self.is_shared)
 
     def with_parser(self, parser: Parser[T]) -> "MemoryItem[T]":
         return MemoryItem(self(), parser, shared=self.is_shared)
@@ -37,13 +37,13 @@ class Item[T: Any](ABC):
 
 
 class MemoryItem[T: Any](Item[T]):
-    def __init__(self, data: T, parser: Parser[T], shared: bool = False) -> None:
-        self._data = data
+    def __init__(self, value: T, parser: Parser[T], shared: bool = False) -> None:
+        self._value = value
         self._parser = parser
         self._shared = shared
 
     def _get(self) -> T:
-        return self._data
+        return self._value
 
     def _get_parser(self) -> Parser[T]:
         return self._parser
@@ -52,7 +52,7 @@ class MemoryItem[T: Any](Item[T]):
         return self._shared
 
     def with_sharedness(self, shared: bool) -> Self:
-        return type(self)(self._data, self._parser, shared=shared)
+        return type(self)(self._value, self._parser, shared=shared)
 
 
 class StoredItem[T: Any](Item[T]):

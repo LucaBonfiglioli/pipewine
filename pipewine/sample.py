@@ -28,17 +28,20 @@ class Sample(ABC, Mapping[str, Item]):
     def with_item(self, key: str, item: Item) -> Self:
         return self.with_items(**{key: item})
 
-    def with_data(self, **data: t.Any) -> Self:
-        dict_data = {k: self._get_item(k).with_data(v) for k, v in data.items()}
-        return self.with_items(**dict_data)
+    def with_values(self, **values: t.Any) -> Self:
+        dict_values = {k: self._get_item(k).with_value(v) for k, v in values.items()}
+        return self.with_items(**dict_values)
+
+    def with_value(self, key: str, value: t.Any) -> Self:
+        return self.with_values(**{key: value})
 
     def without(self, *keys: str) -> "TypelessSample":
-        data = {k: self._get_item(k) for k in self.keys() if k not in keys}
-        return TypelessSample(**data)
+        items = {k: self._get_item(k) for k in self.keys() if k not in keys}
+        return TypelessSample(**items)
 
     def with_only(self, *keys: str) -> "TypelessSample":
-        data = {k: self._get_item(k) for k in self.keys() if k in keys}
-        return TypelessSample(**data)
+        items = {k: self._get_item(k) for k in self.keys() if k in keys}
+        return TypelessSample(**items)
 
     def typeless(self) -> "TypelessSample":
         return TypelessSample(**self)
@@ -47,13 +50,13 @@ class Sample(ABC, Mapping[str, Item]):
         self, fromto: t.Mapping[str, str], exclude: bool = False
     ) -> "TypelessSample":
         if exclude:
-            data = {k: self._get_item(k) for k in self.keys() if k in fromto}
+            items = {k: self._get_item(k) for k in self.keys() if k in fromto}
         else:
-            data = {k: self._get_item(k) for k in self.keys()}
+            items = {k: self._get_item(k) for k in self.keys()}
         for k_from, k_to in fromto.items():
-            if k_from in data:
-                data[k_to] = data.pop(k_from)
-        return TypelessSample(**data)
+            if k_from in items:
+                items[k_to] = items.pop(k_from)
+        return TypelessSample(**items)
 
     def __getitem__(self, key: str) -> Item:
         return self._get_item(key)
@@ -66,20 +69,20 @@ class Sample(ABC, Mapping[str, Item]):
 
 
 class TypelessSample(Sample):
-    def __init__(self, **data: Item) -> None:
-        self._data = data
+    def __init__(self, **items: Item) -> None:
+        self._items = items
 
     def _get_item(self, key: str) -> Item:
-        return self._data[key]
+        return self._items[key]
 
     def _size(self) -> int:
-        return len(self._data)
+        return len(self._items)
 
     def keys(self) -> KeysView[str]:
-        return self._data.keys()
+        return self._items.keys()
 
     def with_items(self, **items: Item) -> Self:
-        return self.__class__(**{**self._data, **items})
+        return self.__class__(**{**self._items, **items})
 
 
 class TypedSample(Bundle[Item], Sample):
