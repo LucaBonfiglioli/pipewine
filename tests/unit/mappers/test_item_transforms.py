@@ -1,16 +1,17 @@
 from typing import Any
 
+import pytest
+
 from pipewine import (
     ConvertMapper,
-    Parser,
-    ShareMapper,
-    Sample,
     MemoryItem,
+    Parser,
     PickleParser,
-    YAMLParser,
+    Sample,
+    ShareMapper,
     TypelessSample,
+    YAMLParser,
 )
-import pytest
 
 
 class TestConvertMapper:
