@@ -27,7 +27,6 @@ classifiers = [
 dependencies = [
     "numpy",
     "PyYAML",
-    "pydantic",
     "typing_extensions",
     "imageio",
     "tifffile",
@@ -35,9 +34,17 @@ dependencies = [
 ]
 dynamic = ["version"]
 
-# Optional dependencies
 [project.optional-dependencies]
-dev = ["black", "flake8", "pytest", "pytest-cov", "build", "mypy", "hatch"]
+dev = [
+    "black",
+    "flake8",
+    "pytest",
+    "pytest-cov",
+    "build",
+    "mypy",
+    "hatch",
+    "pydantic",
+]
 docs = ["mkdocs", "mkdocs-material"]
 
 [project.scripts]
