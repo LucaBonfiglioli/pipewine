@@ -70,6 +70,7 @@ class Sample(ABC, Mapping[str, Item]):
 
 class TypelessSample(Sample):
     def __init__(self, **items: Item) -> None:
+        super().__init__()
         self._items = items
 
     def _get_item(self, key: str) -> Item:

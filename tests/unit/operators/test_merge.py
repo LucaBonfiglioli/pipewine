@@ -9,6 +9,7 @@ from pipewine import (
     Dataset,
     RenameMapper,
     MapOp,
+    Sample,
 )
 import pytest
 
@@ -50,7 +51,7 @@ class TestZipOp:
     @pytest.mark.parametrize("dataset", [RangeDataset(10, 20)])
     def test_call(self, dataset: Dataset[NumberSample]) -> None:
         dataset_b = MapOp(RenameMapper({"number": "other"}))(dataset)
-        op = ZipOp()
+        op: ZipOp[Sample] = ZipOp()
         out = op((dataset, dataset_b))
         for x in out:
             assert x["number"]() == x["other"]()

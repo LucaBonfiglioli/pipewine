@@ -101,7 +101,7 @@ class TestStoredItem:
 
     @pytest.mark.parametrize("sharedness", [True, False])
     def test_with_sharedness(self, sharedness: bool) -> None:
-        item = StoredItem(MockStorage(b""), JSONParser())
+        item: StoredItem[dict] = StoredItem(MockStorage(b""), JSONParser())
         new_item = item.with_sharedness(sharedness)
         assert new_item.is_shared == sharedness
 

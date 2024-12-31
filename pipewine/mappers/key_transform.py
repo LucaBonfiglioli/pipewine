@@ -44,6 +44,7 @@ class FormatKeysMapper(Mapper[Sample, TypelessSample]):
         self._keys = keys
 
     def __call__(self, idx: int, x: Sample) -> TypelessSample:
+        keys: Iterable[str]
         if self._keys is None:
             keys = x.keys()
         elif isinstance(self._keys, str):

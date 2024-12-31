@@ -193,10 +193,10 @@ class AsapLayout(Layout):
         i = 0
         margin = 32
         fontsize = 16
-        current_x = 0
+        current_x = 0.0
         for layer in self._asap_sort(wf):
-            current_y = 0
-            maxw = 0
+            current_y = 0.0
+            maxw = 0.0
             for node in layer:
                 node_to_idx[node] = i
                 inputs: set[str] = set()
@@ -395,10 +395,12 @@ if __name__ == "__main__":
     from pipewine.operators import *
     from pipewine.sinks import *
     from pipewine.sources import *
+    from pipewine.dataset import Dataset
+    from pipewine.sample import TypelessSample
 
     wf = Workflow()
-    data1 = wf.node(UnderfolderSource(folder=Path("i1")))()
-    data2 = wf.node(UnderfolderSource(folder=Path("i2")))()
+    data1: Dataset[TypelessSample] = wf.node(UnderfolderSource(folder=Path("i1")))()
+    data2: Dataset[TypelessSample] = wf.node(UnderfolderSource(folder=Path("i2")))()
     repeat = wf.node(RepeatOp(1000))(data1)
     slice_ = wf.node(SliceOp(step=2))(repeat)
     wf.node(UnderfolderSink(Path("o1")))(slice_)

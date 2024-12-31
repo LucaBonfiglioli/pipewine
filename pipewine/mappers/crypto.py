@@ -1,6 +1,6 @@
 import hashlib
 import pickle
-from collections.abc import Sequence
+from collections.abc import Sequence, Iterable
 from typing import Any
 
 from pipewine.item import Item, MemoryItem
@@ -37,6 +37,7 @@ class HashMapper(Mapper[Sample, HashedSample]):
         return hashlib.new(self._algorithm, pickle.dumps(data)).hexdigest()
 
     def _compute_sample_hash(self, sample: Sample) -> str:
+        keys: Iterable[str]
         if isinstance(self._keys, str):
             keys = [self._keys]
         elif isinstance(self._keys, Sequence):

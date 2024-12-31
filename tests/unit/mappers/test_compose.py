@@ -58,18 +58,18 @@ class TestComposeMapper:
         ],
     )
     def test_call(self, sample: MySample1) -> None:
-        mapper = ComposeMapper(Mapper1_2())
-        sample2 = mapper(0, sample)
+        mapper12 = ComposeMapper((Mapper1_2(),))
+        sample2 = mapper12(0, sample)
         assert isinstance(sample2, MySample2)
         assert sample2.a() == sample.a()
         assert (sample2.b() == sample.c()).all()
 
-        mapper = ComposeMapper((Mapper1_2(), Mapper2_3()))
-        sample3 = mapper(0, sample)
+        mapper23 = ComposeMapper((Mapper1_2(), Mapper2_3()))
+        sample3 = mapper23(0, sample)
         assert isinstance(sample3, MySample3)
         assert sample3.a() == str(sample.a())
 
-        mapper = ComposeMapper((Mapper1_2(), Mapper2_3(), Mapper3_4()))
-        sample4 = mapper(0, sample)
+        mapper34 = ComposeMapper((Mapper1_2(), Mapper2_3(), Mapper3_4()))
+        sample4 = mapper34(0, sample)
         assert isinstance(sample4, MySample4)
         assert sample4.b()["value"] == str(sample.a())

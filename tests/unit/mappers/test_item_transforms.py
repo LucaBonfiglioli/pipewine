@@ -28,18 +28,18 @@ class TestConvertMapper:
     @pytest.mark.parametrize(
         ["parsers", "exp_type"],
         [
-            [{}, {"a": PickleParser, "b": PickleParser, "c": YAMLParser}],
+            [{}, {"a": "PickleParser", "b": "PickleParser", "c": "YAMLParser"}],
             [
                 {"a": PickleParser()},
-                {"a": PickleParser, "b": PickleParser, "c": YAMLParser},
+                {"a": "PickleParser", "b": "PickleParser", "c": "YAMLParser"},
             ],
             [
                 {"b": YAMLParser()},
-                {"a": PickleParser, "b": YAMLParser, "c": YAMLParser},
+                {"a": "PickleParser", "b": "YAMLParser", "c": "YAMLParser"},
             ],
             [
                 {"a": YAMLParser(), "d": PickleParser()},
-                {"a": YAMLParser, "b": PickleParser, "c": YAMLParser},
+                {"a": "YAMLParser", "b": "PickleParser", "c": "YAMLParser"},
             ],
         ],
     )
@@ -54,7 +54,7 @@ class TestConvertMapper:
         assert set(re_sample.keys()) == set(exp_type.keys())
         for k in re_sample:
             assert sample[k]() == re_sample[k]()
-            assert type(re_sample[k].parser) is exp_type[k]
+            assert type(re_sample[k].parser).__name__ is exp_type[k]
 
 
 class TestShareMapper:
@@ -86,7 +86,7 @@ class TestShareMapper:
         unshare: list[str],
         exp_shared: set[str],
     ) -> None:
-        mapper = ShareMapper(share, unshare)
+        mapper: ShareMapper[Sample] = ShareMapper(share, unshare)
         re_sample = mapper(0, sample)
         assert set(sample.keys()) == set(re_sample.keys())
         for k in sample:

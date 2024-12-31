@@ -78,21 +78,21 @@ class NaiveWorkflowExecutor(WorkflowExecutor):
                 edge = next(iter(edges))
                 input_ = state[edge.src]
             elif all_int:
-                inputs = [None] * len(edges)
+                inputs_list = [None] * len(edges)
                 for edge in edges:
-                    inputs[cast(int, edge.src.socket)] = state[edge.src]  # type: ignore
+                    inputs_list[cast(int, edge.src.socket)] = state[edge.src]  # type: ignore
                 if issubclass(action.input_type, tuple):
-                    input_ = tuple(inputs)  # type: ignore
+                    input_ = tuple(inputs_list)  # type: ignore
                 else:
-                    input_ = list(inputs)  # type: ignore
+                    input_ = list(inputs_list)  # type: ignore
             else:
-                inputs = {}
+                inputs_dict = {}
                 for edge in edges:
-                    inputs[cast(str, edge.src.socket)] = state[edge.src]
+                    inputs_dict[cast(str, edge.src.socket)] = state[edge.src]
                 if issubclass(action.input_type, Bundle):
-                    input_ = action.input_type(**inputs)
+                    input_ = action.input_type(**inputs_dict)
                 else:
-                    input_ = inputs
+                    input_ = inputs_dict
 
             output = action(input_)
 

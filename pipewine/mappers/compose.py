@@ -1,9 +1,12 @@
-from typing import Any, TypeVarTuple, cast
+from typing import TypeVar, TypeVarTuple, cast
 
 from pipewine.mappers.base import Mapper
 from pipewine.sample import Sample
 
 Ts = TypeVarTuple("Ts")
+
+A = TypeVar("A", bound=Sample)
+B = TypeVar("B", bound=Sample)
 
 
 class ComposeMapper[T_IN: Sample, T_OUT: Sample](Mapper[T_IN, T_OUT]):
@@ -12,8 +15,7 @@ class ComposeMapper[T_IN: Sample, T_OUT: Sample](Mapper[T_IN, T_OUT]):
         mappers: (
             Mapper[T_IN, T_OUT]
             | tuple[Mapper[T_IN, T_OUT]]
-            | tuple[Mapper[T_IN, Any], Mapper[Any, T_OUT]]
-            | tuple[Mapper[T_IN, Any], *Ts, Mapper[Any, T_OUT]]
+            | tuple[Mapper[T_IN, A], *Ts, Mapper[B, T_OUT]]
         ),
     ) -> None:
         super().__init__()
@@ -26,5 +28,5 @@ class ComposeMapper[T_IN: Sample, T_OUT: Sample](Mapper[T_IN, T_OUT]):
     def __call__(self, idx: int, x: T_IN) -> T_OUT:
         temp = x
         for mapper in self._mappers:
-            temp = mapper(idx, temp)  # type: ignore
+            temp = cast(Mapper, mapper)(idx, temp)
         return cast(T_OUT, temp)

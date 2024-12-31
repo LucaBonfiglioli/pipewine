@@ -57,9 +57,9 @@ class Proxy:
 
 
 @dataclass(unsafe_hash=False, eq=False)
-class Node[**T, V]:
+class Node[T: AnyAction]:
     name: str
-    action: Callable[T, V] = field(hash=False, compare=False)
+    action: T = field(hash=False, compare=False)
 
     def __hash__(self) -> int:
         return hash(self.name)
@@ -107,9 +107,7 @@ class Workflow:
 
         return self._outbound_edges[node]
 
-    def node[
-        **T, V
-    ](self, action: Callable[T, V], name: str | None = None) -> Callable[T, V]:
+    def node[T: AnyAction](self, action: T, name: str | None = None) -> T:
         name = name or self._gen_node_name(cast(AnyAction, action))
         node = Node(name=name, action=action)
         self._nodes.add(node)
@@ -131,8 +129,10 @@ class Workflow:
                 return_val = _DefaultDict(lambda k: Proxy(node, k))
             elif issubclass(return_t, Bundle):
                 return_val = DefaultBundle(lambda k: Proxy(node, k))
+            else:
+                raise ValueError(f"Unknown type '{return_t}'")
 
-        def connect(*args: T.args, **kwargs: T.kwargs) -> V:
+        def connect(*args, **kwargs):
             everything = list(args) + list(kwargs.values())
             edges: list[Edge] = []
             for arg in everything:
@@ -151,6 +151,6 @@ class Workflow:
                 self._inbound_edges[edge.dst.node].add(edge)
                 self._outbound_edges[edge.src.node].add(edge)
 
-            return return_val  # type: ignore
+            return return_val
 
-        return connect
+        return connect  # type: ignore

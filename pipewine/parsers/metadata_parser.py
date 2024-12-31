@@ -38,7 +38,7 @@ class YAMLParser[T: str | int | float | dict | list | PydanticLike](Parser[T]):
         if self._type is None:
             return yaml_data
         elif issubclass(self._type, (str, int, float, dict, list)):
-            return self._type(yaml_data)
+            return self._type(yaml_data)  # type: ignore
         else:
             return self._type.model_validate(yaml_data)
 

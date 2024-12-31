@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Any
+from typing import Any, overload
 
 import pytest
 
@@ -11,7 +11,13 @@ class RaisingSequence(Sequence[int]):
         super().__init__()
         self._exception = exception
 
-    def __getitem__(self, x: int | slice) -> Sequence[int] | int:  # type: ignore
+    @overload
+    def __getitem__(self, x: int, /) -> int: ...
+
+    @overload
+    def __getitem__(self, x: slice, /) -> Sequence[int]: ...
+
+    def __getitem__(self, x: int | slice, /) -> int | Sequence[int]:  # type: ignore
         if x == 3:
             raise self._exception
         return 4

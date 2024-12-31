@@ -279,17 +279,15 @@ def _print_format_help_panel() -> None:
     grid_expand = False
     grid_padding = (0, 3)
     key_style = "bold cyan"
-    title_align = "left"
     panel_border_style = "dim"
-    registries = [SourceCLIRegistry, SinkCLIRegistry]
-    for title, registry in zip(titles, registries):
+    for title, registry in zip(titles, (SourceCLIRegistry, SinkCLIRegistry)):
         grid = Table.grid(expand=grid_expand, padding=grid_padding)
         grid.add_column(style=key_style)
         grid.add_column()
-        for name, fn in registry.registered.items():
+        for name, fn in registry.registered.items():  # type: ignore
             grid.add_row(name, fn.__doc__ or "")
         panel = Panel(
-            grid, title=title, title_align=title_align, border_style=panel_border_style
+            grid, title=title, title_align="left", border_style=panel_border_style
         )
         console.print(panel)
     grid = Table.grid(expand=grid_expand, padding=grid_padding)
@@ -303,7 +301,7 @@ def _print_format_help_panel() -> None:
     panel = Panel(
         grid,
         title="Data Formats",
-        title_align=title_align,
+        title_align="left",
         border_style=panel_border_style,
     )
     console.print(panel)

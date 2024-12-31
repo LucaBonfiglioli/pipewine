@@ -97,10 +97,10 @@ class CursesTracker(Tracker):
     ) -> list[tuple[int, Task | TaskGroup]]:
         next = depth + 1
         result: list[tuple[int, Task | TaskGroup]] = [(depth, group)]
-        for x in group.groups.values():
-            result.extend(self._preorder(x, depth=next))
-        for x in group.tasks.values():
-            result.append((next, x))
+        for tg in group.groups.values():
+            result.extend(self._preorder(tg, depth=next))
+        for task in group.tasks.values():
+            result.append((next, task))
         return result
 
     def _curses(self, stdscr: window) -> None:
@@ -138,29 +138,29 @@ class CursesTracker(Tracker):
             BAR_W = (PROG_W - 10) // 2
             title_pad = curses.newpad(TITLE_H, TITLE_W)
             prog_pad = curses.newpad(PROG_H, PROG_W)
-            for i, (depth, task) in enumerate(list_of_tasks):
+            for i, (depth, entry) in enumerate(list_of_tasks):
                 space = TITLE_W - 2 * depth - 1
-                text = task.name
+                text = entry.name
                 if len(text) > space:
                     start = (global_step // 2) % (len(text) - space)
                     text = text[start : start + space]
                 title_pad.addstr(i, 2 * depth, text)
-                if isinstance(task, Task):
+                if isinstance(entry, Task):
                     bars: list[list[int]]
                     j = 0
                     if BAR_W > 0:
-                        if len(task.units) < BAR_W:
+                        if len(entry.units) < BAR_W:
                             bars = []
-                            div = BAR_W // len(task.units)
-                            rem = BAR_W % len(task.units)
-                            for ui, unit in enumerate(task.units):
+                            div = BAR_W // len(entry.units)
+                            rem = BAR_W % len(entry.units)
+                            for ui, unit in enumerate(entry.units):
                                 bars.append([div + int(ui < rem), int(unit), 1])
-                        elif len(task.units) == BAR_W:
-                            bars = [[1, int(x), 1] for x in task.units]
+                        elif len(entry.units) == BAR_W:
+                            bars = [[1, int(x), 1] for x in entry.units]
                         else:
                             bars = [[1, 0, 0] for _ in range(BAR_W)]
-                            for ui, unit in enumerate(task.units):
-                                bar = bars[int(ui / len(task.units) * len(bars))]
+                            for ui, unit in enumerate(entry.units):
+                                bar = bars[int(ui / len(entry.units) * len(bars))]
                                 bar[1] += int(unit)
                                 bar[2] += 1
                         bar_elem = "██"
@@ -168,7 +168,7 @@ class CursesTracker(Tracker):
                             c = 1 + int((comp / total) * (C - 1))
                             prog_pad.addstr(i, j, bar_elem * size, curses.color_pair(c))
                             j += size * len(bar_elem)
-                    perc = sum(task.units) / len(task.units)
+                    perc = sum(entry.units) / len(entry.units)
                     perc = round(perc * 100, 2)
                     text = f"{perc}%"
                     if len(text) + 2 < PROG_W:
