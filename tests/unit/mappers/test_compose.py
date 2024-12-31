@@ -64,6 +64,12 @@ class TestComposeMapper:
         assert sample2.a() == sample.a()
         assert (sample2.b() == sample.c()).all()
 
+        mapper12 = ComposeMapper(Mapper1_2())
+        sample2 = mapper12(0, sample)
+        assert isinstance(sample2, MySample2)
+        assert sample2.a() == sample.a()
+        assert (sample2.b() == sample.c()).all()
+
         mapper23 = ComposeMapper((Mapper1_2(), Mapper2_3()))
         sample3 = mapper23(0, sample)
         assert isinstance(sample3, MySample3)
