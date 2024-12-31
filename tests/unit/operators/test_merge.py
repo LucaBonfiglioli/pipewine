@@ -7,6 +7,8 @@ from pipewine import (
     TypedSample,
     Item,
     Dataset,
+    RenameMapper,
+    MapOp,
 )
 import pytest
 
@@ -45,10 +47,10 @@ class TestCatOp:
 
 
 class TestZipOp:
-    def test_call(self, dataset: Dataset) -> None:
-        dataset_b = RangeDataset(40, 66)
+    @pytest.mark.parametrize("dataset", [RangeDataset(10, 20)])
+    def test_call(self, dataset: Dataset[NumberSample]) -> None:
+        dataset_b = MapOp(RenameMapper({"number": "other"}))(dataset)
         op = ZipOp()
         out = op((dataset, dataset_b))
         for x in out:
-            x["metadata"]()
-            x["number"]()
+            assert x["number"]() == x["other"]()

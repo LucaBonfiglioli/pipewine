@@ -20,20 +20,20 @@ class UnderfolderFixture:
     type_: type
 
 
-class Sample0Metadata(BaseModel):
+class LetterMetadata(BaseModel):
     letter: str
     color: str
 
 
-class Sample0(TypedSample):
+class LetterSample(TypedSample):
     image: Item[np.ndarray]
-    metadata: Item[Sample0Metadata]
+    metadata: Item[LetterMetadata]
     shared: Item
 
 
 @pytest.fixture(
     params=[
-        ("underfolder_0", 26, Sample0),
+        ("underfolder_0", 26, LetterSample),
     ]
 )
 def underfolder(request, sample_data: Path) -> UnderfolderFixture:
@@ -48,3 +48,10 @@ def underfolder(request, sample_data: Path) -> UnderfolderFixture:
 @pytest.fixture()
 def dataset(underfolder: UnderfolderFixture) -> Dataset:
     return UnderfolderSource(folder=underfolder.folder)()
+
+
+@pytest.fixture()
+def letter_dataset(sample_data: Path) -> Dataset[LetterSample]:
+    return UnderfolderSource(
+        sample_data / "underfolders" / "underfolder_0", sample_type=LetterSample
+    )()
