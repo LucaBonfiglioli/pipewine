@@ -2,7 +2,7 @@ import inspect
 import random
 import sys
 from collections import deque
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Sequence, Mapping
 from dataclasses import dataclass
 from enum import Enum
 from functools import partial
@@ -223,9 +223,9 @@ def _generate_op_command[
             else:
                 added_args_code.append(make_option(io, len(hint.__args__)))
             pass
-        elif issubclass(orig, list):
+        elif issubclass(orig, Sequence):
             added_args_code.append(make_option(io, "list"))
-        elif issubclass(orig, dict):
+        elif issubclass(orig, Mapping):
             added_args_code.append(make_option(io, "dict"))
         elif issubclass(orig, Bundle):
             for k in orig.__annotations__:

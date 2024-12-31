@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from functools import partial
 from typing import cast
 
@@ -103,7 +103,7 @@ class NaiveWorkflowExecutor(WorkflowExecutor):
         elif isinstance(output, Sequence):
             for i, dataset in enumerate(output):
                 state[Proxy(node, i)] = dataset
-        elif isinstance(output, dict):
+        elif isinstance(output, Mapping):
             for k, v in output.items():
                 state[Proxy(node, k)] = v
         elif isinstance(output, Bundle):
