@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Any, overload
+from typing import overload
 
 import pytest
 
@@ -31,7 +31,7 @@ class TestGrabber:
     @pytest.mark.parametrize("workers", [0, 2, 4, 8])
     @pytest.mark.parametrize("prefetch", [1, 5])
     @pytest.mark.parametrize("keep_order", [True, False])
-    def test_grab_all(
+    def test_call(
         self, sequence: Sequence, workers: int, prefetch: int, keep_order: bool
     ) -> None:
         grabber: Grabber = Grabber(
@@ -40,3 +40,17 @@ class TestGrabber:
         with grabber(sequence) as ctx:
             for _ in ctx:
                 pass
+
+    @pytest.mark.parametrize("workers", [0, 2, 4, 8])
+    @pytest.mark.parametrize("prefetch", [1, 5])
+    @pytest.mark.parametrize("keep_order", [True, False])
+    @pytest.mark.parametrize("exc", [RuntimeError(), ValueError()])
+    def test_call_raises(
+        self, workers: int, prefetch: int, keep_order: bool, exc: Exception
+    ) -> None:
+        grabber = Grabber(num_workers=workers, prefetch=prefetch, keep_order=keep_order)
+        seq = RaisingSequence(exc)
+        with pytest.raises(type(exc)):
+            with grabber(seq) as ctx:
+                for _ in ctx:
+                    pass
