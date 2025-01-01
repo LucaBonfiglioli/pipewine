@@ -50,7 +50,7 @@ class TestGrabber:
     ) -> None:
         grabber = Grabber(num_workers=workers, prefetch=prefetch, keep_order=keep_order)
         seq = RaisingSequence(exc)
-        with pytest.raises(type(exc)):
-            with grabber(seq) as ctx:
+        with grabber(seq) as ctx:
+            with pytest.raises(type(exc)):
                 for _ in ctx:
                     pass

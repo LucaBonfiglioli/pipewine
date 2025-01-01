@@ -21,3 +21,5 @@ exclude_lines =
     @(abc\.)?abstractmethod
     @(abc\.)?abstractclassmethod
     @t.overload
+omit =
+    tests/**
