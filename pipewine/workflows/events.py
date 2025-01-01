@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from multiprocessing import Manager, Queue
+from multiprocessing import Manager
 from queue import Empty
 from typing import Any
 
