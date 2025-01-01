@@ -24,7 +24,7 @@ classifiers = [
     "Topic :: Scientific/Engineering",
     "Topic :: Software Development",
 ]
-dependencies = ["numpy", "PyYAML", "typing_extensions", "imageio", "tifffile"]
+dependencies = ["numpy", "PyYAML", "imageio", "tifffile"]
 dynamic = ["version"]
 
 [project.optional-dependencies]

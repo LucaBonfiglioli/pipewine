@@ -1,8 +1,6 @@
-import typing as t
 from abc import ABC, abstractmethod
-from collections.abc import Iterator, Mapping, KeysView
-
-from typing_extensions import Self
+from collections.abc import Iterator, KeysView, Mapping
+from typing import Any, Mapping, Self
 
 from pipewine.bundle import Bundle
 from pipewine.item import Item
@@ -28,11 +26,11 @@ class Sample(ABC, Mapping[str, Item]):
     def with_item(self, key: str, item: Item) -> Self:
         return self.with_items(**{key: item})
 
-    def with_values(self, **values: t.Any) -> Self:
+    def with_values(self, **values: Any) -> Self:
         dict_values = {k: self._get_item(k).with_value(v) for k, v in values.items()}
         return self.with_items(**dict_values)
 
-    def with_value(self, key: str, value: t.Any) -> Self:
+    def with_value(self, key: str, value: Any) -> Self:
         return self.with_values(**{key: value})
 
     def without(self, *keys: str) -> "TypelessSample":
@@ -47,7 +45,7 @@ class Sample(ABC, Mapping[str, Item]):
         return TypelessSample(**self)
 
     def remap(
-        self, fromto: t.Mapping[str, str], exclude: bool = False
+        self, fromto: Mapping[str, str], exclude: bool = False
     ) -> "TypelessSample":
         if exclude:
             items = {k: self._get_item(k) for k in self.keys() if k in fromto}

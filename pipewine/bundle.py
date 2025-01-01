@@ -1,9 +1,7 @@
 from abc import ABCMeta
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any
-
-from typing_extensions import Self, dataclass_transform
+from typing import Any, Self, dataclass_transform
 
 
 @dataclass_transform(kw_only_default=True)
