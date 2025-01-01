@@ -1,16 +1,17 @@
-from collections.abc import Callable, Iterable, Iterator, Sequence
-from contextlib import nullcontext
-from typing import ContextManager, cast
-
-import billiard.context
-import billiard.pool
+from collections.abc import Callable, Iterator, Sequence
+from multiprocessing import Pool
 
 
 class _GrabWorker[T]:
-    def __init__(self, seq: Sequence[T]):
+    def __init__(
+        self, seq: Sequence[T], callback: Callable[[int], None] | None = None
+    ) -> None:
         self._seq = seq
+        self._callback = callback
 
-    def _worker_fn_elem_and_index(self, idx) -> tuple[int, T]:
+    def _worker_fn_elem_and_index(self, idx: int) -> tuple[int, T]:
+        if self._callback is not None:
+            self._callback(idx)
         return idx, self._seq[idx]
 
 
@@ -21,6 +22,7 @@ class _GrabContext[T]:
         prefetch: int,
         keep_order: bool,
         seq: Sequence[T],
+        callback: Callable[[int], None] | None,
         worker_init_fn: tuple[Callable, Sequence] | None,
     ):
         self._num_workers = num_workers
@@ -28,6 +30,7 @@ class _GrabContext[T]:
         self._keep_order = keep_order
         self._seq = seq
         self._pool = None
+        self._callback = callback
         self._worker_init_fn = (None, ()) if worker_init_fn is None else worker_init_fn
 
     @staticmethod
@@ -36,29 +39,22 @@ class _GrabContext[T]:
             user_init_fn[0](*user_init_fn[1])
 
     def __enter__(self) -> Iterator[tuple[int, T]]:
+        worker = _GrabWorker(self._seq, callback=self._callback)
         if self._num_workers == 0:
             self._pool = None
-            worker = _GrabWorker(self._seq)
             return (worker._worker_fn_elem_and_index(i) for i in range(len(self._seq)))
 
-        self._pool = billiard.pool.Pool(
+        self._pool = Pool(
             self._num_workers if self._num_workers > 0 else None,
             initializer=_GrabContext.wrk_init,
             initargs=(self._worker_init_fn,),
-            context=billiard.context.SpawnContext(),
         )
-        runner = cast(billiard.pool.Pool, self._pool).__enter__()
+        pool = self._pool.__enter__()
 
-        worker = _GrabWorker(self._seq)
         fn = worker._worker_fn_elem_and_index
-
         if self._keep_order:
-            return runner.imap(
-                fn, range(len(self._seq)), chunksize=self._prefetch
-            )  # type: ignore
-        return runner.imap_unordered(
-            fn, range(len(self._seq)), chunksize=self._prefetch
-        )  # type: ignore
+            return pool.imap(fn, range(len(self._seq)), chunksize=self._prefetch)
+        return pool.imap_unordered(fn, range(len(self._seq)), chunksize=self._prefetch)
 
     def __exit__(self, exc_type, exc_value, traceback):
         if self._pool is not None:
@@ -80,6 +76,7 @@ class Grabber:
         self,
         seq: Sequence[T],
         *,
+        callback: Callable[[int], None] | None = None,
         worker_init_fn: tuple[Callable, Sequence] | None = None,
     ) -> _GrabContext[T]:
         return _GrabContext(
@@ -87,34 +84,6 @@ class Grabber:
             self.prefetch,
             self.keep_order,
             seq,
+            callback=callback,
             worker_init_fn=worker_init_fn,
         )
-
-    def grab_all[
-        T
-    ](
-        self,
-        seq: Sequence[T],
-        *,
-        track_fn: Callable[[Iterable], Iterable] | None = None,
-        elem_fn: Callable[[T, int], None] | None = None,
-        grab_context_manager: ContextManager | None = None,
-        worker_init_fn: Callable | tuple[Callable, Sequence] | None = None,
-    ):
-        if track_fn is None:
-            track_fn = lambda x: x  # noqa: E731
-        if elem_fn is None:
-            elem_fn = lambda x, y: None  # noqa: E731
-
-        grab_cm = (
-            nullcontext() if grab_context_manager is None else grab_context_manager
-        )
-        worker_init = (
-            (worker_init_fn, ()) if callable(worker_init_fn) else worker_init_fn
-        )
-
-        with grab_cm:
-            ctx = self(seq, worker_init_fn=worker_init)
-            with ctx as grabber_iterator:
-                for idx, elem in track_fn(grabber_iterator):
-                    elem_fn(elem, idx)

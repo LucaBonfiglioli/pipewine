@@ -30,7 +30,6 @@ class TestNumpyNpyParser:
         array = np.arange(math.prod(shape), dtype=dtype).reshape(shape)
         parser = NumpyNpyParser()
         bytes_ = parser.dump(array)
-        print(bytes_)
         assert isinstance(bytes_, bytes)
         re_array = parser.parse(bytes_)
         assert array.dtype == re_array.dtype

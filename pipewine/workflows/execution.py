@@ -10,7 +10,12 @@ from pipewine.operators import DatasetOperator
 from pipewine.sinks import DatasetSink
 from pipewine.sources import DatasetSource
 from pipewine.workflows.model import AnyAction, Node, Proxy, Workflow
-from pipewine.workflows.tracking import EventQueue, TaskUpdateEvent
+from pipewine.workflows.tracking import (
+    EventQueue,
+    TaskCompleteEvent,
+    TaskStartEvent,
+    TaskUpdateEvent,
+)
 
 
 class WorkflowExecutor(ABC):
@@ -45,12 +50,22 @@ class NaiveWorkflowExecutor(WorkflowExecutor):
         for node in sorted_graph:
             self._execute_node(workflow, node, state)
 
-    def _progress_callback(
-        self, node: Node, loop_id: str, idx: int, seq: Sequence
-    ) -> None:
+    def _on_enter_cb(self, node: Node, loop_id: str, total: int) -> None:
         if self._eq is not None:
             task = f"{node.name}/{loop_id}"
-            event = TaskUpdateEvent(task, idx, len(seq))
+            event = TaskStartEvent(task, total)
+            self._eq.emit(event)
+
+    def _on_iter_cb(self, node: Node, loop_id: str, idx: int) -> None:
+        if self._eq is not None:
+            task = f"{node.name}/{loop_id}"
+            event = TaskUpdateEvent(task, idx)
+            self._eq.emit(event)
+
+    def _on_exit_cb(self, node: Node, loop_id: str) -> None:
+        if self._eq is not None:
+            task = f"{node.name}/{loop_id}"
+            event = TaskCompleteEvent(task)
             self._eq.emit(event)
 
     def _execute_node(
@@ -60,9 +75,10 @@ class NaiveWorkflowExecutor(WorkflowExecutor):
         state: dict[Proxy, Dataset],
     ) -> None:
         action = cast(AnyAction, node.action)
-        action.register_callback(partial(self._progress_callback, node))
+        action.register_on_iter(partial(self._on_iter_cb, node))
+        action.register_on_enter(partial(self._on_enter_cb, node))
+        action.register_on_exit(partial(self._on_exit_cb, node))
         edges = workflow.get_inbound_edges(node)
-
         all_none = len(edges) == 1 and all(x.dst.socket is None for x in edges)
         all_int = all(isinstance(x.dst.socket, int) for x in edges)
         all_str = all(isinstance(x.dst.socket, str) for x in edges)

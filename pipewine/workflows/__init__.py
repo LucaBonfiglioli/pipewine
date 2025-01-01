@@ -1,4 +1,4 @@
-from pipewine.workflows.events import Event, EventQueue, InMemoryEventQueue
+from pipewine.workflows.events import Event, EventQueue, SharedMemoryEventQueue
 from pipewine.workflows.execution import NaiveWorkflowExecutor, WorkflowExecutor
 from pipewine.workflows.model import AnyAction, Workflow
 from pipewine.workflows.tracking import (
@@ -19,10 +19,11 @@ def run_workflow(
     executor: WorkflowExecutor | None = None,
     tracker: Tracker | None = None,
 ) -> None:
-    event_queue = event_queue or InMemoryEventQueue()
+    event_queue = event_queue or SharedMemoryEventQueue()
     executor = executor or NaiveWorkflowExecutor()
     tracker = tracker or NoTracker()
     try:
+        event_queue.start()
         executor.attach(event_queue)
         tracker.attach(event_queue)
         executor.execute(workflow)

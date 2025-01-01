@@ -1,12 +1,12 @@
 from abc import ABC, abstractmethod
 
 from pipewine._op_typing import AnyDataset, origin_type
-from pipewine._register import RegisterCallbackMixin
+from pipewine._register import LoopCallbackMixin
 from pipewine.dataset import Dataset, LazyDataset
 from pipewine.sample import Sample
 
 
-class DatasetSource[T: AnyDataset](ABC, RegisterCallbackMixin):
+class DatasetSource[T: AnyDataset](ABC, LoopCallbackMixin):
     @abstractmethod
     def __call__(self) -> T: ...
 

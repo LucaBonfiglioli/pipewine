@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
 
 from pipewine._op_typing import AnyDataset, origin_type
-from pipewine._register import RegisterCallbackMixin
+from pipewine._register import LoopCallbackMixin
 
 
-class DatasetSink[T: AnyDataset](ABC, RegisterCallbackMixin):
+class DatasetSink[T: AnyDataset](ABC, LoopCallbackMixin):
     @abstractmethod
     def __call__(self, data: T) -> None: ...
 

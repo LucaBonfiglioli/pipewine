@@ -24,14 +24,7 @@ classifiers = [
     "Topic :: Scientific/Engineering",
     "Topic :: Software Development",
 ]
-dependencies = [
-    "numpy",
-    "PyYAML",
-    "typing_extensions",
-    "imageio",
-    "tifffile",
-    "billiard",
-]
+dependencies = ["numpy", "PyYAML", "typing_extensions", "imageio", "tifffile"]
 dynamic = ["version"]
 
 [project.optional-dependencies]
@@ -55,10 +48,6 @@ path = "pipewine/__init__.py"
 
 [tool.hatch.build]
 include = ["pipewine/**/*.py", "LICENSE"]
-
-[[tool.mypy.overrides]]
-module = "billiard.*"
-ignore_missing_imports = true
 
 [tool.mypy]
 check_untyped_defs = true

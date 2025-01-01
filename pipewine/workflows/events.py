@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from queue import Empty, Queue
+from multiprocessing import Manager, Queue
+from queue import Empty
 from typing import Any
 
 
@@ -8,6 +9,9 @@ class Event:
 
 
 class EventQueue(ABC):
+    @abstractmethod
+    def start(self) -> None: ...
+
     @abstractmethod
     def emit(self, event: Event) -> None: ...
 
@@ -18,34 +22,33 @@ class EventQueue(ABC):
     def close(self) -> None: ...
 
 
-class InMemoryEventQueue(EventQueue):
+class SharedMemoryEventQueue(EventQueue):
     def __init__(self) -> None:
         super().__init__()
-        self._queue: Queue[Event] = Queue()
-        self._closed = False
+        self._mp_q = None
+
+    def start(self) -> None:
+        self._manager = Manager()
+        self._mp_q = self._manager.Queue()
 
     def emit(self, event: Event) -> None:
-        if self._closed:
+        if self._mp_q is None:
             raise RuntimeError("Queue is closed")
-        self._queue.put(event)
+        self._mp_q.put(event)
 
     def capture(self) -> Event | None:
-        if self._closed:
+        if self._mp_q is None:
             raise RuntimeError("Queue is closed")
         try:
-            return self._queue.get_nowait()
+            return self._mp_q.get_nowait()
         except Empty:
             return None
 
     def close(self) -> None:
-        self._closed = True
+        self._manager.shutdown()
+        self._mp_q = None
 
     def __getstate__(self) -> dict[str, Any]:
         data = {**self.__dict__}
-        del data["_queue"]
+        del data["_manager"]
         return data
-
-    def __setstate__(self, data: dict[str, Any]) -> None:
-        self._queue = Queue()
-        for k, v in data.items():
-            setattr(self, k, v)

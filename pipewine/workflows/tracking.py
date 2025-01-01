@@ -15,9 +15,13 @@ class TrackingEvent(Event):
 
 
 @dataclass
+class TaskStartEvent(TrackingEvent):
+    total: int
+
+
+@dataclass
 class TaskUpdateEvent(TrackingEvent):
     unit: int
-    total: int
 
 
 @dataclass
@@ -80,16 +84,25 @@ class CursesTracker(Tracker):
         self._thread = None
         self._eq = None
 
-    def _get_task(self, group: TaskGroup, path: str, total: int) -> Task:
+    def _get_group(self, group: TaskGroup, path: str) -> TaskGroup:
         path_chunks = path.split("/")
-        for p in path_chunks[:-1]:
+        for p in path_chunks:
             if p not in group.groups:
                 group.groups[p] = TaskGroup(p)
             group = group.groups[p]
-        task_name = path_chunks[-1]
-        if task_name not in group.tasks:
-            units = [False for _ in range(total)]
-            group.tasks[task_name] = Task(task_name, units)
+        return group
+
+    def _spawn_task(self, group: TaskGroup, path: str, total: int) -> Task:
+        group_path, _, task_name = path.rpartition("/")
+        units = [False for _ in range(total)]
+        task = Task(task_name, units)
+        group = self._get_group(group, group_path)
+        group.tasks[task_name] = task
+        return task
+
+    def _get_task(self, group: TaskGroup, path: str) -> Task:
+        group_path, _, task_name = path.rpartition("/")
+        group = self._get_group(group, group_path)
         return group.tasks[task_name]
 
     def _preorder(
@@ -119,12 +132,14 @@ class CursesTracker(Tracker):
             time.sleep(self._refresh_rate)
             global_step = global_step + 1 % 10000
             while (event := em.capture()) is not None:
-                if isinstance(event, TaskCompleteEvent):
-                    task = self._get_task(root, event.task_id, -1)
-                    task.complete = True
+                if isinstance(event, TaskStartEvent):
+                    task = self._spawn_task(root, event.task_id, event.total)
                 elif isinstance(event, TaskUpdateEvent):
-                    task = self._get_task(root, event.task_id, event.total)
+                    task = self._get_task(root, event.task_id)
                     task.units[event.unit] = True
+                elif isinstance(event, TaskCompleteEvent):
+                    task = self._get_task(root, event.task_id)
+                    task.complete = True
 
             list_of_tasks = self._preorder(root, -1)[1:]
             if len(list_of_tasks) == 0:
