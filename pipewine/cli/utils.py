@@ -110,7 +110,6 @@ def run_cli_workflow(workflow: Workflow, tui: bool = True) -> None:
     try:
         run_workflow(workflow, tracker=CursesTracker() if tui else NoTracker())
     except KeyboardInterrupt:
-        print()  # To avoid messing up the panel with the ^C print
         _print_workflow_panel(start_time, "Workflow canceled.", "bold bright_black")
         exit(1)
     except Exception:

@@ -58,8 +58,9 @@ class _GrabContext[T]:
 
     def __exit__(self, exc_type, exc_value, traceback):
         if self._pool is not None:
-            self._pool.close()
-            self._pool.join()
+            if exc_type is None:
+                self._pool.close()
+                self._pool.join()
             self._pool.__exit__(exc_type, exc_value, traceback)
 
 
