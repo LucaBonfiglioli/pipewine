@@ -1,5 +1,5 @@
 from collections.abc import Callable, Iterator, Sequence
-from multiprocessing import Pool
+from multiprocessing.pool import Pool
 
 
 class _GrabWorker[T]:
@@ -29,7 +29,7 @@ class _GrabContext[T]:
         self._prefetch = prefetch
         self._keep_order = keep_order
         self._seq = seq
-        self._pool = None
+        self._pool: Pool | None = None
         self._callback = callback
         self._worker_init_fn = (None, ()) if worker_init_fn is None else worker_init_fn
 

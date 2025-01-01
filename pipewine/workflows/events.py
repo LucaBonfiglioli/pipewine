@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from multiprocessing import Manager
-from queue import Empty
+from queue import Empty, Queue
 from typing import Any
 
 
@@ -25,7 +25,7 @@ class EventQueue(ABC):
 class SharedMemoryEventQueue(EventQueue):
     def __init__(self) -> None:
         super().__init__()
-        self._mp_q = None
+        self._mp_q: Queue | None = None
 
     def start(self) -> None:
         self._manager = Manager()
