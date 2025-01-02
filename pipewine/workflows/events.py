@@ -48,7 +48,7 @@ class SharedMemoryEventQueue(EventQueue):
         self._manager.shutdown()
         self._mp_q = None
 
-    def __getstate__(self) -> dict[str, Any]:
+    def __getstate__(self) -> dict[str, Any]:  # pragma: no cover
         data = {**self.__dict__}
         del data["_manager"]
         return data

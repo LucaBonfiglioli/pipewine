@@ -20,7 +20,7 @@ class _DefaultList[T](Sequence[T]):
 
     def __getitem__(self, idx: int) -> T:  # type: ignore
         while idx >= len(self):
-            self._data.append(self._factory(idx))
+            self._data.append(self._factory(len(self)))
         return self._data[idx]
 
     def __iter__(self) -> Iterator[T]:
@@ -56,13 +56,10 @@ class Proxy:
     socket: int | str | None
 
 
-@dataclass(unsafe_hash=False, eq=False)
+@dataclass(unsafe_hash=True)
 class Node[T: AnyAction]:
     name: str
-    action: T = field(hash=False, compare=False)
-
-    def __hash__(self) -> int:
-        return hash(self.name)
+    action: T = field(hash=False)
 
 
 @dataclass(unsafe_hash=True)
@@ -129,7 +126,7 @@ class Workflow:
                 return_val = _DefaultDict(lambda k: Proxy(node, k))
             elif issubclass(return_t, Bundle):
                 return_val = DefaultBundle(lambda k: Proxy(node, k))
-            else:
+            else:  # pragma: no cover (unreachable)
                 raise ValueError(f"Unknown type '{return_t}'")
 
         def connect(*args, **kwargs):
@@ -146,6 +143,8 @@ class Workflow:
                     edges.extend(
                         [Edge(v, Proxy(node, k)) for k, v in arg.as_dict().items()]
                     )
+                else:  # pragma: no cover (unreachable)
+                    raise ValueError(f"Unknown type '{type(arg)}'")
 
             for edge in edges:
                 self._inbound_edges[edge.dst.node].add(edge)
