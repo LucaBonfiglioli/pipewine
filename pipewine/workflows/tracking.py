@@ -51,7 +51,7 @@ class TaskGroup:
     tasks: OrderedDict[str, Task] = field(default_factory=OrderedDict)
 
 
-class NoTracker(Tracker):
+class NoTracker(Tracker):  # pragma: no cover (useless)
     def attach(self, event_queue: EventQueue) -> None:
         return
 
@@ -61,11 +61,11 @@ class NoTracker(Tracker):
 
 class CursesTracker(Tracker):
     MAX_COLOR = 1000
-    N_SHADES = 10
 
     def __init__(self, refresh_rate: float = 0.1) -> None:
         super().__init__()
         self._refresh_rate = refresh_rate
+        self._n_shades = 10
 
         self._eq: EventQueue | None = None
         self._thread: Thread | None = None
@@ -126,8 +126,6 @@ class CursesTracker(Tracker):
             rem = width % len(units)
             for ui, unit in enumerate(units):
                 bar.append([div + int(ui < rem), int(unit), 1])
-        elif len(units) == width:
-            bar = [[1, int(x), 1] for x in units]
         else:
             bar = [[1, 0, 0] for _ in range(width)]
             for ui, unit in enumerate(units):
@@ -139,10 +137,21 @@ class CursesTracker(Tracker):
     def _init_colors(self) -> None:
         curses.start_color()
         curses.use_default_colors()
-        for i in range(self.N_SHADES):
-            c = int((float(i + 1) / self.N_SHADES) * self.MAX_COLOR)
-            curses.init_color(i + 1, c, c, c)
-            curses.init_pair(i + 1, i + 1, -1)
+        if curses.can_change_color():
+            for i in range(self._n_shades):
+                c = int((float(i + 1) / self._n_shades) * self.MAX_COLOR)
+                curses.init_color(i + 1, c, c, c)
+                curses.init_pair(i + 1, i + 1, -1)
+        else:
+            self._n_shades = 5
+            curses.init_pair(1, curses.COLOR_BLACK, -1)
+            curses.init_pair(2, curses.COLOR_RED, -1)
+            curses.init_pair(3, curses.COLOR_YELLOW, -1)
+            curses.init_pair(4, curses.COLOR_GREEN, -1)
+            curses.init_pair(5, curses.COLOR_WHITE, -1)
+
+    def _color_of(self, frac: float) -> int:
+        return curses.color_pair(1 + int(frac * (self._n_shades - 1)))
 
     def _render_tasks(
         self,
@@ -150,10 +159,12 @@ class CursesTracker(Tracker):
         tasks: list[tuple[int, Task | TaskGroup]],
         global_step: int,
     ) -> None:
+        screen.clear()
         bar_elem = "██"
-        TITLE_H, TITLE_W = len(tasks), 20
+        H, W = screen.getmaxyx()
+        TITLE_H, TITLE_W = len(tasks), min(20, W - 1)
         PROG_H = TITLE_H
-        PROG_W = screen.getmaxyx()[1] - TITLE_W
+        PROG_W = W - TITLE_W
         padding = 0
         for _, entry in tasks:
             if isinstance(entry, Task):
@@ -172,16 +183,16 @@ class CursesTracker(Tracker):
             if isinstance(entry, Task):
                 j = 0
                 if entry.complete:
-                    c = self.N_SHADES
+                    color = self._color_of(1.0)
                     if bar_w > 0:
-                        prog_pad.addstr(i, 0, bar_elem * bar_w, curses.color_pair(c))
+                        prog_pad.addstr(i, 0, bar_elem * bar_w, color)
                         j += len(bar_elem) * bar_w
                     sum_ = len(entry.units)
                 else:
                     if bar_w > 0:
                         for size, comp, total in self._compute_bar(entry.units, bar_w):
-                            c = 1 + int((comp / total) * (self.N_SHADES - 1))
-                            prog_pad.addstr(i, j, bar_elem * size, curses.color_pair(c))
+                            color = self._color_of(comp / total)
+                            prog_pad.addstr(i, j, bar_elem * size, color)
                             j += size * len(bar_elem)
                     sum_ = sum(entry.units)
                 total = len(entry.units)
@@ -190,9 +201,9 @@ class CursesTracker(Tracker):
                 if len(text) + 2 < PROG_W:
                     prog_pad.addstr(i, j + 2, text)
 
-        H, W = screen.getmaxyx()
         title_pad.noutrefresh(max(0, TITLE_H - H), 0, 0, 0, H - 1, W - 1)
         prog_pad.noutrefresh(max(0, TITLE_H - H), 0, 0, TITLE_W, H - 1, W - 1)
+        curses.doupdate()
 
     def _curses(self, stdscr: window) -> None:
         self._init_colors()
@@ -217,9 +228,7 @@ class CursesTracker(Tracker):
             if len(list_of_tasks) == 0:
                 continue
 
-            stdscr.clear()
             self._render_tasks(stdscr, list_of_tasks, global_step)
-            curses.doupdate()
 
     def _loop(self) -> None:
         wrapper(self._curses)

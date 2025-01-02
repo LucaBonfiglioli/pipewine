@@ -7,6 +7,7 @@ from pipewine.workflows.tracking import (
     TaskCompleteEvent,
     TaskGroup,
     TaskUpdateEvent,
+    TaskStartEvent,
     Tracker,
     TrackingEvent,
     NoTracker,
