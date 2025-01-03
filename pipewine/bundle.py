@@ -1,7 +1,7 @@
 from abc import ABCMeta
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Self, dataclass_transform
+from typing import Any, Generic, Self, TypeVar, dataclass_transform
 
 
 @dataclass_transform(kw_only_default=True)
@@ -20,7 +20,10 @@ class BundleMeta(ABCMeta):
         return the_cls
 
 
-class Bundle[T](metaclass=BundleMeta, _is_root=True):
+T = TypeVar("T", covariant=True)
+
+
+class Bundle(Generic[T], metaclass=BundleMeta, _is_root=True):
     def __init__(self, /, **kwargs: T) -> None:
         pass
 
@@ -28,7 +31,7 @@ class Bundle[T](metaclass=BundleMeta, _is_root=True):
         return self.__dict__
 
     @classmethod
-    def from_dict(cls, **data: T) -> Self:
+    def from_dict(cls, **data) -> Self:
         return cls(**data)
 
     def __getstate__(self) -> dict[str, T]:

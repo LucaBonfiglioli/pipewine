@@ -387,7 +387,7 @@ class TestWorkflow:
             edges.update(ob_edges)
             for edge in ob_edges:
                 assert edge.src.node == node
-        edges: set[Edge] = set()
+        edges.clear()
         for node in exp_nodes:
             ib_edges = wf.get_inbound_edges(node)
             edges.update(ib_edges)

@@ -26,16 +26,17 @@ class LoopCallbackMixin:
 
     def loop[
         T
-    ](self, seq: Sequence[T], grabber: Grabber, name: str | None = None) -> Generator[
-        tuple[int, T]
-    ]:
+    ](
+        self, seq: Sequence[T], grabber: Grabber | None = None, name: str | None = None
+    ) -> Generator[tuple[int, T]]:
         if name is None:
             name = self.__class__.__name__ + uuid1().hex
         if self._on_start_cb is not None:
             self._on_start_cb(name, len(seq))
 
         iter_cb = partial(self._on_iter_cb, name) if self._on_iter_cb else None
-        with grabber(seq, callback=iter_cb) as ctx:
+        grabber_ = grabber or Grabber()
+        with grabber_(seq, callback=iter_cb) as ctx:
             for i, x in ctx:
                 yield i, x
         if self._on_end_cb is not None:

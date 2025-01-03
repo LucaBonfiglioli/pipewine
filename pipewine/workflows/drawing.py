@@ -16,7 +16,7 @@ def _ccw(p: np.ndarray, q: np.ndarray, r: np.ndarray) -> np.ndarray:
     ) * (r[..., 0] - p[..., 0])
 
 
-def do_intersect(
+def lines_intersect(
     p1: np.ndarray, p2: np.ndarray, q1: np.ndarray, q2: np.ndarray
 ) -> np.ndarray:
     o1 = _ccw(p1, p2, q1)
@@ -26,12 +26,27 @@ def do_intersect(
     return (o1 * o2 < 0) & (o3 * o4 < 0)
 
 
-def cross_inter(segments_start: np.ndarray, segments_end: np.ndarray) -> np.ndarray:
-    p1 = segments_start[:, np.newaxis, :]
-    p2 = segments_end[:, np.newaxis, :]
-    q1 = segments_start[np.newaxis, :, :]
-    q2 = segments_end[np.newaxis, :, :]
-    return do_intersect(p1, p2, q1, q2)
+def lines_intersect_matrix(p1: np.ndarray, p2: np.ndarray) -> np.ndarray:
+    p1 = p1[:, np.newaxis, :]
+    p2 = p2[:, np.newaxis, :]
+    q1 = p1[np.newaxis, :, :]
+    q2 = p2[np.newaxis, :, :]
+    return lines_intersect(p1, p2, q1, q2)
+
+
+def lines_rects_intersect_matrix(
+    p1: np.ndarray, p2: np.ndarray, xy: np.ndarray, wh: np.ndarray
+) -> np.ndarray:
+    p1 = p1[:, np.newaxis, :]
+    p2 = p2[:, np.newaxis, :]
+    w_, h_ = np.zeros_like(wh), np.zeros_like(wh)
+    w_[:, 0] = wh[:, 0]
+    h_[:, 1] = wh[:, 1]
+    q1 = np.concatenate([xy, xy, xy + wh, xy + wh])
+    q2 = np.concatenate([xy + w_, xy + h_] * 2)
+    q1 = q1[np.newaxis, :, :]
+    q2 = q2[np.newaxis, :, :]
+    return lines_intersect(p1, p2, q1, q2)
 
 
 @dataclass
@@ -67,26 +82,27 @@ class Drawer(ABC):
     def draw(self, vg: ViewGraph, buffer: BinaryIO) -> None: ...
 
 
-class AsapLayout(Layout):
+class OptimizedLayout(Layout):
     RGB_SOURCE = (10, 160, 40)
     RGB_OP = (0, 80, 210)
     RGB_SINK = (220, 30, 10)
 
     def __init__(
         self,
-        optimize_steps: int = 1000,
+        optimize_steps: int = 200,
         optimize_population: int = 100,
-        optimize_time_budget: float = 5.0,
+        optimize_time_budget: float = 100.0,
+        optimize_noise_start: float = 10.0,
     ) -> None:
         super().__init__()
         self._optimize_steps = optimize_steps
         self._optimize_population = optimize_population
         self._optimize_time_budget = optimize_time_budget
+        self._optimize_noise_start = optimize_noise_start
 
     def _asap_sort(self, workflow: Workflow) -> list[list[Node]]:
         result: list[list[Node]] = []
         queue: deque[Node] = deque()
-        mark: set[Node] = set()
         deps: dict[Node, set[Node]] = {}
         for node in workflow.get_nodes():
             inbounds = workflow.get_inbound_edges(node)
@@ -98,16 +114,12 @@ class AsapLayout(Layout):
             size = len(queue)
             for _ in range(size):
                 node = queue.popleft()
-                if node in mark:
-                    continue
                 layer.append(node)
-                mark.add(node)
                 for edge in workflow.get_outbound_edges(node):
                     deps[edge.dst.node].remove(node)
                     if not deps[edge.dst.node]:
                         queue.append(edge.dst.node)
-            if layer:
-                result.append(layer)
+            result.append(layer)
         return result
 
     def _socket_name(self, socket: int | str | None, default: str) -> str:
@@ -118,9 +130,11 @@ class AsapLayout(Layout):
         nodes = vg.nodes
 
         layout = np.array([x.position for x in nodes], dtype=np.float32)
+        sizes = np.array([x.size for x in nodes], dtype=np.float32)
         w, h = layout.max(axis=0) * 1.5
         maxdist = (h**2 + w**2) ** 0.5
-        maxsize = np.array([x.size for x in nodes], dtype=np.float32).max()
+        maxsize = sizes.max()
+        eps = 1e-3
 
         def fitness_fn(layout: np.ndarray) -> float:
             edge_start = np.zeros((len(edges), 2), dtype=np.float32)
@@ -128,59 +142,87 @@ class AsapLayout(Layout):
             for i, x in enumerate(edges):
                 sx, sy = layout[x.start[0]]
                 ex, ey = layout[x.end[0]]
-                sw = nodes[x.start[0]].size[0]
+                sw = sizes[x.start[0]][0]
                 edge_start[i] = (sx + sw, sy + nodes[x.start[0]].outputs[x.start[1]][1])
                 edge_end[i] = (ex, ey + nodes[x.end[0]].inputs[x.end[1]][1])
 
-            dist = np.linalg.norm(edge_end - edge_start, ord=2, axis=-1)
-            edge_distance_term = np.clip(
-                (maxdist - dist) / (maxdist - maxsize), 0.0, 1.0
-            ).mean()
+            edge_start[:, 0] += eps
+            edge_end[:, 0] -= eps
 
+            # Minimize edge length
+            dist = np.linalg.norm(edge_end - edge_start, ord=2, axis=-1)
+            bound = maxdist - maxsize
+            norm_dist = (bound - np.clip(dist - maxsize, 0.0, None)) / bound
+            edge_distance_term = (norm_dist**2).mean()
+
+            # Keep nodes reasonably distanced
+            # The chebyshev distance with the closest node should be close to the
+            # maximum node size.
             cdist = np.max(np.abs(layout[None] - layout[:, None]), axis=-1)
             cdist += np.eye(len(nodes)) * maxdist
             mindist = cdist.min(axis=-1)
-            node_distance_term = (np.clip(mindist, None, maxsize) / (maxsize)).mean()
+            node_distance_term = (np.clip(mindist, None, maxsize) / maxsize).mean()
 
+            # Penalty on backward edges (flow left to right)
             n_backward = (edge_end[:, 0] - edge_start[:, 0] <= maxsize / 2).sum()
             backward_term = (len(edges) - n_backward) / len(edges)
 
-            n_cross = cross_inter(edge_start, edge_end).sum()
-            maxcross = len(edges) ** 2
-            cross_term = (maxcross - n_cross) / maxcross
+            # Penalty on edge/edge crossings
+            mat = lines_intersect_matrix(edge_start, edge_end)
+            edge_edge_cross_term = (len(edges) - mat.any(-1).sum()) / len(edges)
+
+            # Penalty on edge/node crossings
+            mat = lines_rects_intersect_matrix(edge_start, edge_end, layout, sizes)
+            edge_node_cross_term = (len(edges) - mat.any(-1).sum()) / len(edges)
 
             return (
-                node_distance_term + edge_distance_term + cross_term + backward_term
-            ) / 4
+                node_distance_term
+                + edge_distance_term
+                + backward_term
+                + edge_edge_cross_term
+                + edge_node_cross_term
+            ) / 5
 
-        def spawn(layout: np.ndarray) -> np.ndarray:
-            noise = np.random.normal(0.0, 10, layout.shape).astype(np.float32)
-            result: np.ndarray = layout + noise
-            return result
+        def spawn(layout: np.ndarray, sigma: float) -> np.ndarray:
+            noise = np.random.normal(0.0, sigma, layout.shape).astype(np.float32)
+            return layout + noise
 
-        N = self._optimize_steps
-        P = self._optimize_population
-        layouts = [spawn(layout) for _ in range(P - 1)] + [layout]
+        global_step = 0
+        max_steps = self._optimize_steps
+        max_population = self._optimize_population
+        sigma_s = self._optimize_noise_start
+        sigma_e = sigma_s * 1e-4
+        layouts = [spawn(layout, sigma_s) for _ in range(max_population - 1)] + [layout]
         best = -float("inf")
         argbest = layout
-        fitness = np.zeros((P,), dtype=np.float32)
+        fitness = np.zeros((max_population,), dtype=np.float32)
         t_start = time.time()
-        for _ in range(N):
-            if time.time() - t_start > self._optimize_time_budget or best >= 1.0:
+        while True:
+            if (
+                time.time() - t_start > self._optimize_time_budget
+                or global_step > max_steps
+            ):
                 break
+            sigma = sigma_s * np.exp(
+                np.log(sigma_e / sigma_s) * global_step / max_steps
+            )
             for i, layout in enumerate(layouts):
                 fitness[i] = fitness_fn(layout)
                 if fitness[i] > best:
+                    print(global_step, sigma, best)
                     best = fitness[i]
                     argbest = layout
             fitness = (fitness - fitness.min()) / (fitness.max() - fitness.min() + 1e-5)
             fsum = fitness.sum()
             if fsum > 0:
-                next_idx = np.random.choice(P, size=P, p=fitness / fsum)
+                next_idx = np.random.choice(
+                    max_population, size=max_population, p=fitness / fsum
+                )
             else:
-                next_idx = np.arange(P)
+                next_idx = np.arange(max_population)
             for i, idx in enumerate(next_idx):
-                layouts[i] = spawn(layouts[idx])
+                layouts[i] = spawn(layouts[idx], sigma)
+            global_step += 1
 
         minxy = argbest.min(axis=0)
         for i, xy in enumerate(argbest):
@@ -192,6 +234,7 @@ class AsapLayout(Layout):
         node_to_idx: dict[Node, int] = {}
         i = 0
         margin = 32
+        node_distance = 96
         fontsize = 16
         current_x = 0.0
         for layer in self._asap_sort(wf):
@@ -243,10 +286,10 @@ class AsapLayout(Layout):
                     inputs=in_sockets,
                     outputs=out_sockets,
                 )
-                current_y += h + margin
+                current_y += h + node_distance
                 maxw = max(maxw, w)
                 i += 1
-            current_x += maxw + margin
+            current_x += maxw + node_distance
         for node in wf.get_nodes():
             for e in wf.get_outbound_edges(node):
                 src_node = view_nodes[node]
@@ -263,7 +306,8 @@ class AsapLayout(Layout):
                     ViewEdge((src_node_idx, src_s_idx), (dst_node_idx, dst_s_idx))
                 )
         vg = ViewGraph(list(view_nodes.values()), view_edges)
-        self._optimize(vg)
+        if len(view_nodes) > 1:
+            self._optimize(vg)
         return vg
 
 
@@ -284,7 +328,7 @@ class SVGDrawer(Drawer):
         fontsize = node.fontsize
 
         col = f"rgb{node.color}"
-        rect_elem = ET.SubElement(
+        ET.SubElement(
             parent,
             "rect",
             x=str(x),
@@ -294,7 +338,6 @@ class SVGDrawer(Drawer):
             fill=col,
             rx="10",
         )
-        rect_elem.set("fill-opacity", "0.9")
         text_elem = ET.SubElement(
             parent,
             "text",
@@ -350,15 +393,33 @@ class SVGDrawer(Drawer):
     def _draw_edge(
         self, parent: ET.Element, x1: float, y1: float, x2: float, y2: float
     ) -> None:
-        h = (x2 - x1) / 2
+        x1 += 9
+        x2 -= 9
+        head_size = 15
+        xk = x2 - head_size / 2
+        tn = 0.5 * np.pi * (y1 - y2) / (x1 - x2) * np.sin(np.pi * (xk - x1) / (x2 - x1))
+        angle = np.arctan(tn) if x1 < x2 else np.pi - np.arctan(tn)
+        h1 = (x2 - x1) * (0.5 - 0.134)
+        h2 = (x2 - x1) * (0.5 + 0.134)
         line = ET.SubElement(
             parent,
             "path",
-            d=f"M {x1} {y1} C {x1 + h} {y1} {x1 + h} {y2} {x2} {y2}",
+            d=f"M {x1} {y1} C {x1 + h1} {y1} {x1 + h2} {y2} {x2} {y2}",
             stroke="black",
             fill="none",
         )
-        line.set("stroke-width", "4")
+        line.set("stroke-width", "2")
+        line.set("stroke-linecap", "round")
+        tip = ET.SubElement(
+            parent,
+            "path",
+            d=f"M0,0 L-{head_size - 4},-{head_size / 2 - 2} V{head_size / 2 - 2} Z",
+            fill="black",
+            stroke="black",
+            transform=f"translate({x2}, {y2}) rotate({angle * 180 / np.pi})",
+        )
+        tip.set("stroke-width", "4")
+        tip.set("stroke-linejoin", "round")
 
     def draw(self, vg: ViewGraph, buffer: BinaryIO) -> None:
         svg = ET.Element("svg", xmlns="http://www.w3.org/2000/svg")
@@ -379,38 +440,11 @@ class SVGDrawer(Drawer):
             y2 = dst_node.position[1] + dst_node.inputs[dst_sock][1]
             self._draw_edge(edges_group, x1, y1, x2, y2)
 
-        svg.append(edges_group)
         svg.append(nodes_group)
+        svg.append(edges_group)
         tree = ET.ElementTree(svg)
         svg.set("width", str(max(node.position[0] + node.size[0] for node in vg.nodes)))
         svg.set(
             "height", str(max(node.position[1] + node.size[1] for node in vg.nodes))
         )
         tree.write(buffer)
-
-
-if __name__ == "__main__":
-    from pathlib import Path
-
-    from pipewine.operators import *
-    from pipewine.sinks import *
-    from pipewine.sources import *
-    from pipewine.dataset import Dataset
-    from pipewine.sample import TypelessSample
-
-    wf = Workflow()
-    data1: Dataset[TypelessSample] = wf.node(UnderfolderSource(folder=Path("i1")))()
-    data2: Dataset[TypelessSample] = wf.node(UnderfolderSource(folder=Path("i2")))()
-    repeat = wf.node(RepeatOp(1000))(data1)
-    slice_ = wf.node(SliceOp(step=2))(repeat)
-    wf.node(UnderfolderSink(Path("o1")))(slice_)
-    cat = wf.node(CatOp())([data1, data2, repeat])
-    wf.node(UnderfolderSink(Path("o2")))(cat)
-    cat2 = wf.node(CatOp())([cat, slice_, data2])
-    wf.node(UnderfolderSink(Path("o3")))(cat2)
-
-    drawer = SVGDrawer()
-    layout = AsapLayout()
-
-    with open("/tmp/file.svg", "wb") as fp:
-        drawer.draw(layout.layout(wf), fp)

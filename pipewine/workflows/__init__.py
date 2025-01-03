@@ -1,16 +1,25 @@
+from pipewine.workflows.drawing import (
+    Drawer,
+    Layout,
+    OptimizedLayout,
+    SVGDrawer,
+    ViewEdge,
+    ViewGraph,
+    ViewNode,
+)
 from pipewine.workflows.events import Event, EventQueue, SharedMemoryEventQueue
-from pipewine.workflows.execution import NaiveWorkflowExecutor, WorkflowExecutor
-from pipewine.workflows.model import AnyAction, Workflow
+from pipewine.workflows.execution import SequentialWorkflowExecutor, WorkflowExecutor
+from pipewine.workflows.model import AnyAction, Workflow, Node, Edge, Proxy
 from pipewine.workflows.tracking import (
     CursesTracker,
+    NoTracker,
     Task,
     TaskCompleteEvent,
     TaskGroup,
-    TaskUpdateEvent,
     TaskStartEvent,
+    TaskUpdateEvent,
     Tracker,
     TrackingEvent,
-    NoTracker,
 )
 
 
@@ -21,7 +30,7 @@ def run_workflow(
     tracker: Tracker | None = None,
 ) -> None:
     event_queue = event_queue or SharedMemoryEventQueue()
-    executor = executor or NaiveWorkflowExecutor()
+    executor = executor or SequentialWorkflowExecutor()
     tracker = tracker or NoTracker()
     try:
         event_queue.start()

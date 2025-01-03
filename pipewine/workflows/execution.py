@@ -29,7 +29,7 @@ class WorkflowExecutor(ABC):
     def detach(self) -> None: ...
 
 
-class NaiveWorkflowExecutor(WorkflowExecutor):
+class SequentialWorkflowExecutor(WorkflowExecutor):
     def __init__(self) -> None:
         super().__init__()
         self._eq: EventQueue | None = None
@@ -43,12 +43,6 @@ class NaiveWorkflowExecutor(WorkflowExecutor):
         if self._eq is None:
             raise RuntimeError("Not attached to any event queue.")
         self._eq = None
-
-    def execute(self, workflow: Workflow) -> None:
-        sorted_graph = self._topological_sort(workflow)
-        state: dict[Proxy, Dataset] = {}
-        for node in sorted_graph:
-            self._execute_node(workflow, node, state)
 
     def _on_enter_cb(self, node: Node, loop_id: str, total: int) -> None:
         if self._eq is not None:
@@ -96,7 +90,7 @@ class NaiveWorkflowExecutor(WorkflowExecutor):
             elif all_int:
                 inputs_list = [None] * len(edges)
                 for edge in edges:
-                    inputs_list[cast(int, edge.src.socket)] = state[edge.src]  # type: ignore
+                    inputs_list[cast(int, edge.dst.socket)] = state[edge.src]  # type: ignore
                 if issubclass(action.input_type, tuple):
                     input_ = tuple(inputs_list)  # type: ignore
                 else:
@@ -104,7 +98,7 @@ class NaiveWorkflowExecutor(WorkflowExecutor):
             else:
                 inputs_dict = {}
                 for edge in edges:
-                    inputs_dict[cast(str, edge.src.socket)] = state[edge.src]
+                    inputs_dict[cast(str, edge.dst.socket)] = state[edge.src]
                 if issubclass(action.input_type, Bundle):
                     input_ = action.input_type(**inputs_dict)
                 else:
@@ -122,7 +116,8 @@ class NaiveWorkflowExecutor(WorkflowExecutor):
         elif isinstance(output, Mapping):
             for k, v in output.items():
                 state[Proxy(node, k)] = v
-        elif isinstance(output, Bundle):
+        else:
+            assert isinstance(output, Bundle)
             for k, v in output.as_dict().items():
                 state[Proxy(node, k)] = v
 
@@ -132,7 +127,10 @@ class NaiveWorkflowExecutor(WorkflowExecutor):
 
         def visit(node: Node) -> None:
             mark_of_node = mark.get(node, 0)
-            if mark_of_node == 1:
+            if mark_of_node == 1:  # pragma: no cover
+                # Excluding from coverage because it's pretty much impossible to create
+                # graphs with cycles with the current graph builder imperative approach.
+                # Might change in the future.
                 raise ValueError("The graph contains cycles.")
             if mark_of_node == 2:
                 return
@@ -145,3 +143,9 @@ class NaiveWorkflowExecutor(WorkflowExecutor):
         for node in workflow.get_nodes():
             visit(node)
         return result[::-1]
+
+    def execute(self, workflow: Workflow) -> None:
+        sorted_graph = self._topological_sort(workflow)
+        state: dict[Proxy, Dataset] = {}
+        for node in sorted_graph:
+            self._execute_node(workflow, node, state)
