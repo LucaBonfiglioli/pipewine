@@ -13,9 +13,9 @@ main_app.add_typer(op_app)
 main_app.add_typer(map_app)
 
 
-def main() -> None:
+def main() -> None:  # pragma: no cover
     main_app()
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     main()

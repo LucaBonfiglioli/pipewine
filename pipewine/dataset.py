@@ -1,5 +1,5 @@
 import math
-import typing as t
+from typing import overload
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Sequence
 from functools import partial
@@ -23,9 +23,9 @@ class Dataset[T: Sample](ABC, Sequence[T]):
     def __len__(self) -> int:
         return self.size()
 
-    @t.overload
+    @overload
     def __getitem__(self, idx: int) -> T: ...
-    @t.overload
+    @overload
     def __getitem__(self, idx: slice) -> "Dataset[T]": ...
     def __getitem__(self, idx: int | slice) -> T | "Dataset[T]":
         if isinstance(idx, int):
