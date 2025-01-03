@@ -8,16 +8,18 @@ import pytest
 from pipewine import (
     CatOp,
     Dataset,
+    RepeatOp,
+    SliceOp,
+    TypelessSample,
+    UnderfolderSink,
+    UnderfolderSource,
+)
+from pipewine.workflows import (
     Drawer,
     Edge,
     Layout,
     OptimizedLayout,
-    RepeatOp,
-    SliceOp,
     SVGDrawer,
-    TypelessSample,
-    UnderfolderSink,
-    UnderfolderSource,
     Workflow,
 )
 

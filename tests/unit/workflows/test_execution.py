@@ -1,31 +1,21 @@
 from collections import deque
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any
 
 import pytest
 
 from pipewine import (
     Bundle,
-    CatOp,
-    Dataset,
     DatasetOperator,
     DatasetSink,
     DatasetSource,
     ListDataset,
     MemoryItem,
     PickleParser,
-    RepeatOp,
-    SliceOp,
     TypelessSample,
-    SequentialWorkflowExecutor,
-    UnderfolderSink,
-    UnderfolderSource,
-    Workflow,
-    EventQueue,
-    Event,
 )
+from pipewine.workflows import Event, EventQueue, SequentialWorkflowExecutor, Workflow
 
 
 class MockQueue(EventQueue):

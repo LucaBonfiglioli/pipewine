@@ -1,17 +1,11 @@
-from collections.abc import Mapping, Sequence, Callable
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
+
 import pytest
 
-from pipewine import (
-    Bundle,
-    Dataset,
-    DatasetOperator,
-    DatasetSource,
-    DatasetSink,
-    Workflow,
-)
-
-from pipewine.workflows.model import Node, Edge, Proxy, _DefaultDict, _DefaultList
+from pipewine import Bundle, Dataset, DatasetOperator, DatasetSink, DatasetSource
+from pipewine.workflows import Edge, Node, Proxy, Workflow
+from pipewine.workflows.model import _DefaultDict, _DefaultList
 
 
 class MyBundle(Bundle[Dataset]):

@@ -5,7 +5,7 @@ from typing import no_type_check
 import pytest
 import curses
 
-from pipewine import (
+from pipewine.workflows import (
     CursesTracker,
     EventQueue,
     SharedMemoryEventQueue,

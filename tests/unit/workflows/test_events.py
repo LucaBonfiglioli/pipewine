@@ -7,7 +7,7 @@ from typing import cast
 
 import pytest
 
-from pipewine import Event, EventQueue, SharedMemoryEventQueue
+from pipewine.workflows import Event, EventQueue, SharedMemoryEventQueue
 
 
 @dataclass

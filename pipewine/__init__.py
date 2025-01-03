@@ -5,7 +5,6 @@ from pipewine.operators import *
 from pipewine.parsers import *
 from pipewine.sinks import *
 from pipewine.sources import *
-from pipewine.workflows import *
 from pipewine.bundle import Bundle, BundleMeta, DefaultBundle
 from pipewine.dataset import Dataset, ListDataset, LazyDataset
 from pipewine.grabber import Grabber
