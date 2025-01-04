@@ -18,18 +18,18 @@ To install **Pipewine**, run:
 pip install pipewine
 ```
 
-You can then verify whether `pipewine` was correctly installed by calling the CLI help:
+You can then verify whether `pipewine` was correctly installed by calling the CLI:
 
 ```bash
-pipewine --help
+pipewine --version
 ```
 
 !!! success
 
-    In case the installation is successful, you should see a typical Typer CLI help message starting with something like:
+    In case the installation is successful, you should see the version of the current Pipewine installation, e.g:
 
     ```
-    Usage: pipewine [OPTIONS] COMMAND [ARGS]...  
+    0.1.0
     ```
 
 !!! failure

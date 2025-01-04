@@ -4,6 +4,8 @@ repo_name: lucabonfiglioli/pipewine
 repo_url: https://github.com/lucabonfiglioli/pipewine
 theme:
   name: material
+  logo: assets/pipewine.svg
+  favicon: assets/pipewine.svg
   palette:
     # Palette toggle for automatic mode
     - media: "(prefers-color-scheme)"
@@ -39,12 +41,12 @@ extra_css:
 nav: 
   - index.md
   - 📖 Tutorial: 
+    - tutorial/overview.md
     - tutorial/installation.md
-    - tutorial/core.md
     - tutorial/data.md
     - tutorial/sources.md
     - tutorial/sinks.md
-    - tutorial/operations.md
+    - tutorial/operators.md
     - tutorial/workflows.md
     - tutorial/cli.md
 
