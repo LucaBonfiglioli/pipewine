@@ -1,3 +1,4 @@
+import curses
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -5,7 +6,7 @@ import numpy as np
 import pytest
 from pydantic import BaseModel
 
-from pipewine import Item, TypedSample, Dataset, UnderfolderSource
+from pipewine import Dataset, Item, TypedSample, UnderfolderSource
 
 
 @pytest.fixture
@@ -55,3 +56,14 @@ def letter_dataset(sample_data: Path) -> Dataset[LetterSample]:
     return UnderfolderSource(
         sample_data / "underfolders" / "underfolder_0", sample_type=LetterSample
     )()
+
+
+def noop(*args, **kwargs):
+    pass
+
+
+@pytest.fixture(autouse=True)
+def mock_curses(monkeypatch):
+    monkeypatch.setattr(curses, "cbreak", noop)
+    monkeypatch.setattr(curses, "nocbreak", noop)
+    monkeypatch.setattr(curses, "endwin", noop)

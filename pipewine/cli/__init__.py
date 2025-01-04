@@ -1,4 +1,4 @@
-from pipewine.cli.main import main_app
+from pipewine.cli.main import pipewine_app
 from pipewine.cli.mappers import map_cli
 from pipewine.cli.ops import op_cli
 from pipewine.cli.sinks import sink_cli

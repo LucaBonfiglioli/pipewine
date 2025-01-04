@@ -21,7 +21,7 @@ from pipewine.workflows import Event, EventQueue, SequentialWorkflowExecutor, Wo
 class MockQueue(EventQueue):
     def __init__(self) -> None:
         super().__init__()
-        self._queue = deque()
+        self._queue: deque[Event] = deque()
 
     def start(self) -> None:
         pass

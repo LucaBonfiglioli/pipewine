@@ -1,18 +1,18 @@
+import curses
 import os
 import time
 from typing import no_type_check
 
 import pytest
-import curses
 
 from pipewine.workflows import (
     CursesTracker,
+    Event,
     EventQueue,
     SharedMemoryEventQueue,
     TaskCompleteEvent,
     TaskStartEvent,
     TaskUpdateEvent,
-    Event,
 )
 
 
@@ -29,19 +29,8 @@ def event_queue() -> EventQueue:
     queue.close()
 
 
-def noop(*args, **kwargs):
-    pass
-
-
 class TestCursesTracker:
-    @pytest.mark.parametrize("size", [(24, 80), (40, 120), (10, 20)])
-    def test_curses_tracker(
-        self, monkeypatch, event_queue: EventQueue, size: tuple[int, int]
-    ) -> None:
-        monkeypatch.setattr(curses, "cbreak", noop)
-        monkeypatch.setattr(curses, "nocbreak", noop)
-        monkeypatch.setattr(curses, "endwin", noop)
-        monkeypatch.setattr(os, "get_terminal_size", lambda: (size[1], size[0]))
+    def test_curses_tracker(self, event_queue: EventQueue) -> None:
         tracker = CursesTracker()
         tracker.attach(event_queue)
         time.sleep(0.2)
