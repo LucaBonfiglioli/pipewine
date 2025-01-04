@@ -1,16 +1,16 @@
 ---
 name: Bug report
 about: Report buggy behavior, errors, crashes
-title: ''
+title: "[BUG]"
 labels: ''
 assignees: LucaBonfiglioli
 
 ---
 
-**Describe the bug**
+## Bug Description
 A clear and concise description of what the bug is.
 
-**System**
+## System
  - OS:
  - Python: 
  - Pipewine version: 
@@ -20,7 +20,7 @@ A clear and concise description of what the bug is.
    ``` 
  - If relevant, feel free to add additional system data. E.g. in a CLI-related question, knowing the shell type and version could help.
 
-**To Reproduce**
+## Steps to Reproduce
 Provide a minimal list of instructions to reproduce the bug. Bugs that cannot be reproduced won't be fixed.
 
 Keep it short! Once you observe a bug, do the following:
@@ -32,9 +32,9 @@ Keep it short! Once you observe a bug, do the following:
 # buggy_program.py
 ```
 
-**Observed behavior**
+## Observed Behavior
 What is the outcome of the buggy program? 
 
-**Expected behavior**
+## Expected Behavior
 What would be the output of the program if the bug weren't there?
 You can omit this section in case of crashes.
