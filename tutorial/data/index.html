@@ -11,13 +11,13 @@
         <link rel="canonical" href="https://github.com/lucabonfiglioli/tutorial/data/">
       
       
-        <link rel="prev" href="../core/">
+        <link rel="prev" href="../installation/">
       
       
         <link rel="next" href="../sources/">
       
       
-      <link rel="icon" href="../../assets/images/favicon.png">
+      <link rel="icon" href="../../assets/pipewine.svg">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.49">
     
     
@@ -92,8 +92,7 @@
   <nav class="md-header__inner md-grid" aria-label="Header">
     <a href="../.." title="Pipewine" class="md-header__button md-logo" aria-label="Pipewine" data-md-component="logo">
       
-  
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+  <img src="../../assets/pipewine.svg" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -248,7 +247,7 @@
     
     
       <li class="md-tabs__item md-tabs__item--active">
-        <a href="../installation/" class="md-tabs__link">
+        <a href="../overview/" class="md-tabs__link">
           
   
   📖 Tutorial
@@ -283,8 +282,7 @@
   <label class="md-nav__title" for="__drawer">
     <a href="../.." title="Pipewine" class="md-nav__button md-logo" aria-label="Pipewine" data-md-component="logo">
       
-  
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+  <img src="../../assets/pipewine.svg" alt="logo">
 
     </a>
     Pipewine
@@ -374,11 +372,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../installation/" class="md-nav__link">
+      <a href="../overview/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    🛠️ Installation
+    💠 Overview
   </span>
   
 
@@ -395,11 +393,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../core/" class="md-nav__link">
+      <a href="../installation/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    💠 Core Concepts
+    🛠️ Installation
   </span>
   
 
@@ -425,6 +423,17 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    🗃️ Data Model
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -434,6 +443,88 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#immutability" class="md-nav__link">
+    <span class="md-ellipsis">
+      Immutability
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dataset" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dataset
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sample" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sample
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#item" class="md-nav__link">
+    <span class="md-ellipsis">
+      Item
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#parser" class="md-nav__link">
+    <span class="md-ellipsis">
+      Parser
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#readstorage" class="md-nav__link">
+    <span class="md-ellipsis">
+      ReadStorage
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -489,11 +580,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../operations/" class="md-nav__link">
+      <a href="../operators/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    ⚙️ Operations
+    ⚙️ Operators
   </span>
   
 
@@ -572,6 +663,77 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#immutability" class="md-nav__link">
+    <span class="md-ellipsis">
+      Immutability
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dataset" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dataset
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sample" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sample
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#item" class="md-nav__link">
+    <span class="md-ellipsis">
+      Item
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#parser" class="md-nav__link">
+    <span class="md-ellipsis">
+      Parser
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#readstorage" class="md-nav__link">
+    <span class="md-ellipsis">
+      ReadStorage
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -589,6 +751,92 @@
 
 
 <h1 id="data-model">🗃️ Data Model</h1>
+<h2 id="overview">Overview</h2>
+<p>Pipewine <strong>data model</strong> is composed of three main abstractions: </p>
+<ul>
+<li><strong>Dataset</strong> - A <strong>Sequence</strong> of <code>Sample</code> instances, where "sequence" means an ordered collection that supports indexing, slicing and iteration.</li>
+<li><strong>Sample</strong> - A <strong>Mapping</strong> of strings to <code>Item</code> instances, where "mapping" means a set of key-value pairs that supports indexing and iteration. </li>
+<li><strong>Item</strong> - An object that has access to the underlying data unit. E.g. images, text, structured metadata, numpy arrays, and whatever serializable object you may want to include in your dataset.</li>
+</ul>
+<p>Plus, some lower level components that are detailed later on. You can disregard them for now:</p>
+<ul>
+<li><strong>Parser</strong> - Defines how an item should encode/decode the associated data.</li>
+<li><strong>ReadStorage</strong> - Defines how an item should access data stored elsewhere.</li>
+</ul>
+<iframe style="border:none" width="800" height="450" src="https://whimsical.com/embed/S8SpLwdz7iiZ9HZFsjjJYB@YbhPqJZAwhQ5dRk3XgrxbuF8o4HtB46rKFdcY"></iframe>
+
+<h2 id="immutability">Immutability</h2>
+<p>All data model types are <strong>immutable</strong>. Their inner state is hidden in private fields and methods and should never be modified in-place. Instead, they provide public methods that return copies with altered values, leaving the original object intact.</p>
+<p>With immutability, a design decision inherited by the old Pipelime, we can be certain that every object is in the correct state everytime, since it cannot possibly change, and this prevents many issues when the same function is run multiple times, possibly in non-deterministic order.</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<p>Let's say you have a sample containing an item named <code>image</code> with an RGB image. You want to resize the image reducing the resolution to 50% of the original size.</p>
+<p>To change the image in a sample, you need to create a <strong>new sample</strong> in which the <code>image</code> item contains the resized image.</p>
+<div class="language-py highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">def</span> <span class="nf">half_res</span><span class="p">(</span><span class="n">image</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="c1"># Some code that downscales an image by 50%</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="o">...</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="c1"># Read the image (more details later)</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="n">image</span> <span class="o">=</span> <span class="n">sample</span><span class="p">[</span><span class="s2">&quot;image&quot;</span><span class="p">]()</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="c1"># Downscale the image</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="n">half_image</span> <span class="o">=</span> <span class="n">half_res</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="c1"># Create a new sample with the new (downscaled) image</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="n">new_sample</span> <span class="o">=</span> <span class="n">sample</span><span class="o">.</span><span class="n">with_value</span><span class="p">(</span><span class="s2">&quot;image&quot;</span><span class="p">,</span> <span class="n">half_image</span><span class="p">)</span>
+</span></code></pre></div>
+<p>At the end of the snippet above, the <code>sample</code> variable will still contain the original full-size image. Instead, <code>new_sample</code> will contain the new resized image.</p>
+</div>
+<p>There are only two exceptions to this immutability rule:</p>
+<ol>
+<li><strong>Caches</strong>: They need to change their state to save time when the result of a computation is already known. Since all other data is immutable, caches never need to be invalidated.</li>
+<li><strong>Inner data</strong>: While all pipewine data objects are immutable, this may not be true for the data contained within them. If your item contains mutable objects, you are able to modify them implace. <strong>But never do that!</strong> </li>
+</ol>
+<p>When dealing with mutable data structures inside your items, make sure you either:</p>
+<ul>
+<li>Access the data without applying changes.</li>
+<li>Create a copy of the data before applying in-place changes.</li>
+</ul>
+<div class="admonition danger">
+<p class="admonition-title">Danger</p>
+<p>Never do this!</p>
+<div class="language-py highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Read the image from a sample</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">image</span> <span class="o">=</span> <span class="n">sample</span><span class="p">[</span><span class="s2">&quot;image&quot;</span><span class="p">]()</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Apply some in-place changes to image</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="n">image</span> <span class="o">+=</span> <span class="mi">1</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="n">image</span> <span class="o">*=</span> <span class="mf">0.9</span> 
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="n">image</span> <span class="o">+=</span> <span class="mi">1</span>   
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="c1"># Create a new sample with the new image</span>
+</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="n">new_sample</span> <span class="o">=</span> <span class="n">sample</span><span class="o">.</span><span class="n">with_value</span><span class="p">(</span><span class="s2">&quot;image&quot;</span><span class="p">,</span> <span class="n">image</span><span class="p">)</span>
+</span></code></pre></div>
+<p>The modified image will be present both in the old and new sample, violating the immutability rule.</p>
+</div>
+<div class="admonition success">
+<p class="admonition-title">Success</p>
+<p>Do this instead!</p>
+<div class="language-py highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Read the image from a sample</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">image</span> <span class="o">=</span> <span class="n">sample</span><span class="p">[</span><span class="s2">&quot;image&quot;</span><span class="p">]()</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Create a copy of the image with modified data</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="n">image</span> <span class="o">=</span> <span class="n">image</span> <span class="o">+</span> <span class="mi">1</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1"># Since image is now a copy of the original data, you can now apply all </span>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="c1"># the in-place changes you like now. </span>
+</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="n">image</span> <span class="o">*=</span> <span class="mf">0.9</span> <span class="c1"># Perfectly safe</span>
+</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="n">image</span> <span class="o">+=</span> <span class="mi">1</span>   <span class="c1"># Perfectly safe</span>
+</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>
+</span><span id="__span-2-12"><a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="c1"># Create a new sample with the new image</span>
+</span><span id="__span-2-13"><a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="n">new_sample</span> <span class="o">=</span> <span class="n">sample</span><span class="o">.</span><span class="n">with_value</span><span class="p">(</span><span class="s2">&quot;image&quot;</span><span class="p">,</span> <span class="n">image</span><span class="p">)</span>
+</span></code></pre></div>
+<p>The modified image will be present only in the new sample.</p>
+</div>
+<h2 id="dataset">Dataset</h2>
+<h2 id="sample">Sample</h2>
+<h2 id="item">Item</h2>
+<h2 id="parser">Parser</h2>
+<h2 id="readstorage">ReadStorage</h2>
 
 
 

@@ -8,21 +8,21 @@
       
       
       
-        <link rel="canonical" href="https://github.com/lucabonfiglioli/tutorial/operations/">
+        <link rel="canonical" href="https://github.com/lucabonfiglioli/tutorial/overview/">
       
       
-        <link rel="prev" href="../sinks/">
+        <link rel="prev" href="../..">
       
       
-        <link rel="next" href="../workflows/">
+        <link rel="next" href="../installation/">
       
       
-      <link rel="icon" href="../../assets/images/favicon.png">
+      <link rel="icon" href="../../assets/pipewine.svg">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.49">
     
     
       
-        <title>⚙️ Operations - Pipewine</title>
+        <title>💠 Overview - Pipewine</title>
       
     
     
@@ -76,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#operations" class="md-skip">
+        <a href="#overview" class="md-skip">
           Skip to content
         </a>
       
@@ -92,8 +92,7 @@
   <nav class="md-header__inner md-grid" aria-label="Header">
     <a href="../.." title="Pipewine" class="md-header__button md-logo" aria-label="Pipewine" data-md-component="logo">
       
-  
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+  <img src="../../assets/pipewine.svg" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -110,7 +109,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              ⚙️ Operations
+              💠 Overview
             
           </span>
         </div>
@@ -248,7 +247,7 @@
     
     
       <li class="md-tabs__item md-tabs__item--active">
-        <a href="../installation/" class="md-tabs__link">
+        <a href="./" class="md-tabs__link">
           
   
   📖 Tutorial
@@ -283,8 +282,7 @@
   <label class="md-nav__title" for="__drawer">
     <a href="../.." title="Pipewine" class="md-nav__button md-logo" aria-label="Pipewine" data-md-component="logo">
       
-  
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+  <img src="../../assets/pipewine.svg" alt="logo">
 
     </a>
     Pipewine
@@ -371,18 +369,94 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../installation/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    💠 Overview
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   <span class="md-ellipsis">
-    🛠️ Installation
+    💠 Overview
   </span>
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#high-level" class="md-nav__link">
+    <span class="md-ellipsis">
+      High Level
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#extendibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      Extendibility
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-note-on-performance" class="md-nav__link">
+    <span class="md-ellipsis">
+      A Note on Performance
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-note-on-scalability" class="md-nav__link">
+    <span class="md-ellipsis">
+      A Note on Scalability
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -395,11 +469,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../core/" class="md-nav__link">
+      <a href="../installation/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    💠 Core Concepts
+    🛠️ Installation
   </span>
   
 
@@ -476,28 +550,18 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../operators/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    ⚙️ Operations
+    ⚙️ Operators
   </span>
   
 
       </a>
-      
     </li>
   
 
@@ -572,6 +636,50 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#high-level" class="md-nav__link">
+    <span class="md-ellipsis">
+      High Level
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#extendibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      Extendibility
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-note-on-performance" class="md-nav__link">
+    <span class="md-ellipsis">
+      A Note on Performance
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-note-on-scalability" class="md-nav__link">
+    <span class="md-ellipsis">
+      A Note on Scalability
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -588,7 +696,51 @@
   
 
 
-<h1 id="operations">⚙️ Operations</h1>
+<h1 id="overview">💠 Overview</h1>
+<h2 id="high-level">High Level</h2>
+<p><strong>Pipewine</strong> provides you with tools to help decouple what you do with data from the way data is represented and stored. It does so by providing a set of abstractions for many aspects of your data pipeline:</p>
+<ul>
+<li><code>Dataset</code>, <code>Sample</code>, <code>Item</code> define how the data is structured, how many data samples are there, in which order, what is their content, how are they accessed etc...</li>
+<li>More low-level abstractions such as <code>Parser</code> and <code>ReadStorage</code> define how data is encoded and stored. </li>
+<li><code>DatasetSource</code>, <code>DatasetSink</code>, <code>DatasetOperator</code> define how the data is read, written and transformed, and consistitute the base building blocks for workflows.</li>
+<li><code>Workflow</code> defines how a set of operators are interconnected. They can be seen as DAGs (Directed Acyclic Graph) in which nodes are sources, sinks or operators, and edges are datasets. </li>
+</ul>
+<p>All of these components are designed to allow the user to easily create custom implementations that can be seamlessly integrated with all the built-in blocks.</p>
+<p>By doing so, Pipewine (much like Pipelime) encourages you to write components that are likely to be highly re-usable.</p>
+<iframe style="border:none" width="800" height="450" src="https://whimsical.com/embed/S8SpLwdz7iiZ9HZFsjjJYB@6HYTAunKLgTUesrFqzeTZY9X3YMh3oKU2qNqAphr4F1BXn7"></iframe>
+
+<h2 id="extendibility">Extendibility</h2>
+<p><strong>Pipewine</strong> is <strong>completely agnostic</strong> on the following aspects of your data:</p>
+<ul>
+<li><strong>Storage location</strong>: you can store data anywhere you want, on the file system, on a DB of your choice, on the device memory, on a remote source. You just need to implement the necessary components. </li>
+<li><strong>Data encoding</strong>: By default Pipewine supports some popular image encodings, JSON/YAML metadata, numpy encoding for array data and Pickle encoding for generic python objects. You can easily add custom encodings to read/write data as you like.</li>
+<li><strong>Data format</strong>: By default Pipewine supports the same built-in dataset format as Pipelime, a file system based format called "Underfolder" that is flexible to most use-cases but has a few limitations. Dataset formats are highly dependent on the application, thus Pipewine allows you to fully take control on how to structure your datasets.</li>
+<li><strong>Data operators</strong>: As mentioned previously, you can define custom operators that do all sorts of things with your data. Built-in operators cover some common things you may want to do at some point such as concatenating two or more datasets, filtering samples based on a criterion, splitting datasets into smaller chunks, apply the same function (called <code>Mapper</code>) to all samples of a dataset.  </li>
+</ul>
+<h2 id="a-note-on-performance">A Note on Performance</h2>
+<p>Pipewine is a python package and it's currently 100% python, therefore it's certainly going to be orders of magnitude slower than it could be if written in another language.</p>
+<p>Having said that, Pipewine still tries its best to maximize efficiency by leveraging:</p>
+<ul>
+<li><strong>Caching</strong>: Results of computations can be cached to avoid being computed multiple times. This was also done by Pipelime, but they way cache works underwent many changes in the rewrite.</li>
+<li><strong>Parallelism</strong>: Many operations are automatically run in parallel with a multi-processing pool of workers. </li>
+<li><strong>Linking</strong>: When writing to file system, Pipewine automatically attempts to leverage hard-links where possible to avoid serializing and writing the same file multiple times.</li>
+<li><strong>Vectorization</strong>: Where possible, Pipewine uses Numpy to perform vectorized computation on batches of data, achieving better performance if compared to plain python code.</li>
+</ul>
+<p>Furthermore, when performing complex operations such as image processing, inference with AI models, 3D data processing, the performance overhead of Pipewine will likely become negligible if compared to the complexity of the individual operations.</p>
+<h2 id="a-note-on-scalability">A Note on Scalability</h2>
+<p><strong>Pipewine</strong> - and its predecessor Pipelime - are meant to quickly let you manipulate data without either having to:</p>
+<ul>
+<li>Coding everything from scratch and come up with meaningful abstractions yourself. </li>
+<li>Setting up complex and expensive frameworks that can run data pipelines on distributed systems with many nodes.</li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>If you are running data pipelines on petabytes of data, in distributed systems, with strong consistency requirements and the need for data replication at each step, Pipewine <strong>is not</strong> what you are looking for.</p>
+</div>
+<div class="admonition success">
+<p class="admonition-title">Success</p>
+<p>If you need to run data pipelines on small/medium datasets (in the order of gigabytes) and want a flexible tool to help you do that, then Pipewine <strong>might be</strong> what you are looking for.</p>
+</div>
 
 
 

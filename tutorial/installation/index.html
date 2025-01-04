@@ -11,13 +11,13 @@
         <link rel="canonical" href="https://github.com/lucabonfiglioli/tutorial/installation/">
       
       
-        <link rel="prev" href="../..">
+        <link rel="prev" href="../overview/">
       
       
-        <link rel="next" href="../core/">
+        <link rel="next" href="../data/">
       
       
-      <link rel="icon" href="../../assets/images/favicon.png">
+      <link rel="icon" href="../../assets/pipewine.svg">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.49">
     
     
@@ -92,8 +92,7 @@
   <nav class="md-header__inner md-grid" aria-label="Header">
     <a href="../.." title="Pipewine" class="md-header__button md-logo" aria-label="Pipewine" data-md-component="logo">
       
-  
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+  <img src="../../assets/pipewine.svg" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -248,7 +247,7 @@
     
     
       <li class="md-tabs__item md-tabs__item--active">
-        <a href="./" class="md-tabs__link">
+        <a href="../overview/" class="md-tabs__link">
           
   
   📖 Tutorial
@@ -283,8 +282,7 @@
   <label class="md-nav__title" for="__drawer">
     <a href="../.." title="Pipewine" class="md-nav__button md-logo" aria-label="Pipewine" data-md-component="logo">
       
-  
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+  <img src="../../assets/pipewine.svg" alt="logo">
 
     </a>
     Pipewine
@@ -366,6 +364,27 @@
             📖 Tutorial
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../overview/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    💠 Overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -453,27 +472,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../core/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    💠 Core Concepts
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../data/" class="md-nav__link">
         
   
@@ -537,11 +535,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../operations/" class="md-nav__link">
+      <a href="../operators/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    ⚙️ Operations
+    ⚙️ Operators
   </span>
   
 
@@ -677,13 +675,13 @@
 <p>To install <strong>Pipewine</strong>, run:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pip<span class="w"> </span>install<span class="w"> </span>pipewine
 </span></code></pre></div>
-<p>You can then verify whether <code>pipewine</code> was correctly installed by calling the CLI help:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pipewine<span class="w"> </span>--help
+<p>You can then verify whether <code>pipewine</code> was correctly installed by calling the CLI:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pipewine<span class="w"> </span>--version
 </span></code></pre></div>
 <div class="admonition success">
 <p class="admonition-title">Success</p>
-<p>In case the installation is successful, you should see a typical Typer CLI help message starting with something like:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Usage: pipewine [OPTIONS] COMMAND [ARGS]...  
+<p>In case the installation is successful, you should see the version of the current Pipewine installation, e.g:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>0.1.0
 </span></code></pre></div>
 </div>
 <div class="admonition failure">

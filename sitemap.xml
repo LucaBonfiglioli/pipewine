@@ -9,10 +9,6 @@
          <lastmod>2025-01-04</lastmod>
     </url>
     <url>
-         <loc>https://github.com/lucabonfiglioli/tutorial/core/</loc>
-         <lastmod>2025-01-04</lastmod>
-    </url>
-    <url>
          <loc>https://github.com/lucabonfiglioli/tutorial/data/</loc>
          <lastmod>2025-01-04</lastmod>
     </url>
@@ -21,7 +17,11 @@
          <lastmod>2025-01-04</lastmod>
     </url>
     <url>
-         <loc>https://github.com/lucabonfiglioli/tutorial/operations/</loc>
+         <loc>https://github.com/lucabonfiglioli/tutorial/operators/</loc>
+         <lastmod>2025-01-04</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/tutorial/overview/</loc>
          <lastmod>2025-01-04</lastmod>
     </url>
     <url>
