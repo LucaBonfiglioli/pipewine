@@ -13,15 +13,17 @@ class PydanticLike(Protocol):
     def model_dump(self) -> dict: ...
 
 
-class JSONParser[T: dict | PydanticLike](Parser[T]):
+class JSONParser[T: str | int | float | bool | dict | list | PydanticLike](Parser[T]):
     def parse(self, data: bytes) -> T:
         json_data = json.loads(data.decode())
-        if self._type is None or issubclass(self._type, dict):
+        if self._type is None:
             return json_data
+        elif issubclass(self._type, (str, int, float, bool, dict, list)):
+            return self._type(json_data)
         return self._type.model_validate(json_data)
 
     def dump(self, data: T) -> bytes:
-        if isinstance(data, dict):
+        if isinstance(data, (str, int, float, bool, dict, list)):
             json_data = data
         else:
             json_data = data.model_dump()
@@ -32,18 +34,18 @@ class JSONParser[T: dict | PydanticLike](Parser[T]):
         return ["json"]
 
 
-class YAMLParser[T: str | int | float | dict | list | PydanticLike](Parser[T]):
+class YAMLParser[T: str | int | float | bool | dict | list | PydanticLike](Parser[T]):
     def parse(self, data: bytes) -> T:
         yaml_data = yaml.safe_load(data.decode())
         if self._type is None:
             return yaml_data
-        elif issubclass(self._type, (str, int, float, dict, list)):
+        elif issubclass(self._type, (str, int, float, bool, dict, list)):
             return self._type(yaml_data)  # type: ignore
         else:
             return self._type.model_validate(yaml_data)
 
     def dump(self, data: T) -> bytes:
-        if isinstance(data, (str, int, float, dict, list)):
+        if isinstance(data, (str, int, float, bool, dict, list)):
             yaml_data = data
         else:
             yaml_data = data.model_dump()

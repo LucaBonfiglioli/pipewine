@@ -7,7 +7,7 @@ from pipewine.item import StoredItem
 from pipewine.parsers import ParserRegistry
 from pipewine.sample import Sample, TypedSample, TypelessSample
 from pipewine.sources.base import LazyDatasetSource
-from pipewine.storage import LocalFileReadStorage
+from pipewine.reader import LocalFileReader
 
 
 class UnderfolderSource[T: Sample](LazyDatasetSource[T]):
@@ -102,7 +102,7 @@ class UnderfolderSource[T: Sample](LazyDatasetSource[T]):
                 "is correct and/or implement a custom Parser for it.",
             )
             return None
-        storage = LocalFileReadStorage(v)
+        reader = LocalFileReader(v)
         annotated_type = None
         if issubclass(self.sample_type, TypedSample):
             annotation = self.sample_type.__annotations__.get(k)
@@ -114,10 +114,10 @@ class UnderfolderSource[T: Sample](LazyDatasetSource[T]):
                 annotated_type = annotation.__args__[0]
         parser = parser_type(type_=annotated_type)
         if k in self._root_files:
-            result = StoredItem(storage, parser, shared=True)
+            result = StoredItem(reader, parser, shared=True)
             self._root_items[k] = result
         else:
-            result = StoredItem(storage, parser, shared=False)
+            result = StoredItem(reader, parser, shared=False)
         return result
 
     def _get_sample(self, idx: int) -> T:

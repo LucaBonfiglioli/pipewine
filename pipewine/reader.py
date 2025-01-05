@@ -2,13 +2,13 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 
 
-class ReadStorage(ABC):
+class Reader(ABC):
     @abstractmethod
     def read(self) -> bytes:
         pass
 
 
-class LocalFileReadStorage(ReadStorage):
+class LocalFileReader(Reader):
     def __init__(self, path: Path):
         self._path = path
 

@@ -8,7 +8,7 @@ from pipewine import (
     Dataset,
     Sample,
     StoredItem,
-    LocalFileReadStorage,
+    LocalFileReader,
 )
 import shutil
 
@@ -120,8 +120,8 @@ class TestUnderfolderSource:
             assert isinstance(sample, expected_type)
             for k, v in sample.items():
                 assert isinstance(v, StoredItem)
-                assert isinstance(v.storage, LocalFileReadStorage)
-                fname = v.storage.path.stem
+                assert isinstance(v.reader, LocalFileReader)
+                fname = v.reader.path.stem
                 if v.is_shared:
                     assert fname == k
                 else:

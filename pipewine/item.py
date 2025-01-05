@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Self
 
 from pipewine.parsers import Parser
-from pipewine.storage import ReadStorage
+from pipewine.reader import Reader
 
 
 class Item[T: Any](ABC):
@@ -56,15 +56,13 @@ class MemoryItem[T: Any](Item[T]):
 
 
 class StoredItem[T: Any](Item[T]):
-    def __init__(
-        self, storage: ReadStorage, parser: Parser[T], shared: bool = False
-    ) -> None:
-        self._storage = storage
+    def __init__(self, reader: Reader, parser: Parser[T], shared: bool = False) -> None:
+        self._reader = reader
         self._parser = parser
         self._shared = shared
 
     def _get(self) -> T:
-        return self._parser.parse(self._storage.read())
+        return self._parser.parse(self._reader.read())
 
     def _get_parser(self) -> Parser[T]:
         return self._parser
@@ -73,11 +71,11 @@ class StoredItem[T: Any](Item[T]):
         return self._shared
 
     def with_sharedness(self, shared: bool) -> Self:
-        return type(self)(self._storage, self._parser, shared=shared)
+        return type(self)(self._reader, self._parser, shared=shared)
 
     @property
-    def storage(self) -> ReadStorage:
-        return self._storage
+    def reader(self) -> Reader:
+        return self._reader
 
 
 class CachedItem[T: Any](Item[T]):

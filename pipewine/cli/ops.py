@@ -346,7 +346,7 @@ def op_callback(
 op_app = Typer(
     callback=op_callback,
     name="op",
-    help="Run a pipewine dataset operation.",
+    help="Run a pipewine dataset operator.",
     invoke_without_command=True,
     no_args_is_help=True,
 )

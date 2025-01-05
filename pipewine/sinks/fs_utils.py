@@ -5,7 +5,7 @@ from enum import Enum
 from pathlib import Path
 
 from pipewine.item import CachedItem, Item, StoredItem
-from pipewine.storage import LocalFileReadStorage
+from pipewine.reader import LocalFileReader
 
 
 class CopyPolicy(str, Enum):
@@ -70,10 +70,10 @@ def write_item_to_file(item: Item, file: Path, copy_policy: CopyPolicy) -> None:
     errors: list[tuple] = []
     if (
         isinstance(item, StoredItem)
-        and isinstance(item.storage, LocalFileReadStorage)
-        and item.storage.path.is_file()
+        and isinstance(item.reader, LocalFileReader)
+        and item.reader.path.is_file()
     ):
-        src = item.storage.path
+        src = item.reader.path
         if copy_policy == CopyPolicy.HARD_LINK:
             if _try_copy(os.link, str(src), str(file), errors):
                 return

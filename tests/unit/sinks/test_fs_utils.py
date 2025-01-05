@@ -10,7 +10,7 @@ from pipewine import (
     CachedItem,
     CopyPolicy,
     Item,
-    LocalFileReadStorage,
+    LocalFileReader,
     MemoryItem,
     Parser,
     StoredItem,
@@ -62,7 +62,7 @@ class StringParser(Parser[str]):
             CopyPolicy.REWRITE,
         ],
         [
-            StoredItem(LocalFileReadStorage(Path()), StringParser()),
+            StoredItem(LocalFileReader(Path()), StringParser()),
             CopyPolicy.HARD_LINK,
             False,
             False,
@@ -70,7 +70,7 @@ class StringParser(Parser[str]):
             CopyPolicy.HARD_LINK,
         ],
         [
-            StoredItem(LocalFileReadStorage(Path()), StringParser()),
+            StoredItem(LocalFileReader(Path()), StringParser()),
             CopyPolicy.HARD_LINK,
             True,
             False,
@@ -78,7 +78,7 @@ class StringParser(Parser[str]):
             CopyPolicy.REPLICATE,
         ],
         [
-            StoredItem(LocalFileReadStorage(Path()), StringParser()),
+            StoredItem(LocalFileReader(Path()), StringParser()),
             CopyPolicy.HARD_LINK,
             True,
             True,
@@ -86,7 +86,7 @@ class StringParser(Parser[str]):
             CopyPolicy.REWRITE,
         ],
         [
-            StoredItem(LocalFileReadStorage(Path()), StringParser()),
+            StoredItem(LocalFileReader(Path()), StringParser()),
             CopyPolicy.HARD_LINK,
             True,
             True,
@@ -94,7 +94,7 @@ class StringParser(Parser[str]):
             None,
         ],
         [
-            StoredItem(LocalFileReadStorage(Path()), StringParser()),
+            StoredItem(LocalFileReader(Path()), StringParser()),
             CopyPolicy.SYMBOLIC_LINK,
             False,
             False,
@@ -102,7 +102,7 @@ class StringParser(Parser[str]):
             CopyPolicy.SYMBOLIC_LINK,
         ],
         [
-            StoredItem(LocalFileReadStorage(Path()), StringParser()),
+            StoredItem(LocalFileReader(Path()), StringParser()),
             CopyPolicy.SYMBOLIC_LINK,
             True,
             False,
@@ -110,7 +110,7 @@ class StringParser(Parser[str]):
             CopyPolicy.REPLICATE,
         ],
         [
-            StoredItem(LocalFileReadStorage(Path()), StringParser()),
+            StoredItem(LocalFileReader(Path()), StringParser()),
             CopyPolicy.SYMBOLIC_LINK,
             True,
             True,
@@ -118,7 +118,7 @@ class StringParser(Parser[str]):
             CopyPolicy.REWRITE,
         ],
         [
-            StoredItem(LocalFileReadStorage(Path()), StringParser()),
+            StoredItem(LocalFileReader(Path()), StringParser()),
             CopyPolicy.SYMBOLIC_LINK,
             True,
             True,
@@ -126,7 +126,7 @@ class StringParser(Parser[str]):
             None,
         ],
         [
-            StoredItem(LocalFileReadStorage(Path()), StringParser()),
+            StoredItem(LocalFileReader(Path()), StringParser()),
             CopyPolicy.REPLICATE,
             False,
             False,
@@ -134,7 +134,7 @@ class StringParser(Parser[str]):
             CopyPolicy.REPLICATE,
         ],
         [
-            StoredItem(LocalFileReadStorage(Path()), StringParser()),
+            StoredItem(LocalFileReader(Path()), StringParser()),
             CopyPolicy.REPLICATE,
             False,
             True,
@@ -142,7 +142,7 @@ class StringParser(Parser[str]):
             CopyPolicy.REWRITE,
         ],
         [
-            StoredItem(LocalFileReadStorage(Path()), StringParser()),
+            StoredItem(LocalFileReader(Path()), StringParser()),
             CopyPolicy.REPLICATE,
             False,
             True,
@@ -150,7 +150,7 @@ class StringParser(Parser[str]):
             None,
         ],
         [
-            StoredItem(LocalFileReadStorage(Path()), StringParser()),
+            StoredItem(LocalFileReader(Path()), StringParser()),
             CopyPolicy.REWRITE,
             False,
             False,
@@ -158,7 +158,7 @@ class StringParser(Parser[str]):
             CopyPolicy.REWRITE,
         ],
         [
-            StoredItem(LocalFileReadStorage(Path()), StringParser()),
+            StoredItem(LocalFileReader(Path()), StringParser()),
             CopyPolicy.REWRITE,
             False,
             True,
@@ -180,7 +180,7 @@ def test_write_item_to_file(
 ) -> None:
     dst = tmp_path / "file"
     if isinstance(item, StoredItem):
-        item._storage = LocalFileReadStorage(sample_data / "items" / "data.txt")
+        item._reader = LocalFileReader(sample_data / "items" / "data.txt")
     if link_fails:
         monkeypatch.setattr(os, "link", fail_on_purpose)
         monkeypatch.setattr(os, "symlink", fail_on_purpose)
@@ -198,16 +198,16 @@ def test_write_item_to_file(
         return
 
     assert dst.exists()
-    re_item = StoredItem(LocalFileReadStorage(dst), item.parser)
+    re_item = StoredItem(LocalFileReader(dst), item.parser)
     assert re_item() == item()
     if actual_policy == CopyPolicy.HARD_LINK:
         source_item = item
         if isinstance(source_item, CachedItem):
             source_item = source_item.source_recursive()
         assert isinstance(source_item, StoredItem)
-        assert isinstance(source_item.storage, LocalFileReadStorage)
+        assert isinstance(source_item.reader, LocalFileReader)
         a_string = "A very peculiar string that only I can think of"
-        with open(source_item.storage.path, "w") as fp:
+        with open(source_item.reader.path, "w") as fp:
             fp.write(a_string)
         with open(dst, "r") as fp:
             assert fp.read() == a_string

@@ -5,7 +5,7 @@
 **Pipewine** provides you with tools to help decouple what you do with data from the way data is represented and stored. It does so by providing a set of abstractions for many aspects of your data pipeline:
 
 - `Dataset`, `Sample`, `Item` define how the data is structured, how many data samples are there, in which order, what is their content, how are they accessed etc...
-- More low-level abstractions such as `Parser` and `ReadStorage` define how data is encoded and stored. 
+- More low-level abstractions such as `Parser` and `Reader` define how data is encoded and stored. 
 - `DatasetSource`, `DatasetSink`, `DatasetOperator` define how the data is read, written and transformed, and consistitute the base building blocks for workflows.
 - `Workflow` defines how a set of operators are interconnected. They can be seen as DAGs (Directed Acyclic Graph) in which nodes are sources, sinks or operators, and edges are datasets. 
 

@@ -10,4 +10,4 @@ from pipewine.dataset import Dataset, ListDataset, LazyDataset
 from pipewine.grabber import Grabber
 from pipewine.item import Item, StoredItem, MemoryItem, CachedItem
 from pipewine.sample import Sample, TypedSample, TypelessSample
-from pipewine.storage import ReadStorage, LocalFileReadStorage
+from pipewine.reader import Reader, LocalFileReader

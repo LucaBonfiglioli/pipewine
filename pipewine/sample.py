@@ -41,9 +41,6 @@ class Sample(ABC, Mapping[str, Item]):
         items = {k: self._get_item(k) for k in self.keys() if k in keys}
         return TypelessSample(**items)
 
-    def typeless(self) -> "TypelessSample":
-        return TypelessSample(**self)
-
     def remap(
         self, fromto: Mapping[str, str], exclude: bool = False
     ) -> "TypelessSample":
@@ -55,6 +52,9 @@ class Sample(ABC, Mapping[str, Item]):
             if k_from in items:
                 items[k_to] = items.pop(k_from)
         return TypelessSample(**items)
+
+    def typeless(self) -> "TypelessSample":
+        return TypelessSample(**self)
 
     def __getitem__(self, key: str) -> Item:
         return self._get_item(key)

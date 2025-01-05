@@ -7,7 +7,7 @@ import pytest
 from pipewine import (
     CachedItem,
     Item,
-    ReadStorage,
+    Reader,
     JSONParser,
     MemoryItem,
     PickleParser,
@@ -56,7 +56,7 @@ class TestMemoryItem:
         assert new_item.is_shared == sharedness
 
 
-class MockStorage(ReadStorage):
+class MockReader(Reader):
     def __init__(self, bytes_: bytes) -> None:
         super().__init__()
         self._bytes = bytes_
@@ -71,37 +71,37 @@ class TestStoredItem:
     def test_get(self) -> None:
         parser: JSONParser = JSONParser()
         value = {"a": 10, "b": "hello", "c": [10, 20, 30]}
-        storage = MockStorage(parser.dump(value))
-        item = StoredItem(storage, parser, shared=False)
-        assert storage.read_called == 0
+        reader = MockReader(parser.dump(value))
+        item = StoredItem(reader, parser, shared=False)
+        assert reader.read_called == 0
         assert item() == value
-        assert storage.read_called == 1
+        assert reader.read_called == 1
         assert item() == value
-        assert storage.read_called == 2
+        assert reader.read_called == 2
         assert item() == value
-        assert storage.read_called == 3
+        assert reader.read_called == 3
 
-    def test_storage(self) -> None:
+    def test_reader(self) -> None:
         parser: JSONParser = JSONParser()
         value = {"a": 10, "b": "hello", "c": [10, 20, 30]}
-        storage = MockStorage(parser.dump(value))
-        item = StoredItem(storage, parser, shared=False)
-        assert isinstance(item.storage, MockStorage)
-        assert item.storage is storage
+        reader = MockReader(parser.dump(value))
+        item = StoredItem(reader, parser, shared=False)
+        assert isinstance(item.reader, MockReader)
+        assert item.reader is reader
 
     def test_get_parser(self) -> None:
         parser: JSONParser = JSONParser()
-        item = StoredItem(MockStorage(b""), parser, shared=False)
+        item = StoredItem(MockReader(b""), parser, shared=False)
         assert item.parser == parser
 
     @pytest.mark.parametrize("shared", [True, False])
     def test_shared(self, shared: bool) -> None:
-        item: StoredItem = StoredItem(MockStorage(b""), JSONParser(), shared=shared)
+        item: StoredItem = StoredItem(MockReader(b""), JSONParser(), shared=shared)
         assert item.is_shared == shared
 
     @pytest.mark.parametrize("sharedness", [True, False])
     def test_with_sharedness(self, sharedness: bool) -> None:
-        item: StoredItem[dict] = StoredItem(MockStorage(b""), JSONParser())
+        item: StoredItem[dict] = StoredItem(MockReader(b""), JSONParser())
         new_item = item.with_sharedness(sharedness)
         assert new_item.is_shared == sharedness
 
