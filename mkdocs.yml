@@ -44,9 +44,7 @@ nav:
     - tutorial/overview.md
     - tutorial/installation.md
     - tutorial/data.md
-    - tutorial/sources.md
-    - tutorial/sinks.md
-    - tutorial/operators.md
+    - tutorial/actions.md
     - tutorial/workflows.md
     - tutorial/cli.md
 

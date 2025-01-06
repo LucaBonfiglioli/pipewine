@@ -66,7 +66,7 @@ class _GrabContext[T]:
 
 class Grabber:
     def __init__(
-        self, num_workers: int = 0, prefetch: int = 2, keep_order: bool = False
+        self, num_workers: int = 0, prefetch: int = 2, keep_order: bool = True
     ) -> None:
         super().__init__()
         self.num_workers = num_workers

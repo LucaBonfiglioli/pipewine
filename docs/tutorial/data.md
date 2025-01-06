@@ -2,6 +2,8 @@
 
 ## Overview
 
+In this section your will learn what are the main data abstractions upon which Pipewine is built, how to interact with them and extend them according to your needs.
+
 Pipewine **data model** is composed of three main abstractions: 
 
 - **Dataset** - A **Sequence** of `Sample` instances, where "sequence" means an ordered collection that supports indexing, slicing and iteration.
@@ -311,7 +313,6 @@ All `Item` objects have a `Parser` inside of them, an object that is responsible
 
 Furthermore, items can be flagged as "shared", enabling Pipelime to perform some optimizations when reading/writing them, but essentially leaving their behavior unchanged.
 
-<iframe style="border:none" width="800" height="450" src="https://whimsical.com/embed/S8SpLwdz7iiZ9HZFsjjJYB@NKBbAEvLSyiJZQveGiXLMroxi8D1tPZ73"></iframe>
 
 !!! example
 
@@ -341,6 +342,8 @@ Furthermore, items can be flagged as "shared", enabling Pipelime to perform some
     ```
 
 Pipewine provides three `Item` variants, that differ in the way data is accessed or stored.
+
+<iframe style="border:none" width="800" height="450" src="https://whimsical.com/embed/S8SpLwdz7iiZ9HZFsjjJYB@NKBbAEvLSyiJZQveGiXLMroxi8D1tPZ73"></iframe>
 
 ### MemoryItem
 
@@ -473,22 +476,22 @@ Pipewine has some built-in parsers for commonly used data encodings:
 
     - ⚠️ Only supports grayscale, RGB and RGBA uint8 images.
     - ❌ Does not apply any compression to data, resulting in very large files.
-    - ✅ Fast de/serialization
-    - ✅ Lossless
+    - ✅ Fast de/serialization.
+    - ✅ Lossless.
 
 - `PngParser` de/serializes numpy arrays into [PNG](http://libpng.org/pub/png/) files.
 
     - ⚠️ Only supports grayscale, RGB and RGBA uint8 images.
     - ✅ Produces smaller files due to image compression. 
-    - ❌ Slow de/serialization
-    - ✅ Lossless
+    - ❌ Slow de/serialization.
+    - ✅ Lossless.
 
 - `JpegParser` de/serializes numpy arrays into [JPEG](https://jpeg.org/) files.
 
     - ⚠️ Only supports grayscale and RGB uint8 images.
     - ✅ Produces very small files due to image compression. 
-    - ✅ Fast de/serialization
-    - ❌ Lossy
+    - ✅ Fast de/serialization.
+    - ❌ Lossy.
 
 ### Custom Parsers
 
