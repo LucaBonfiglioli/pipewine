@@ -486,53 +486,11 @@
   
   
     <li class="md-nav__item">
-      <a href="tutorial/sources/" class="md-nav__link">
+      <a href="tutorial/actions/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    ✳️ Sources
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="tutorial/sinks/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    ⭕ Sinks
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="tutorial/operators/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    ⚙️ Operators
+    ⚙️ Actions
   </span>
   
 
@@ -660,13 +618,13 @@
 <li><strong>Unified access pattern</strong> to datasets of various formats, origin and content.</li>
 <li><strong>Underfolder</strong>, a quick and easy filesystem-based dataset format good for small/medium datasets.</li>
 <li><strong>Common data encoding</strong> formats for images, text and metadata.</li>
-<li><strong>Common operations</strong> to manipulate existing datasets.</li>
+<li><strong>Common operators</strong> to manipulate existing datasets.</li>
 <li><strong>Workflows</strong> that transform data in complex DAGs (Directed Acyclic Graph) pipelines.</li>
-<li><strong>CLI</strong> (Command Line Interface) to perform operations without writing a full python script.</li>
+<li><strong>CLI</strong> (Command Line Interface) to perform operators without writing a full python script.</li>
 <li><strong>Extendibility</strong>, allowing the user to easily extend the library in many aspects, adding components that seamlessly integrate with the built-in ones:<ul>
 <li>Add custom dataset formats</li>
 <li>Add custom data encoding formats</li>
-<li>Add custom operations on datasets</li>
+<li>Add custom operators on datasets</li>
 <li>Register components to the CLI</li>
 </ul>
 </li>
@@ -678,7 +636,7 @@
 <li><strong>Over-reliance on Pydantic</strong>: Making most library components inherit from Pydantic <code>BaseModel</code>'s (expecially with the 1.0 major) completely violate type-safety and result in type-checking errors if used with any modern python type-checker like MyPy or PyLance. As a result, IntelliSense and autocompletion do not work properly, requiring the user to fill their code with <code>type: ignore</code> directives. Furthermore, Pydantic runtime validation has some serious performance issues, slowing down the computation significantly (especially before rewriting the whole library in Rust).</li>
 <li><strong>Lack of typed abstractions</strong>: Many components of Pipelime (e.g. <code>SamplesSequence</code>, <code>Sample</code>, <code>SampleStage</code>, <code>PipedSequence</code> and <code>PipelimeCommand</code>) do not carry any information on the type of data they operate on, thus making the usage of Pipelime error-prone: the user cannot rely on the type checker to know what type of data is currently processing. Some later components like <code>Entity</code> and <code>Action</code> aim at mitigating this problem by encapsulating samples inside a Pydantic model, but they ended up being almost unused because they integrate poorly with the rest of the library.</li>
 <li><strong>Confusing CLI</strong>: Pipelime CLI was built with the purpose of being able to directly instantiate any (possibly nested) Pydantic model. This resulted in a very powerful CLI that could do pretty much anything but was also very confusing to use (and even worse to maintain). As a contributor of the pipelime library, I never met anybody able to read and understand the CLI validation errors.</li>
-<li><strong>Everything is CLI</strong>: All Pipelime components are also CLI components. This has the positive effect of eliminating the need to manually write CLI hooks for data operations, but also couples the CLI with the API, requiring everything to be serializable as a list of key-value pairs of (possibly nested) builtin values. We solved this using Pydantic, but was it really worth the cost?</li>
+<li><strong>Everything is CLI</strong>: All Pipelime components are also CLI components. This has the positive effect of eliminating the need to manually write CLI hooks for data operators, but also couples the CLI with the API, requiring everything to be serializable as a list of key-value pairs of (possibly nested) builtin values. We solved this using Pydantic, but was it really worth the cost?</li>
 <li><strong>Feature Creep</strong>: Lots of features like streams, remotes, choixe add a lot of complexity but are mostly unused. </li>
 </ul>
 <p>Key development decisions behind Pipewine:</p>
