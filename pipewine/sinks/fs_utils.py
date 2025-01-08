@@ -63,7 +63,9 @@ def _try_copy(
     return False
 
 
-def write_item_to_file(item: Item, file: Path, copy_policy: CopyPolicy) -> None:
+def write_item_to_file(
+    item: Item, file: Path, copy_policy: CopyPolicy = CopyPolicy.HARD_LINK
+) -> None:
     if isinstance(item, CachedItem):
         item = item.source_recursive()
 
