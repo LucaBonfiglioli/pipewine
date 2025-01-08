@@ -9,7 +9,7 @@ Pipewine is a complete rewrite of the [Pipelime](https://github.com/eyecan-ai/pi
 - **Common data encoding** formats for images, text and metadata.
 - **Common operators** to manipulate existing datasets.
 - **Workflows** that transform data in complex DAGs (Directed Acyclic Graph) pipelines.
-- **CLI** (Command Line Interface) to perform operators without writing a full python script.
+- **CLI** (Command Line Interface) to quickly run simple workflows without writing a full python script.
 - **Extendibility**, allowing the user to easily extend the library in many aspects, adding components that seamlessly integrate with the built-in ones:
     - Add custom dataset formats
     - Add custom data encoding formats
@@ -18,7 +18,7 @@ Pipewine is a complete rewrite of the [Pipelime](https://github.com/eyecan-ai/pi
 
 ## ⭐️ Rationale
 
-Pipewine started from a refactoring of some core components of the Pipelime library, but it soon turned into a complete rewrite that aims at solving some **architectural issues of Pipelime**, namely:
+Pipewine started from a refactoring of some core components of the Pipelime library, but it soon turned into a complete rewrite that aims at solving some architectural issues of Pipelime, namely:
 
 - **Dependency Hell**: Pipelime had so many of dependencies and contstraints that made it very hard to install in many environments due to conflicts and incompatibilities. Outdated dependencies at the core of the library (e.g. Pydantic 1) make it incompatible with new python packages that use Pydantic 2+. Upgrading these dependencies is currently impossible without breaking everything.
 - **Over-reliance on Pydantic**: Making most library components inherit from Pydantic `BaseModel`'s (expecially with the 1.0 major) completely violate type-safety and result in type-checking errors if used with any modern python type-checker like MyPy or PyLance. As a result, IntelliSense and autocompletion do not work properly, requiring the user to fill their code with `type: ignore` directives. Furthermore, Pydantic runtime validation has some serious performance issues, slowing down the computation significantly (especially before rewriting the whole library in Rust).

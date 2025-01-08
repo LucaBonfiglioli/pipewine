@@ -22,9 +22,9 @@ Pipewine uses the broad term "Action" to denote any of the following components:
 
 - `DatasetSource` - A component that is able to create one or more `Dataset` objects.  
 - `DatasetSink` - A component that is able to consume one or more `Dataset` objects. 
-- `DatasetOperator` - A components that takes as input and returns one or more `Dataset` objects.
+- `DatasetOperator` - A component that accepts and returns one or more `Dataset` objects.
 
-In general, actions can receive and return one of the following:
+In general, actions can accept and return one of the following:
 
 - A single `Dataset` object.
 - A `Sequence` of datasets.
@@ -32,7 +32,7 @@ In general, actions can receive and return one of the following:
 - A `Mapping` of strings to datasets.
 - A `Bundle` of datasets.
 
-Specific types of actions **statically** declare the type of inputs and outputs they accept/return to ensure that their type is always known at development time (as soon as you write the code).
+Specific types of actions statically declare the type of inputs and outputs they accept/return to ensure that their type is always known at development time (as soon as you write the code).
 
 !!! example
 
@@ -113,7 +113,7 @@ Let's explore the trade-off between the two approaches:
 
 As you can see, there are positive and negative aspects in both approaches. You may be inclined to think that for this silly example of loading and displaying images, the lazy approach is clearly better. After all, who would use a software that needs to load the entire photo album of thousands of photos just to display a single image?
 
-As you may have noticed in the previous section, Pipewine allows you to choose both approaches, but when there is no clear reason to prefer the eager behavior, its components are implemented so that they behave **lazily**: `Item` only reads data when requested to do so, `LazyDataset` creates the actual `Sample` object upon indexing. As you will see, most Pipewine actions follow a similar pattern.
+As you may have noticed in the previous section, Pipewine allows you to choose both approaches, but when there is no clear reason to prefer the eager behavior, its components are implemented so that they behave lazily: `Item` only reads data when requested to do so, `LazyDataset` creates the actual `Sample` object upon indexing. As you will see, most Pipewine actions follow a similar pattern.
 
 This decision, inherited from the old Pipelime library, is motivated mainly by the following reasons:
 
@@ -156,16 +156,15 @@ The `Grabber` object also does a few nice things for you:
 
 When creating a `Grabber` you will need to choose three main parameters that govern the execution:
 
-- `num_workers`: The number of concurrent workers. Ideally, in a magic world where all workload is perfectly distributed and communication overhead is zero, the total time is proportional to `num_jobs / num_workers`, so the higher the better. In reality:
-    - Work is not perfectly distributed. If you need to run 100 jobs with 3 workers, 2 workers will be assigned 33 jobs each, but the 3rd worker is left with 34 jobs. 
-    - Different jobs may have different computational costs. If you need to run 100 jobs with 4 workers, equal splits of 25 each may not guarantee that the actual workload is evenly split: a "lucky" worker may get the 25 easiest jobs and complete them way before the others have finished running. 
+- `num_workers`: The number of concurrent workers. Ideally, in a magic world where all workload is perfectly distributed and communication overhead is zero, the total time is proportional to `num_jobs / num_workers`, so the higher the better. In reality, there are many factors that make the returns of adding more processes strongly diminishing, and sometimes even negative:
+    - Work is not perfectly distributed and it's not complete until the slowest worker hasn't finished. 
     - Processes are expensive to create. With small enough workloads, a single process may actually be faster than a concurrent pool.
     - Everytime an object is passed from one process to the other it needs to be serialized and then de-serialized. This can become quite expensive when dealing with large data structures.
     - Processes need synchronization mechanisms that temporarily halt the computation.
     - Sometimes the bottleneck is not the computation itself: if a single process reading data from the network completely saturates your bandwidth, adding more processes won't fix the problem.
     - Sometimes multiprocessing can be much slower than single processing. A typical example is when concurrently writing to a mechanical HDD, causing it to waste a lot of time going back and forth the writing locations.  
     - Your code may already be parallelized. Whenever you use libraries like Numpy, PyTorch, OpenCV (and many more), you are calling C/C++ bindings that run very efficient multi-threaded code outside of the Python interpreter, or even code that runs on devices other than your CPU (e.g. CUDA-enabled GPUs). Adding multiprocessing in these cases will only add overhead costs to something that already uses your computational resources nearly optimally.
-    - Due to memory constraints the number of processes you can keep running without swapping (and thus severely compromising the execution speed) may be limited to a small number. E.g. if each process needs to keep loaded a 10GB deep learning model and the available memory is just 32GB, the maximum amount of processes you can run without swapping is 3. 
+    - Due to memory constraints the number of processes you can keep running may be limited to a small number. E.g. if each process needs to keep loaded a 10GB chunk of data and the available memory is just 32GB, the maximum amount of processes you can run without swapping is 3. Adding a 4th process will make the system start swapping, greatly deteriorating the overall execution speed.
 - `prefetch`: The number of tasks that are assigned to each worker whenever they are ready. It's easier to explain this with an analogy. Imagine you need to deliver 1000 products to customers and you have 4 couriers ready to deliver them. How inefficient would it be if every courier delivered one product at a time, returning to the warehouse whenever they complete a delivery? You would still parallelize work across 4 couriers, but would incur in massive synchronization costs (the extra time it takes for the courier to return to the warehouse each time). A smarter solution would be to assign a larger batch of deliveries to each courier (e.g. 50) so that they would have to return to the warehouse less often. 
 - `keep_order`: Sometimes, the order in which the operations are performed is not that relevant. Executing tasks out-of-order requires even less synchronization, usually resulting in faster overall execution.
 
@@ -264,14 +263,98 @@ Let's see an example of how a `Grabber` works.
 
 ## Sources and Sinks
 
-`DatasetSource` and `DatasetSink` are the two base classes for every Pipewine action that respectively **reads** or **writes** datasets (or collections of datasets) from/to external storages.
+`DatasetSource` and `DatasetSink` are the two base classes for every Pipewine action that respectively reads or writes datasets (or collections of datasets) from/to external storages.
 
-A `DatasetSource` creates and returns instances of Pipewine `Datasets`.
-A `DatasetSink` consumes instances of Pipewine `Datasets` 
- 
+Pipewine offers built-in support for *Underfolder* datasets, a flexible dataset format inherited by Pipelime that works well with many small-sized multi-modal datasets with arbitrary content. 
 
+While Underfolder is the only format supported by Pipewine (currently), you are strongly encouraged to create custom dataset sources and sinks for whatever format you like.
 
 ### Underfolder
+
+An underfolder dataset is a directory located anywhere on the file system, with no constraint on its name. Every underfolder must contain a subfolder named `data`, plus some additional files.
+
+Every file contained in the `data` subfolder corresponds to an item and must be named: `$INDEX_$KEY.$EXTENSION`, where:
+
+- `$INDEX` is a non-negative integer number representing the index of the sample in the dataset, prefixed with an arbitrary number of `0` characters that are ignored. 
+- `$KEY`  is a string representing the key of the item in the sample. Every name that can be used as a Python variable name is a valid key.
+- `$EXTENSION` is the file extension you would normally use. Pipewine can only read files if there is a registered `Parser` class that supports its extension.  
+
+Every file outside of the `data` folder (also called "root file") represents a shared item that every sample in the dataset will inherit.
+
+!!! warning
+
+    All sample indices must be contiguous: if a sample with index N is present, then all the samples from 0 to N-1 must also be present in the dataset.
+
+
+<iframe style="border:none" width="800" height="450" src="https://whimsical.com/embed/S8SpLwdz7iiZ9HZFsjjJYB@or4CdLRbgroHUKdJDDwGHScPtCHyW8WkbahA1dJaH"></iframe>
+
+Pros and cons of the Underfolder dataset format:
+
+- ✅ No need to setup databases, making them extremely easy to create and access. You can even create them by renaming a bunch of files using your favourite file explorer or a shell script.
+- ✅ You can easily inspect and edit the content of an underfolder dataset just by opening the individual files you are interested in with your favourite tools.
+- ✅ It's a very flexible format that you can use in many scenarios. 
+- ❌ Databases exist for a reason. Putting 100.000 files in a local directory and expecting it to be efficient is pure fantasy. You should avoid using underfolders when dealing with large datasets or when performance is critical.
+- ❌ There is an issue when used with datasets where all items are shared (an edge case that's very rare in practice). In these cases, the original length of the dataset is lost after writing. Although fixing this issue is quite easy, it would break the forward-compatibility (reading data written by a future version of the library), so it will likely remain unfixed.
+
+!!! example
+
+    You can see an example of an Underfolder dataset [here](https://github.com/LucaBonfiglioli/pipewine/tree/0ffaa9cb0ee829f78bcdf56cbbe21110045a94d8/tests/sample_data/underfolders/underfolder_0). The dataset contains samples corresponding to the 26 letters of the english alphabet, with RGB images and metadata.
+
+    Basic `UnderfolderSource` usage with no typing information:
+
+    ``` py
+    # Create the source object from an existing directory Path.
+    path = Path("tests/sample_data/underfolders/underfolder_0")
+    source = UnderfolderSource(path)
+
+    # Call the source object to create a new Dataset instance.
+    dataset = source()
+
+    # Do stuff with the dataset
+    sample = dataset[4]
+    print(sample["image"]().reshape(-1, 3).mean(0))  # >>> [244.4, 231.4, 221.7]
+    print(sample["metadata"]()["color"])  #            >>> "orange"
+    print(sample["shared"]()["vowels"])  #             >>> ["a", "e", "i", "o", "u"]
+    ```
+
+    Fully typed usage:
+
+    ``` py
+    class LetterMetadata(pydantic.BaseModel):
+        letter: str
+        color: str
+
+    class SharedMetadata(pydantic.BaseModel):
+        vowels: list[str]
+        consonants: list[str]
+
+    class LetterSample(TypedSample):
+        image: Item[np.ndarray]
+        metadata: Item[LetterMetadata]
+        shared: Item[SharedMetadata]
+
+    # Create the source object from an existing directory Path.
+    path = Path("tests/sample_data/underfolders/underfolder_0")
+    source = UnderfolderSource(path, sample_type=LetterSample)
+
+    # Call the source object to create a new Dataset instance.
+    dataset = source()
+
+    # Do stuff with the dataset
+    sample = dataset[4]
+    print(sample.image().reshape(-1, 3).mean(0))  # >>> [244.4, 231.4, 221.7]
+    print(sample.metadata().color)  #               >>> "orange"
+    print(sample.shared().vowels)  #                >>> ["a", "e", "i", "o", "u"]
+    ```
+
+    You can use `UnderfolderSink` to write any Pipewine dataset, even if it wasn't previously read as an underfolder.
+
+    ``` py
+    # Write the dataset with an underfolder sink
+    output_path = Path(gettempdir()) / "underfolder_write_example"
+    sink = UnderfolderSink(output_path)
+    sink(dataset) # <-- Writes data to the specified path.
+    ```
 
 ### Custom Formats
 

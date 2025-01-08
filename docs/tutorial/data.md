@@ -4,7 +4,7 @@
 
 In this section your will learn what are the main data abstractions upon which Pipewine is built, how to interact with them and extend them according to your needs.
 
-Pipewine **data model** is composed of three main abstractions: 
+Pipewine data model is composed of three main abstractions: 
 
 - **Dataset** - A **Sequence** of `Sample` instances, where "sequence" means an ordered collection that supports indexing, slicing and iteration.
 - **Sample** - A **Mapping** of strings to `Item` instances, where "mapping" means a set of key-value pairs that supports indexing and iteration. 

@@ -2,7 +2,7 @@
 
 ## High Level
 
-**Pipewine** provides you with tools to help decouple what you do with data from the way data is represented and stored. It does so by providing a set of abstractions for many aspects of your data pipeline:
+Pipewine provides you with tools to help decouple what you do with data from the way data is represented and stored. It does so by providing a set of abstractions for many aspects of your data pipeline:
 
 - `Dataset`, `Sample`, `Item` define how the data is structured, how many data samples are there, in which order, what is their content, how are they accessed etc...
 - More low-level abstractions such as `Parser` and `Reader` define how data is encoded and stored. 
@@ -17,7 +17,7 @@ By doing so, Pipewine (much like Pipelime) encourages you to write components th
 
 ## Extendibility
 
-**Pipewine** is **completely agnostic** on the following aspects of your data:
+Pipewine is completely agnostic on the following aspects of your data:
 
 - **Storage location**: you can store data anywhere you want, on the file system, on a DB of your choice, on the device memory, on a remote source. You just need to implement the necessary components. 
 - **Data encoding**: By default Pipewine supports some popular image encodings, JSON/YAML metadata, numpy encoding for array data and Pickle encoding for generic python objects. You can easily add custom encodings to read/write data as you like.
@@ -39,7 +39,7 @@ Furthermore, when performing complex operations such as image processing, infere
 
 ## A Note on Scalability
 
-**Pipewine** - and its predecessor Pipelime - are meant to quickly let you manipulate data without either having to:
+Pipewine - and its predecessor Pipelime - are meant to quickly let you manipulate data without either having to:
 
 - Coding everything from scratch and come up with meaningful abstractions yourself. 
 - Setting up complex and expensive frameworks that can run data pipelines on distributed systems with many nodes.
