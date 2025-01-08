@@ -8,6 +8,7 @@ from pipewine.parsers import ParserRegistry
 from pipewine.sample import Sample, TypedSample, TypelessSample
 from pipewine.sources.base import LazyDatasetSource
 from pipewine.reader import LocalFileReader
+from pipewine._op_typing import origin_type
 
 
 class UnderfolderSource[T: Sample](LazyDatasetSource[T]):
@@ -111,7 +112,7 @@ class UnderfolderSource[T: Sample](LazyDatasetSource[T]):
                 and hasattr(annotation, "__args__")
                 and len(annotation.__args__) > 0
             ):
-                annotated_type = annotation.__args__[0]
+                annotated_type = origin_type(annotation.__args__[0])
         parser = parser_type(type_=annotated_type)
         if k in self._root_files:
             result = StoredItem(reader, parser, shared=True)
