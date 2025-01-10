@@ -358,6 +358,10 @@ Pros and cons of the Underfolder dataset format:
 
 ### Custom Formats
 
+You can add custom implementations of the `DatasetSource` and `DatasetSink` interfaces that allow reading and writing custom dataset formats.
+
+
+
 ## Operators
 
 ### Built-in Operators
