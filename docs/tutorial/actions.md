@@ -358,9 +358,94 @@ Pros and cons of the Underfolder dataset format:
 
 ### Custom Formats
 
-You can add custom implementations of the `DatasetSource` and `DatasetSink` interfaces that allow reading and writing custom dataset formats.
+You can add custom implementations of the `DatasetSource` and `DatasetSink` interfaces that allow reading and writing datasets with custom formats. To better illustrate how to do so, this section will walk you through an example use case of a source and a sink for folders containing JPEG image files.
 
+Before you start, you should always think of the type of datasets you are going to read. Some formats may be flexible enough to support any kind of dataset, while others may be restricted to only a specific type. Pipewine gives you the tools to choose any of the two options in a type-safe way, but also to completely ignore all the typing part and to always return un-typed structures as it was with the old Pipelime.
 
+!!! example
+
+    In this example case it's very simple: we only want to read samples that contain a single item named "image" that loads as a numpy array:
+
+    ``` py
+    class ImageSample(TypedSample):
+        image: Item[np.ndarray]
+    ```
+
+Next, let's implement the dataset source:
+
+1. Inherit from `DatasetSource` and specify the type of data that will be read.
+2. [Optional] Implement an `__init__` method. 
+3. Implement the `__call__` method, accepting no arguments and returning an instance of chosen type of dataset. You can choose to load the whole dataset upfront (eager), or to return a `LazyDataset` that will load the samples only when needed.
+
+!!! tip
+
+    When overriding the `__init__` method, always remember to call `super().__init__()`, otherwise the object won't be correctly initialized.
+
+!!! example
+
+    ```py
+    class ImagesFolderSource(DatasetSource[Dataset[ImageSample]]):
+        def __init__(self, folder: Path) -> None:
+            super().__init__()  # Always call the superclass constructor!
+            self._folder = folder
+            self._files: list[Path]
+
+        def __call__(self) -> Dataset[ImageSample]:
+            # Find all JPEG files in the folder in lexicographic order.
+            jpeg_files = filter(lambda x: x.suffix == ".jpeg", self._folder.iterdir())
+            self._files = sorted(list(jpeg_files))
+
+            # Return a lazy dataset thet loads the samples with the _get_sample method
+            return LazyDataset(len(self._files), self._get_sample)
+
+        def _get_sample(self, idx: int) -> ImageSample:
+            # Create an Item that reads a JPEG image from the i-th file.
+            reader = LocalFileReader(self._files[idx])
+            parser = JpegParser()
+            image_item = StoredItem(reader, parser)
+
+            # Return an ImageSample that only contains the image item.
+            return ImageSample(image=image_item)
+    ```
+
+Next, let's implement the dataset sink, which is somewhat specular to the source:
+
+1. Inherit from `DatasetSink` and specify the type of data that will be written.
+2. [Optional] Implement an `__init__` method. 
+3. Implement the `__call__` method, accepting an instance of the chosen type of dataset and returning nothing. 
+
+!!! tip
+
+    Since sinks are always placed at the end of pipelines, computation cannot be delayed any further, giving them no option but to loop over the data in an eager way inside the `__call__` method. We recommend doing this using the `self.loop` method with a grabber. Doing this has two advantages:
+
+    1. It loops over the data using a grabber, meaning that if there are some lazy operations that still need to be computed, they can be run efficiently in parallel.
+    2. It automatically invokes callbacks that send progress updates to whoever is listening to them, enabling live progress tracking in long-running jobs.
+
+!!! example
+
+    ``` py
+    class ImagesFolderSink(DatasetSink[Dataset[ImageSample]]):
+    # Inherit from DatasetSink and specify the type of data that will be written.
+    # In this case, we only want to write a single dataset with a custom sample type.
+
+        def __init__(self, folder: Path, grabber: Grabber | None = None) -> None:
+            super().__init__()  # Always call the superclass constructor!
+            self._folder = folder
+            self._grabber = grabber or Grabber()
+
+        def __call__(self, data: Dataset[ImageSample]) -> None:
+            self._folder.mkdir(parents=True, exist_ok=True)
+
+            # Compute the amount of 0-padding to preserve lexicographic order.
+            zpadding = len(str(len(data)))
+
+            # Iterate over the dataset and write each sample.
+            for i, sample in self.loop(data, self._grabber, name="Writing"):
+                fname = self._folder / f"{str(i).zfill(zpadding)}.jpeg"
+                write_item_to_file(sample.image, fname)
+    ```
+
+Custom dataset sources and sinks can be registered to the Pipewine CLI to allow you to manipulate your own datasets using the same commands you would normally use for every other dataset format. This is covered in the [CLI](cli.md) tutorial. 
 
 ## Operators
 
