@@ -585,7 +585,59 @@ Custom dataset operators can be registered to the Pipewine CLI to allow you to a
 
 ## Mappers
 
+Pipewine `Mapper` objects (essentially the same as Pipelime Stages), allow you to quickly implement dataset operators by defining a function that transforms individual samples.
+
+This allows you to write way less code when the following conditions apply:
+
+- The operation accepts and returns a single dataset.
+- The input and output datasets have the same length.
+- The i-th sample of the output dataset can be computed as a pure function of the i-th sample of the input dataset.
+
+!!! danger
+
+    Never use mappers when the function that transforms samples is stateful. Not only Pipewine does not preserve the order of samples when calling mappers, but the execution may be run concurrently in different processes that do not share memory.
+    
+    In these cases, use a `DatasetOperator` instead of a `Mapper`.
+
+
+Mappers must be used in combination with `MapOp`, a built-in dataset operator that lazily applies a mapper to every sample of a dataset.
+
+!!! example
+
+    Example usage of a mapper that renames items in a dataset:
+
+    ``` py
+    # Given a dataset
+    dataset: Dataset
+
+    # Rename all items named "image" into "my_image"
+    op = MapOp(RenameMapper({"image": "my_image"}))
+
+    # Apply the mapper
+    dataset = op(dataset)
+    ```
+ 
+If you need to apply multiple mappers, instead of applying them individually using multiple `MapOp`, you should compose the mappers into a single one using the built-in `ComposeMapper` and then apply it with a single `MapOp`.
+
+All mappers are statically annotated with the type of input and output samples they accept/return, enabling static type checking. When composed in a `ComposeMapper`, it will automatically detect the input and output type.
+
+!!! example
+
+    Here, the static type-checker automatically infers type `Mapper[SampleA, SampleE]` for the variable `composed`:
+
+    ``` py
+    mapper_ab: Mapper[SampleA, SampleB]
+    mapper_bc: Mapper[SampleB, SampleC]
+    mapper_cd: Mapper[SampleC, SampleD]
+    mapper_de: Mapper[SampleD, SampleE]
+
+    composed = ComposeMapper((mapper_ab, mapper_bc, mapper_cd, mapper_de))
+    ```
+
+
 ### Built-in Mappers
+
+
 
 ### Custom Mappers
 
