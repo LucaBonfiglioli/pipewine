@@ -425,9 +425,6 @@ Next, let's implement the dataset sink, which is somewhat specular to the source
 
     ``` py
     class ImagesFolderSink(DatasetSink[Dataset[ImageSample]]):
-    # Inherit from DatasetSink and specify the type of data that will be written.
-    # In this case, we only want to write a single dataset with a custom sample type.
-
         def __init__(self, folder: Path, grabber: Grabber | None = None) -> None:
             super().__init__()  # Always call the superclass constructor!
             self._folder = folder
@@ -449,9 +446,142 @@ Custom dataset sources and sinks can be registered to the Pipewine CLI to allow 
 
 ## Operators
 
+We have seen how to read and write datasets using dataset sources and sinks, now it's time to see how to apply operations that transform datasets into other datasets. This is done by implementations of the `DatasetOperator` base class. 
+
+Similarly to sources and sinks, operators must statically declare the type of data they accept as input and the one they return, for a total of 25 (5x5) possible combinations of input and output types.
+
+!!! example
+
+    For example, a dataset operator that splits a single dataset into exactly 3 parts, should specify:
+    
+    - Input type: `Dataset`
+    - Output type: `tuple[Dataset, Dataset, Dataset]`
+
+Operators are constructed as plain Python objects, then they behave like a Python `Callable` accepting and returning either a dataset or a collection of datasets.
+
+!!! example
+
+    Here is an example of how to use a `DatasetOperator` that concatenates two or more datasets into a single one.
+
+    ``` py
+    # Given N datasets
+    dataset1: Dataset
+    dataset2: Dataset
+    dataset3: Dataset
+
+    # Construct the operator object
+    concatenate = CatOp()
+
+    # Call the object
+    full_dataset = concatenate([dataset1, dataset2, dataset3])
+    ```
+
+Just like most Pipewine components, dataset operators can either be:
+
+- Eager: performing all the computation when called and returning dataset/s containing the computation results. This is similar to the way old Pipelime's `PipelimeCommand` objects behave.
+- Lazy: the call immediately returns a `LazyDataset` instance that performs the actual computation when requested. 
+
+!!! tip
+
+    In reality, it often makes sense to use a mix of the two approaches. You can perform some eager computation upfront then return a lazy dataset that uses the result of the previous computation.  
+
 ### Built-in Operators
 
+Pipewine has some useful generic operators that are commonly used in many workflows. Here is a list of the currently available built-in operators with a brief explanation. For more in-depth documentation, refer to the API reference.
+
+**Iteration operators:** operators that operate on single datasets changing their length or the order of samples.
+
+- `SliceOp`: return a slice (as in Python slices) of a dataset.
+- `RepeatOp`: replicate the samples of a dataset N times.
+- `CycleOp`: replicate the samples of a dataset until the desired number of samples is reached.
+- `IndexOp`: select a sub-sequence of samples of a dataset with arbitrary order.
+- `ReverseOp`: invert the order of samples in a dataset (same as `SliceOp(step=-1)`).
+- `PadOp`: extend a dataset to a desired length by replicating the i-th sample.
+
+**Merge operators:** operators that merge a collection of datasets into a single one.
+
+- `CatOp`: concatenate one or more datasets into a single dataset preserving the order of samples.
+- `ZipOp`: zip two or more dataset with the same length by merging the contents of the individual samples.
+
+**Split operators:** operators that split a single dataset into a collection of datasets.
+
+- `BatchOp`: split a dataset into many datasets of the desired size.
+- `ChunkOp`: split a dataset into a desired number of chunks (of approximately the same size).
+- `SplitOp`: split a dataset into an arbitrary amount of splits with arbitrary size.
+
+**Functional operators:** operators that transform datasets based on the result of a user-defined function.
+
+- `FilterOp`: keep only (or discard) samples that verify an arbitrary predicate.
+- `GroupByOp`: split a dataset grouping together samples that evaluate to the same value of a given function.
+- `SortOp`: sort a dataset with a user-defined sorting key function.
+- `MapOp`: apply a user-defined function (`Mapper`) to each sample of a dataset.
+
+**Random operators:** operators that apply non-deterministic random transformations.
+
+- `ShuffleOp`: sort the samples of a dataset in random order.
+
+**Cache operators:** operators that do not apply any transformation to the actual data, bu only change the way they are accessed.
+
+- `CacheOp`: adds a caching layer that memorizes samples to avoid computing them multiple times.
+
 ### Custom Operators
+
+As with sources and sinks, you can implement your own operators that manipulate data as you wish. To help you understand how to do so, this section will walk you through the implementation of an example operator that normalizes images.
+
+To implement the dataset operator:
+
+1. Inherit from `DatasetOperator` and specify both the input and output types. You can choose to implement operators that work with specific types of data or to allow usage with arbitrary types.
+2. [Optional] Implement an `__init__` method.
+3. Implement the `__call__` method, accepting and returning the previously specified types of data. 
+
+!!! example
+
+    Here is the code for the `NormalizeOp`, an example operator that applies a channel-wise z-score normalization to all images of a dataset. 
+
+    The implementation is realatively naive: reading and stacking all images in a dataset is not a good strategy memory-wise. In a real-world scenario, you want to compute mean and standard deviation using constant-memory approaches. However, for the sake of this tutorial we can disregard this aspect and focus on other aspects of the code.
+
+    Important things to consider:
+
+    - Since we want to be able to use this operator with many types of dataset, we inherit from `DatasetOperator[Dataset, Dataset]`, leaving the type of dataset unspecified for now.
+    - The `__call__` method has a typevar `T` that is used to tell the type-checker that the type of samples contained in the input dataset is preserved in the output dataset, allowing us to use this operator with any dataset we want.
+    - In the first part of the `__call__` method, we eagerly compute mu and sigma vectors iterating over the whole dataset.
+    - In the second part of the `__call__` method we return a lazy dataset instance that applies the normalization.
+
+    ``` py
+    class NormalizeOp(DatasetOperator[Dataset, Dataset]):
+        def __init__(self, grabber: Grabber | None = None) -> None:
+            super().__init__()
+            self._grabber = grabber or Grabber()
+
+        def _normalize[
+            T: Sample
+        ](self, dataset: Dataset[T], mu: np.ndarray, sigma: np.ndarray, i: int) -> T:
+            # Get the image of the i-th sample
+            sample = dataset[i]
+            image = sample["image"]().astype(np.float32)
+
+            # Apply normalization then bring values back to the [0, 255] range, 
+            # clipping values below -sigma to 0 and above sigma to 255.
+            image = (image - mu) / sigma
+            image = (image * 255 / 2 + 255 / 2).clip(0, 255).astype(np.uint8)
+
+            # Replace the image item value
+            return sample.with_value("image", image)
+
+        def __call__[T: Sample](self, x: Dataset[T]) -> Dataset[T]:
+            # Compute mu and sigma on the dataset (eager)
+            all_images = []
+            for _, sample in self.loop(x, self._grabber, name="Computing stats"):
+                all_images.append(sample["image"]())
+            all_images_np = np.concatenate(all_images)
+            mu = all_images_np.mean((0, 1), keepdims=True)
+            sigma = all_images_np.std((0, 1), keepdims=True)
+
+            # Lazily apply the normalization with precomputed mu and sigma
+            return LazyDataset(len(x), partial(self._normalize, x, mu, sigma))
+    ```
+
+Custom dataset operators can be registered to the Pipewine CLI to allow you to apply custom transformations to your datasets using a common CLI. This is covered in the [CLI](cli.md) tutorial. 
 
 ## Mappers
 
