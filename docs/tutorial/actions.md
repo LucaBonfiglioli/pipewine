@@ -487,7 +487,7 @@ Just like most Pipewine components, dataset operators can either be:
 
 ### Built-in Operators
 
-Pipewine has some useful generic operators that are commonly used in many workflows. Here is a list of the currently available built-in operators with a brief explanation. For more in-depth documentation, refer to the API reference.
+Pipewine has some useful generic operators that are commonly used in many workflows. Here is a list of the currently available built-in operators with a brief explanation. More in-depth documentation in the API reference.
 
 **Iteration operators:** operators that operate on single datasets changing their length or the order of samples.
 
@@ -619,7 +619,7 @@ Mappers must be used in combination with `MapOp`, a built-in dataset operator th
  
 If you need to apply multiple mappers, instead of applying them individually using multiple `MapOp`, you should compose the mappers into a single one using the built-in `ComposeMapper` and then apply it with a single `MapOp`.
 
-All mappers are statically annotated with the type of input and output samples they accept/return, enabling static type checking. When composed in a `ComposeMapper`, it will automatically detect the input and output type.
+All mappers are statically annotated with two type variables representing the type of input and output samples they accept/return, enabling static type checking. E.g. `Mapper[SampleA, SampleB]` accepts samples of type `SampleA` and returns samples of type `SampleB`. When composed in a `ComposeMapper`, it will automatically detect the input and output type from the sequence of mappers it is constructed with.
 
 !!! example
 
@@ -637,7 +637,50 @@ All mappers are statically annotated with the type of input and output samples t
 
 ### Built-in Mappers
 
+Pipewine has some useful generic mappers that are commonly used in many workflows. Here is a list of the currently available built-in mappers with a brief explanation. More in-depth documentation in the API reference.
 
+**Key transformation mappers:** modify the samples by adding, removing and renaming keys.
+
+- `DuplicateItemMapper`: create a copy of an existing item and give it a different name.
+- `FormatKeysMapper`: rename items using a format string.
+- `RenameMapper`: rename items using a mapping from old to new keys.
+- `FilterKeysMapper`: keep or discard a subset of items.
+
+**Item transformation mappers:** modify item properties such as parser and sharedness.
+
+- `ConvertMapper`: change the parser of a subset of items, e.g. convert PNG to JPEG.
+- `ShareMapper`: change the sharedness of a subset of items.
+
+**Cryptography mappers:** currently contains only `HashMapper`.
+
+- `HashMapper`: computes a secure hash of a subset of items, useful to perform deduplication or integrity checks.
+
+**Special mappers:**
+
+- `CacheMapper`: converts all items to `CachedItem`. 
+- `ComposeMapper`: composes many mappers into a single object that applies all functions sequentially. 
 
 ### Custom Mappers
 
+To implement a `Mapper`:
+
+1. Inherit from `Mapper` and specify both the input and output sample types.
+2. [Optional] Implement an `__init__` method.
+3. Implement the `__call__` method, accepting an integer and the input sample, and returning the output sample.
+
+!!! danger
+
+    Remember: mappers are stateless. Never use object fields to store state between subsequent calls.
+
+!!! example 
+
+    In this example we will implement a mapper that inverts the colors of an image.
+
+    ``` py
+    class ImageSample(TypedSample):
+        image: Item[np.ndarray]
+
+    class InvertRGBMapper(Mapper[ImageSample, ImageSample]):
+        def __call__(self, idx: int, x: ImageSample) -> ImageSample:
+            return x.with_value("image", 255 - x.image())
+    ```
