@@ -684,3 +684,5 @@ To implement a `Mapper`:
         def __call__(self, idx: int, x: ImageSample) -> ImageSample:
             return x.with_value("image", 255 - x.image())
     ```
+
+Custom mappers can be registered to the Pipewine CLI to allow you to apply custom transformations to your datasets using a common CLI. This is covered in the [CLI](cli.md) tutorial. 
