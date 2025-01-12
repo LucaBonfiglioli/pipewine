@@ -3,7 +3,7 @@ from typing import Any
 
 import pytest
 
-from pipewine import Bundle, DefaultBundle
+from pipewine import Bundle
 
 
 class EmptyBundle(Bundle[int]):
@@ -60,21 +60,4 @@ class TestBundle:
         ],
     )
     def test_pickle(self, bundle: Bundle) -> None:
-        assert bundle == pickle.loads(pickle.dumps(bundle))
-
-
-def _make_fn(key: str) -> str:
-    return "key-" + key
-
-
-class TestDefaultBundle:
-    def test_creation(self) -> None:
-        bundle = DefaultBundle(lambda x: "key-" + x, bob="bob")
-        assert bundle.alice == "key-alice"
-        assert bundle.bob == "bob"
-
-        assert bundle.as_dict() == {"alice": "key-alice", "bob": "bob"}
-
-    @pytest.mark.parametrize("bundle", [DefaultBundle(_make_fn, a="a", b="2", c="c")])
-    def test_pickle(self, bundle: DefaultBundle) -> None:
         assert bundle == pickle.loads(pickle.dumps(bundle))

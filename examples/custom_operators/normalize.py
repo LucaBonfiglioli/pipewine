@@ -12,6 +12,7 @@ from pipewine import (
     Sample,
     UnderfolderSink,
     UnderfolderSource,
+    TypelessSample,
 )
 
 
@@ -53,7 +54,7 @@ class NormalizeOp(DatasetOperator[Dataset, Dataset]):
 if __name__ == "__main__":
     # Read a dataset with an underfolder source
     input_path = Path("tests/sample_data/underfolders/underfolder_0")
-    source = UnderfolderSource(input_path)
+    source: UnderfolderSource[TypelessSample] = UnderfolderSource(input_path)
     dataset = source()
 
     # Apply the normalization op

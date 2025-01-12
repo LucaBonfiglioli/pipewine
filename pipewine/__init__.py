@@ -5,7 +5,7 @@ from pipewine.operators import *
 from pipewine.parsers import *
 from pipewine.sinks import *
 from pipewine.sources import *
-from pipewine.bundle import Bundle, BundleMeta, DefaultBundle
+from pipewine.bundle import Bundle, BundleMeta
 from pipewine.dataset import Dataset, ListDataset, LazyDataset
 from pipewine.grabber import Grabber
 from pipewine.item import Item, StoredItem, MemoryItem, CachedItem

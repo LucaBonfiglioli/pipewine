@@ -5,7 +5,40 @@ import pytest
 
 from pipewine import Bundle, Dataset, DatasetOperator, DatasetSink, DatasetSource
 from pipewine.workflows import Edge, Node, Proxy, Workflow
-from pipewine.workflows.model import _DefaultDict, _DefaultList
+from pipewine.workflows.model import _ProxyMapping, _ProxySequence
+
+
+class TestProxyMapping:
+    def test_dict(self) -> None:
+        pmap: _ProxyMapping[str] = _ProxyMapping(lambda k: k.upper())
+        assert dict(pmap._data) == {}
+        assert len(pmap._data) == 0
+        pmap["a"]
+        pmap["b"]
+        pmap["c"]
+        pmap["d"]
+        assert dict(pmap._data) == {"a": "A", "b": "B", "c": "C", "d": "D"}
+        assert len(pmap._data) == 4
+        with pytest.raises(RuntimeError):
+            len(pmap)
+        with pytest.raises(RuntimeError):
+            dict(pmap)
+
+
+class TestProxySequence:
+    def test_list(self) -> None:
+        pseq: _ProxySequence[str] = _ProxySequence(lambda x: f"n{x}")
+        assert list(pseq._data) == []
+        assert len(pseq._data) == 0
+        pseq[4]
+        pseq[5]
+        pseq[2]
+        assert list(pseq._data) == ["n0", "n1", "n2", "n3", "n4", "n5"]
+        assert len(pseq._data) == 6
+        with pytest.raises(RuntimeError):
+            len(pseq)
+        with pytest.raises(RuntimeError):
+            list(pseq)
 
 
 class MyBundle(Bundle[Dataset]):
@@ -339,35 +372,46 @@ def __workflow__6() -> WorkflowFixture:
     return WorkflowFixture(wf=wf, nodes=nodes, edges=edges)
 
 
+def __workflow__7() -> WorkflowFixture:
+    wf = Workflow()
+    source_0, source_1 = Source(), Source()
+    sink_0, sink_1 = Sink(), Sink()
+    op1 = List2List()
+    op2 = List2List()
+    data_0 = wf.node(source_0, name="source_0")()
+    data_1 = wf.node(source_1, name="source_1")()
+    data = wf.node(op1, name="op1")((data_0, data_1))
+    data = wf.node(op2, name="op2")(data)
+    wf.node(sink_0, name="sink_0")(data[0])
+    wf.node(sink_1, name="sink_1")(data[1])
+
+    source_0_node = Node("source_0", source_0)
+    source_1_node = Node("source_1", source_1)
+    op1_node = Node("op1", op1)
+    op2_node = Node("op2", op2)
+    sink_0_node = Node("sink_0", sink_0)
+    sink_1_node = Node("sink_1", sink_1)
+    nodes: set[Node] = {
+        source_0_node,
+        source_1_node,
+        op1_node,
+        op2_node,
+        sink_0_node,
+        sink_1_node,
+    }
+    edges: set[Edge] = {
+        Edge(Proxy(source_0_node, None), Proxy(op1_node, 0)),
+        Edge(Proxy(source_1_node, None), Proxy(op1_node, 1)),
+        Edge(Proxy(op1_node, None), Proxy(op2_node, None)),
+        Edge(Proxy(op2_node, 0), Proxy(sink_0_node, None)),
+        Edge(Proxy(op2_node, 1), Proxy(sink_1_node, None)),
+    }
+    return WorkflowFixture(wf=wf, nodes=nodes, edges=edges)
+
+
 @pytest.fixture(params=[v for k, v in locals().items() if k.startswith("__workflow__")])
 def make_wf(request) -> Callable[[], WorkflowFixture]:
     return request.param
-
-
-class TestDefaultDict:
-    def test_dict(self) -> None:
-        ddict: _DefaultDict[str, str] = _DefaultDict(lambda k: k.upper())
-        assert dict(ddict) == {}
-        assert len(ddict) == 0
-        ddict["a"]
-        ddict["b"]
-        ddict["c"]
-        ddict["d"]
-        assert dict(ddict) == {"a": "A", "b": "B", "c": "C", "d": "D"}
-        assert len(ddict) == 4
-
-
-class TestDefaultList:
-    def test_list(self) -> None:
-        dlist: _DefaultList[str] = _DefaultList(lambda x: f"n{x}")
-        assert list(dlist) == []
-        assert len(dlist) == 0
-        dlist[4]
-        dlist[5]
-        dlist[8]
-        dlist[2]
-        assert list(dlist) == ["n0", "n1", "n2", "n3", "n4", "n5", "n6", "n7", "n8"]
-        assert len(dlist) == 9
 
 
 class TestWorkflow:

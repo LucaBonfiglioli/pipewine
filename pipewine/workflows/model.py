@@ -1,59 +1,16 @@
 from collections import defaultdict
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
-from typing import Iterator, cast
+from types import GenericAlias
+from typing import Iterator, cast, overload
 
-from pipewine.bundle import Bundle, DefaultBundle
+from pipewine.bundle import Bundle
 from pipewine.dataset import Dataset
 from pipewine.operators import DatasetOperator
 from pipewine.sinks import DatasetSink
 from pipewine.sources import DatasetSource
 
-
-class _DefaultList[T](Sequence[T]):
-    def __init__(self, factory: Callable[[int], T], *args: T) -> None:
-        self._data = list(args)
-        self._factory = factory
-
-    def __len__(self) -> int:
-        return len(self._data)
-
-    def __getitem__(self, idx: int) -> T:  # type: ignore
-        while idx >= len(self):
-            self._data.append(self._factory(len(self)))
-        return self._data[idx]
-
-    def __iter__(self) -> Iterator[T]:
-        return iter(self._data)
-
-
-class _DefaultDict[K, V](Mapping[K, V]):
-    def __init__(
-        self, factory: Callable[[K], V], data: Mapping[K, V] | None = None
-    ) -> None:
-        super().__init__()
-        self._factory = factory
-        self._data = {**data} if data is not None else {}
-
-    def __len__(self) -> int:
-        return len(self._data)
-
-    def __getitem__(self, key: K) -> V:
-        if key not in self._data:
-            self._data[key] = self._factory(key)
-        return self._data[key]
-
-    def __iter__(self) -> Iterator[K]:
-        return iter(self._data)
-
-
 AnyAction = DatasetSource | DatasetOperator | DatasetSink
-
-
-@dataclass(unsafe_hash=True)
-class Proxy:
-    node: "Node"
-    socket: int | str | None
 
 
 @dataclass(unsafe_hash=True)
@@ -63,9 +20,64 @@ class Node[T: AnyAction]:
 
 
 @dataclass(unsafe_hash=True)
+class Proxy:
+    node: Node
+    socket: int | str | None
+
+
+@dataclass(unsafe_hash=True)
 class Edge:
     src: Proxy
     dst: Proxy
+
+
+class _ProxySequence[T](Sequence[T]):
+    def __init__(self, factory: Callable[[int], T]) -> None:
+        self._data: list[T] = []
+        self._factory = factory
+
+    def __len__(self) -> int:
+        raise RuntimeError("Proxy sequences do not support len().")
+
+    @overload
+    def __getitem__(self, idx: int) -> T: ...
+    @overload
+    def __getitem__(self, idx: slice) -> "_ProxySequence[T]": ...
+    def __getitem__(self, idx: int | slice) -> "T | _ProxySequence[T]":
+        if isinstance(idx, slice):
+            raise RuntimeError("Proxy sequences do not support slicing.")
+        while idx >= len(self._data):
+            self._data.append(self._factory(len(self._data)))
+        return self._data[idx]
+
+    def __iter__(self) -> Iterator[T]:
+        raise RuntimeError("Proxy sequences do not support iter().")
+
+
+class _ProxyMapping[V](Mapping[str, V]):
+    def __init__(
+        self, factory: Callable[[str], V], data: Mapping[str, V] | None = None
+    ) -> None:
+        super().__init__()
+        self._factory = factory
+        self._data = {**data} if data is not None else {}
+
+    def __len__(self) -> int:
+        raise NotImplementedError("Proxy mapppings do not support len().")
+
+    def __getitem__(self, key: str) -> V:
+        if key not in self._data:
+            self._data[key] = self._factory(key)
+        return self._data[key]
+
+    def __iter__(self) -> Iterator[str]:
+        raise NotImplementedError("Proxy mapppings do not support iter().")
+
+
+class _ProxyBundle[T](Bundle[T]):
+    def __init__(self, **data: T) -> None:
+        for k, v in data.items():
+            setattr(self, k, v)
 
 
 class Workflow:
@@ -120,12 +132,24 @@ class Workflow:
             return_t = action_.output_type
             if issubclass(return_t, Dataset):
                 return_val = Proxy(node, None)
+            elif (
+                issubclass(return_t, tuple)
+                and isinstance(
+                    ann := action.__call__.__annotations__["return"], GenericAlias
+                )
+                and len(ann.__args__) > 0
+                and ann.__args__[-1] is not Ellipsis
+            ):
+                # If the size of the tuple is statically known, we can allow iter() and
+                # len() in the returned proxy object.
+                return_val = [Proxy(node, i) for i in range(len(ann.__args__))]
             elif issubclass(return_t, Sequence):
-                return_val = _DefaultList(lambda idx: Proxy(node, idx))
+                return_val = _ProxySequence(lambda idx: Proxy(node, idx))
             elif issubclass(return_t, Mapping):
-                return_val = _DefaultDict(lambda k: Proxy(node, k))
+                return_val = _ProxyMapping(lambda k: Proxy(node, k))
             elif issubclass(return_t, Bundle):
-                return_val = DefaultBundle(lambda k: Proxy(node, k))
+                fields = return_t.__dataclass_fields__
+                return_val = _ProxyBundle(**{k: Proxy(node, k) for k in fields})
             else:  # pragma: no cover (unreachable)
                 raise ValueError(f"Unknown type '{return_t}'")
 
@@ -135,8 +159,14 @@ class Workflow:
             for arg in everything:
                 if isinstance(arg, Proxy):
                     edges.append(Edge(arg, Proxy(node, None)))
+                elif isinstance(arg, _ProxySequence):
+                    orig_node = arg._factory(0).node
+                    edges.append(Edge(Proxy(orig_node, None), Proxy(node, None)))
                 elif isinstance(arg, Sequence):
                     edges.extend([Edge(x, Proxy(node, i)) for i, x in enumerate(arg)])
+                elif isinstance(arg, _ProxyMapping):
+                    orig_node = cast(Node, arg._factory("a").node)
+                    edges.append(Edge(Proxy(orig_node, None), Proxy(node, None)))
                 elif isinstance(arg, Mapping):
                     edges.extend([Edge(v, Proxy(node, k)) for k, v in arg.items()])
                 elif isinstance(arg, Bundle):

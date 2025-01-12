@@ -1,11 +1,11 @@
 from pathlib import Path
 
-from pipewine import UnderfolderSource
+from pipewine import TypelessSample, UnderfolderSource
 
 if __name__ == "__main__":
     # Create the source object from an existing directory Path.
     path = Path("tests/sample_data/underfolders/underfolder_0")
-    source = UnderfolderSource(path)
+    source: UnderfolderSource[TypelessSample] = UnderfolderSource(path)
 
     # Call the source object to create a new Dataset instance.
     dataset = source()
