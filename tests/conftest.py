@@ -67,3 +67,10 @@ def mock_curses(monkeypatch):
     monkeypatch.setattr(curses, "cbreak", noop)
     monkeypatch.setattr(curses, "nocbreak", noop)
     monkeypatch.setattr(curses, "endwin", noop)
+
+
+@pytest.fixture(autouse=True)
+def clear_static_data():
+    from pipewine.grabber import StaticData
+
+    StaticData.data.clear()

@@ -1,5 +1,7 @@
 from collections.abc import Callable, Iterator, Sequence
 from multiprocessing.pool import Pool
+from multiprocessing import get_context
+from typing import Any
 
 
 class _GrabWorker[T]:
@@ -13,6 +15,10 @@ class _GrabWorker[T]:
         if self._callback is not None:
             self._callback(idx)
         return idx, self._seq[idx]
+
+
+class StaticData:
+    data: dict[str, Any] = {}
 
 
 class _GrabContext[T]:
@@ -34,7 +40,8 @@ class _GrabContext[T]:
         self._worker_init_fn = (None, ()) if worker_init_fn is None else worker_init_fn
 
     @staticmethod
-    def wrk_init(user_init_fn):  # pragma: no cover
+    def wrk_init(static_data: dict[str, Any], user_init_fn):  # pragma: no cover
+        StaticData.data = static_data
         if user_init_fn[0] is not None:
             user_init_fn[0](*user_init_fn[1])
 
@@ -44,10 +51,13 @@ class _GrabContext[T]:
             self._pool = None
             return (worker._worker_fn_elem_and_index(i) for i in range(len(self._seq)))
 
-        self._pool = Pool(
+        self._pool = get_context("spawn").Pool(
             self._num_workers if self._num_workers > 0 else None,
             initializer=_GrabContext.wrk_init,
-            initargs=(self._worker_init_fn,),
+            initargs=(
+                StaticData.data,
+                self._worker_init_fn,
+            ),
         )
         pool = self._pool.__enter__()
 

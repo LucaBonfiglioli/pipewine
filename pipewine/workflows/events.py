@@ -1,7 +1,10 @@
 from abc import ABC, abstractmethod
-from multiprocessing import Manager
-from queue import Empty, Queue
-from typing import Any
+from multiprocessing import Queue, get_context
+from queue import Empty
+from typing import Any, cast
+from uuid import uuid1
+
+from pipewine.grabber import StaticData
 
 
 class Event:
@@ -26,10 +29,12 @@ class SharedMemoryEventQueue(EventQueue):
     def __init__(self) -> None:
         super().__init__()
         self._mp_q: Queue | None = None
+        self._id = uuid1().hex
 
     def start(self) -> None:
-        self._manager = Manager()
-        self._mp_q = self._manager.Queue()
+        self._mp_q = get_context("spawn").Queue()
+        self._mp_q.cancel_join_thread()
+        StaticData.data[self._id] = self._mp_q
 
     def emit(self, event: Event) -> None:
         if self._mp_q is None:
@@ -45,10 +50,17 @@ class SharedMemoryEventQueue(EventQueue):
             return None
 
     def close(self) -> None:
-        self._manager.shutdown()
+        if self._mp_q is not None:
+            self._mp_q.close()
+            del StaticData.data[self._id]
         self._mp_q = None
 
     def __getstate__(self) -> dict[str, Any]:  # pragma: no cover
         data = {**self.__dict__}
-        del data["_manager"]
+        del data["_mp_q"]
         return data
+
+    def __setstate__(self, data: dict[str, Any]) -> None:
+        self._id = data["_id"]
+        self._mp_q = cast(Queue, StaticData.data[self._id])
+        self._mp_q.cancel_join_thread()

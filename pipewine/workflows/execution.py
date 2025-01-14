@@ -58,6 +58,29 @@ class UnderfolderCheckpointFactory(CheckpointFactory):
         return sink, source
 
 
+def _on_enter_cb(
+    queue: EventQueue | None, node: Node, loop_id: str, total: int
+) -> None:
+    if queue is not None:
+        task = f"{node.name}/{loop_id}"
+        event = TaskStartEvent(task, total)
+        queue.emit(event)
+
+
+def _on_iter_cb(queue: EventQueue | None, node: Node, loop_id: str, idx: int) -> None:
+    if queue is not None:
+        task = f"{node.name}/{loop_id}"
+        event = TaskUpdateEvent(task, idx)
+        queue.emit(event)
+
+
+def _on_exit_cb(queue: EventQueue | None, node: Node, loop_id: str) -> None:
+    if queue is not None:
+        task = f"{node.name}/{loop_id}"
+        event = TaskCompleteEvent(task)
+        queue.emit(event)
+
+
 class SequentialWorkflowExecutor(WorkflowExecutor):
     def __init__(
         self,
@@ -82,24 +105,6 @@ class SequentialWorkflowExecutor(WorkflowExecutor):
             raise RuntimeError("Not attached to any event queue.")
         self._eq = None
 
-    def _on_enter_cb(self, node: Node, loop_id: str, total: int) -> None:
-        if self._eq is not None:
-            task = f"{node.name}/{loop_id}"
-            event = TaskStartEvent(task, total)
-            self._eq.emit(event)
-
-    def _on_iter_cb(self, node: Node, loop_id: str, idx: int) -> None:
-        if self._eq is not None:
-            task = f"{node.name}/{loop_id}"
-            event = TaskUpdateEvent(task, idx)
-            self._eq.emit(event)
-
-    def _on_exit_cb(self, node: Node, loop_id: str) -> None:
-        if self._eq is not None:
-            task = f"{node.name}/{loop_id}"
-            event = TaskCompleteEvent(task)
-            self._eq.emit(event)
-
     def _execute_node(
         self,
         workflow: Workflow,
@@ -107,9 +112,9 @@ class SequentialWorkflowExecutor(WorkflowExecutor):
         state: dict[Proxy, Dataset],
     ) -> None:
         action = cast(AnyAction, node.action)
-        action.register_on_iter(partial(self._on_iter_cb, node))
-        action.register_on_enter(partial(self._on_enter_cb, node))
-        action.register_on_exit(partial(self._on_exit_cb, node))
+        action.register_on_iter(partial(_on_iter_cb, self._eq, node))
+        action.register_on_enter(partial(_on_enter_cb, self._eq, node))
+        action.register_on_exit(partial(_on_exit_cb, self._eq, node))
         edges = workflow.get_inbound_edges(node)
         all_none = len(edges) == 1 and all(x.dst.socket is None for x in edges)
         all_int = all(isinstance(x.dst.socket, int) for x in edges)
@@ -170,9 +175,9 @@ class SequentialWorkflowExecutor(WorkflowExecutor):
                 type(dataset[0]),
                 self._checkpoint_grabber,
             )
-            sink.register_on_enter(partial(self._on_enter_cb, proxy.node))
-            sink.register_on_iter(partial(self._on_iter_cb, proxy.node))
-            sink.register_on_exit(partial(self._on_exit_cb, proxy.node))
+            sink.register_on_enter(partial(_on_enter_cb, self._eq, proxy.node))
+            sink.register_on_iter(partial(_on_iter_cb, self._eq, proxy.node))
+            sink.register_on_exit(partial(_on_exit_cb, self._eq, proxy.node))
             sink(dataset)
             dataset = source()
         state[proxy] = dataset
