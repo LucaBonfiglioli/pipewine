@@ -9,7 +9,7 @@ from pipewine.workflows import (
     CursesTracker,
     Event,
     EventQueue,
-    SharedMemoryEventQueue,
+    ProcessSharedEventQueue,
     TaskCompleteEvent,
     TaskStartEvent,
     TaskUpdateEvent,
@@ -23,7 +23,7 @@ class MyEvent(Event):
 @pytest.fixture()
 @no_type_check
 def event_queue() -> EventQueue:
-    queue = SharedMemoryEventQueue()
+    queue = ProcessSharedEventQueue()
     queue.start()
     yield queue
     queue.close()

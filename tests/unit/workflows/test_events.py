@@ -7,7 +7,7 @@ from typing import cast
 
 import pytest
 
-from pipewine.workflows import Event, EventQueue, SharedMemoryEventQueue
+from pipewine.workflows import Event, EventQueue, ProcessSharedEventQueue
 from pipewine.grabber import InheritedData
 
 
@@ -17,7 +17,7 @@ class MyEvent(Event):
     data: int
 
 
-class TestSharedMemoryEventQueue:
+class TestProcessSharedEventQueue:
     def _worker(self, queue: EventQueue, num: int) -> int:
         time.sleep(0.01)
         queue.emit(MyEvent(os.getpid(), num))
@@ -29,7 +29,7 @@ class TestSharedMemoryEventQueue:
     @pytest.mark.parametrize("nproc", [1, 2, 4, 8])
     def test_queue(self, nproc: int) -> None:
         n = 100
-        queue = SharedMemoryEventQueue()
+        queue = ProcessSharedEventQueue()
         queue.start()
         pool = get_context("spawn").Pool(
             nproc, initializer=self._init, initargs=(InheritedData.data,)
@@ -45,7 +45,7 @@ class TestSharedMemoryEventQueue:
         queue.close()
 
     def test_queue_wrong_state(self) -> None:
-        queue = SharedMemoryEventQueue()
+        queue = ProcessSharedEventQueue()
         with pytest.raises(RuntimeError):
             queue.emit(MyEvent(os.getpid(), 42))
 

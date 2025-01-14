@@ -7,7 +7,7 @@ from pipewine.workflows.drawing import (
     ViewGraph,
     ViewNode,
 )
-from pipewine.workflows.events import Event, EventQueue, SharedMemoryEventQueue
+from pipewine.workflows.events import Event, EventQueue, ProcessSharedEventQueue
 from pipewine.workflows.execution import SequentialWorkflowExecutor, WorkflowExecutor
 from pipewine.workflows.model import AnyAction, Workflow, Node, Edge, Proxy
 from pipewine.workflows.tracking import (
@@ -29,7 +29,7 @@ def run_workflow(
     executor: WorkflowExecutor | None = None,
     tracker: Tracker | None = None,
 ) -> None:
-    event_queue = event_queue or SharedMemoryEventQueue()
+    event_queue = event_queue or ProcessSharedEventQueue()
     executor = executor or SequentialWorkflowExecutor()
     tracker = tracker or NoTracker()
     try:

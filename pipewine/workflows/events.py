@@ -25,7 +25,7 @@ class EventQueue(ABC):
     def close(self) -> None: ...
 
 
-class SharedMemoryEventQueue(EventQueue):
+class ProcessSharedEventQueue(EventQueue):
     def __init__(self) -> None:
         super().__init__()
         self._mp_q: Queue | None = None
