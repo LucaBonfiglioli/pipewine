@@ -71,6 +71,6 @@ def mock_curses(monkeypatch):
 
 @pytest.fixture(autouse=True)
 def clear_static_data():
-    from pipewine.grabber import StaticData
+    from pipewine.grabber import InheritedData
 
-    StaticData.data.clear()
+    InheritedData.data.clear()

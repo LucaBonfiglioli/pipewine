@@ -8,7 +8,7 @@ from typing import cast
 import pytest
 
 from pipewine.workflows import Event, EventQueue, SharedMemoryEventQueue
-from pipewine.grabber import StaticData
+from pipewine.grabber import InheritedData
 
 
 @dataclass
@@ -24,7 +24,7 @@ class TestSharedMemoryEventQueue:
         return num
 
     def _init(self, data) -> None:
-        StaticData.data = data
+        InheritedData.data = data
 
     @pytest.mark.parametrize("nproc", [1, 2, 4, 8])
     def test_queue(self, nproc: int) -> None:
@@ -32,7 +32,7 @@ class TestSharedMemoryEventQueue:
         queue = SharedMemoryEventQueue()
         queue.start()
         pool = get_context("spawn").Pool(
-            nproc, initializer=self._init, initargs=(StaticData.data,)
+            nproc, initializer=self._init, initargs=(InheritedData.data,)
         )
         list(pool.imap(partial(self._worker, queue), range(n)))
         pool.close()

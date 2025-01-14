@@ -17,7 +17,7 @@ class _GrabWorker[T]:
         return idx, self._seq[idx]
 
 
-class StaticData:
+class InheritedData:
     data: dict[str, Any] = {}
 
 
@@ -41,7 +41,7 @@ class _GrabContext[T]:
 
     @staticmethod
     def wrk_init(static_data: dict[str, Any], user_init_fn):  # pragma: no cover
-        StaticData.data = static_data
+        InheritedData.data = static_data
         if user_init_fn[0] is not None:
             user_init_fn[0](*user_init_fn[1])
 
@@ -55,7 +55,7 @@ class _GrabContext[T]:
             self._num_workers if self._num_workers > 0 else None,
             initializer=_GrabContext.wrk_init,
             initargs=(
-                StaticData.data,
+                InheritedData.data,
                 self._worker_init_fn,
             ),
         )
