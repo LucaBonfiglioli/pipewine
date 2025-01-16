@@ -1,22 +1,79 @@
+import shutil
+from abc import ABC, abstractmethod
 from collections import defaultdict
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
+from pathlib import Path
+from tempfile import gettempdir
 from types import GenericAlias
-from typing import Iterator, cast, overload
+from typing import Any, Iterator, cast, overload
 
 from pipewine.bundle import Bundle
 from pipewine.dataset import Dataset
+from pipewine.grabber import Grabber
 from pipewine.operators import DatasetOperator
-from pipewine.sinks import DatasetSink
-from pipewine.sources import DatasetSource
+from pipewine.sample import Sample
+from pipewine.sinks import DatasetSink, UnderfolderSink
+from pipewine.sources import DatasetSource, UnderfolderSource
 
 AnyAction = DatasetSource | DatasetOperator | DatasetSink
+
+
+class CheckpointFactory(ABC):
+    @abstractmethod
+    def create[
+        T: Sample
+    ](
+        self, execution_id: str, name: str, sample_type: type[T], grabber: Grabber
+    ) -> tuple[DatasetSink[Dataset[T]], DatasetSource[Dataset[T]]]: ...
+
+    @abstractmethod
+    def destroy(self, execution_id: str, name: str) -> None: ...
+
+
+class UnderfolderCheckpointFactory(CheckpointFactory):
+    def __init__(self, folder: Path | None = None) -> None:
+        self._folder = folder or Path(gettempdir()) / "pipewine_workflows"
+
+    def create[
+        T: Sample
+    ](
+        self, execution_id: str, name: str, sample_type: type[T], grabber: Grabber
+    ) -> tuple[DatasetSink[Dataset[T]], DatasetSource[Dataset[T]]]:
+        path = self._folder / execution_id / name
+        sink = UnderfolderSink(path, grabber=grabber)
+        source = UnderfolderSource(path, sample_type=sample_type)
+        return sink, source
+
+    def destroy(self, execution_id: str, name: str) -> None:
+        rm_path = self._folder / execution_id / name
+        if rm_path.is_dir():
+            shutil.rmtree(rm_path)
+
+
+class Default:
+    @classmethod
+    def get[T](cls, maybe_value: T | "Default", default: T) -> T:
+        return default if isinstance(maybe_value, Default) else maybe_value
+
+
+@dataclass
+class NodeOptions:
+    cache_type: type | None | Default = field(default_factory=Default)
+    cache_params: dict[str, Any] | Default = field(default_factory=Default)
+    checkpoint_factory: CheckpointFactory | None | Default = field(
+        default_factory=Default
+    )
+    checkpoint_grabber: Grabber | Default = field(default_factory=Default)
+    collect_after_checkpoint: bool | Default = field(default_factory=Default)
+    destroy_checkpoints: bool | Default = field(default_factory=Default)
 
 
 @dataclass(unsafe_hash=True)
 class Node[T: AnyAction]:
     name: str
     action: T = field(hash=False)
+    options: NodeOptions = field(default_factory=NodeOptions, hash=False, compare=False)
 
 
 @dataclass(unsafe_hash=True)
@@ -116,9 +173,14 @@ class Workflow:
 
         return self._outbound_edges[node]
 
-    def node[T: AnyAction](self, action: T, name: str | None = None) -> T:
+    def node[
+        T: AnyAction
+    ](
+        self, action: T, name: str | None = None, options: NodeOptions | None = None
+    ) -> T:
         name = name or self._gen_node_name(cast(AnyAction, action))
-        node = Node(name=name, action=action)
+        options = options or NodeOptions()
+        node = Node(name=name, action=action, options=options)
         self._nodes.add(node)
         self._nodes_by_name[node.name] = node
         self._inbound_edges[node] = set()

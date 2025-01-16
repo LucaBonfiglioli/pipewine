@@ -1,61 +1,31 @@
+import gc
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Mapping, Sequence
 from functools import partial
-from pathlib import Path
 from typing import cast
 from uuid import uuid1
 
 from pipewine._op_typing import AnyDataset
 from pipewine.bundle import Bundle
 from pipewine.dataset import Dataset
-from pipewine.operators import CacheOp, DatasetOperator
-from pipewine.sample import Sample
-from pipewine.sinks import DatasetSink, UnderfolderSink
-from pipewine.sources import DatasetSource, UnderfolderSource
-from tempfile import gettempdir
 from pipewine.grabber import Grabber
-from pipewine.workflows.model import AnyAction, Node, Proxy, Workflow
+from pipewine.operators import CacheOp, DatasetOperator
+from pipewine.sinks import DatasetSink
+from pipewine.sources import DatasetSource
+from pipewine.workflows.model import (
+    AnyAction,
+    Default,
+    Node,
+    NodeOptions,
+    Proxy,
+    Workflow,
+)
 from pipewine.workflows.tracking import (
     EventQueue,
     TaskCompleteEvent,
     TaskStartEvent,
     TaskUpdateEvent,
 )
-
-
-class WorkflowExecutor(ABC):
-    @abstractmethod
-    def execute(self, workflow: Workflow) -> None: ...
-
-    @abstractmethod
-    def attach(self, event_queue: EventQueue) -> None: ...
-
-    @abstractmethod
-    def detach(self) -> None: ...
-
-
-class CheckpointFactory(ABC):
-    @abstractmethod
-    def create[
-        T: Sample
-    ](
-        self, execution_id: str, name: str, sample_type: type[T], grabber: Grabber
-    ) -> tuple[DatasetSink[Dataset[T]], DatasetSource[Dataset[T]]]: ...
-
-
-class UnderfolderCheckpointFactory(CheckpointFactory):
-    def __init__(self, folder: Path | None = None) -> None:
-        self._folder = folder or Path(gettempdir()) / "pipewine_workflows"
-
-    def create[
-        T: Sample
-    ](
-        self, execution_id: str, name: str, sample_type: type[T], grabber: Grabber
-    ) -> tuple[DatasetSink[Dataset[T]], DatasetSource[Dataset[T]]]:
-        path = self._folder / execution_id / name
-        sink = UnderfolderSink(path, grabber=grabber)
-        source = UnderfolderSource(path, sample_type=sample_type)
-        return sink, source
 
 
 def _on_enter_cb(
@@ -81,19 +51,30 @@ def _on_exit_cb(queue: EventQueue | None, node: Node, loop_id: str) -> None:
         queue.emit(event)
 
 
+class WorkflowExecutor(ABC):
+    @abstractmethod
+    def execute(self, workflow: Workflow) -> None: ...
+
+    @abstractmethod
+    def attach(self, event_queue: EventQueue) -> None: ...
+
+    @abstractmethod
+    def detach(self) -> None: ...
+
+
 class SequentialWorkflowExecutor(WorkflowExecutor):
-    def __init__(
-        self,
-        checkpoint_factory: CheckpointFactory | None = None,
-        checkpoint_grabber: Grabber | None = None,
-        cache: CacheOp | None = None,
-    ) -> None:
+    def __init__(self, node_options: NodeOptions | None = None) -> None:
         super().__init__()
         self._eq: EventQueue | None = None
-        self._checkpoint_factory = checkpoint_factory
-        self._checkpoint_grabber = checkpoint_grabber or Grabber()
-        self._cache = cache
-        self._id = uuid1()
+        opts = node_options or NodeOptions()
+        self._cache_type = Default.get(opts.cache_type, None)
+        self._cache_params = Default.get(opts.cache_params, {})
+        self._checkpoint_factory = Default.get(opts.checkpoint_factory, None)
+        self._checkpoint_grabber = Default.get(opts.checkpoint_grabber, Grabber())
+        self._collect_after_checkpoint = Default.get(
+            opts.collect_after_checkpoint, True
+        )
+        self._destroy_checkpoints = Default.get(opts.destroy_checkpoints, True)
 
     def attach(self, event_queue: EventQueue) -> None:
         if self._eq is not None:
@@ -105,16 +86,20 @@ class SequentialWorkflowExecutor(WorkflowExecutor):
             raise RuntimeError("Not attached to any event queue.")
         self._eq = None
 
+    def _register_all_cbs(self, action: AnyAction, node: Node) -> None:
+        action.register_on_iter(partial(_on_iter_cb, self._eq, node))
+        action.register_on_enter(partial(_on_enter_cb, self._eq, node))
+        action.register_on_exit(partial(_on_exit_cb, self._eq, node))
+
     def _execute_node(
         self,
         workflow: Workflow,
         node: Node,
         state: dict[Proxy, Dataset],
+        id_: str,
     ) -> None:
         action = cast(AnyAction, node.action)
-        action.register_on_iter(partial(_on_iter_cb, self._eq, node))
-        action.register_on_enter(partial(_on_enter_cb, self._eq, node))
-        action.register_on_exit(partial(_on_exit_cb, self._eq, node))
+        self._register_all_cbs(action, node)
         edges = workflow.get_inbound_edges(node)
         all_none = len(edges) == 1 and all(x.dst.socket is None for x in edges)
         all_int = all(isinstance(x.dst.socket, int) for x in edges)
@@ -152,34 +137,56 @@ class SequentialWorkflowExecutor(WorkflowExecutor):
         if output is None:
             return
         if isinstance(output, Dataset):
-            self._handle_output(state, Proxy(node, None), output)
+            self._handle_output(state, Proxy(node, None), output, id_)
         elif isinstance(output, Sequence):
             for i, dataset in enumerate(output):
-                self._handle_output(state, Proxy(node, i), dataset)
+                self._handle_output(state, Proxy(node, i), dataset, id_)
         elif isinstance(output, Mapping):
             for k, v in output.items():
                 state[Proxy(node, k)] = v
-                self._handle_output(state, Proxy(node, k), v)
+                self._handle_output(state, Proxy(node, k), v, id_)
         else:
             assert isinstance(output, Bundle)
             for k, v in output.as_dict().items():
-                self._handle_output(state, Proxy(node, k), v)
+                self._handle_output(state, Proxy(node, k), v, id_)
 
     def _handle_output(
-        self, state: dict[Proxy, Dataset], proxy: Proxy, dataset: Dataset
+        self,
+        state: dict[Proxy, Dataset],
+        proxy: Proxy,
+        dataset: Dataset,
+        id_: str,
     ) -> None:
-        if self._checkpoint_factory is not None and len(dataset) > 0:
-            sink, source = self._checkpoint_factory.create(
-                self._id.hex,
-                proxy.node.name,
-                type(dataset[0]),
-                self._checkpoint_grabber,
+        opts = proxy.node.options
+        ckpt_fact = Default.get(opts.checkpoint_factory, self._checkpoint_factory)
+        if (
+            ckpt_fact is not None
+            and len(dataset) > 0
+            and not isinstance(proxy.node.action, DatasetSource)
+        ):
+            grabber = Default.get(opts.checkpoint_grabber, self._checkpoint_grabber)
+            sink, source = ckpt_fact.create(
+                id_, proxy.node.name, type(dataset[0]), grabber
             )
-            sink.register_on_enter(partial(_on_enter_cb, self._eq, proxy.node))
-            sink.register_on_iter(partial(_on_iter_cb, self._eq, proxy.node))
-            sink.register_on_exit(partial(_on_exit_cb, self._eq, proxy.node))
+            self._register_all_cbs(sink, proxy.node)
+            self._register_all_cbs(source, proxy.node)
             sink(dataset)
+
+            collect = Default.get(
+                opts.collect_after_checkpoint, self._collect_after_checkpoint
+            )
+            if collect:
+                del dataset
+                gc.collect()
+
             dataset = source()
+
+        cache_type = Default.get(opts.cache_type, self._cache_type)
+        if cache_type is not None:
+            cache_params = Default.get(opts.cache_params, self._cache_params)
+            cache_op = CacheOp(cache_type=cache_type, **{**cache_params})
+            dataset = cache_op(dataset)
+
         state[proxy] = dataset
 
     def _topological_sort(self, workflow: Workflow) -> list[Node]:
@@ -206,7 +213,15 @@ class SequentialWorkflowExecutor(WorkflowExecutor):
         return result[::-1]
 
     def execute(self, workflow: Workflow) -> None:
+        id_ = uuid1()
         sorted_graph = self._topological_sort(workflow)
         state: dict[Proxy, Dataset] = {}
         for node in sorted_graph:
-            self._execute_node(workflow, node, state)
+            self._execute_node(workflow, node, state, id_.hex)
+
+        for node in workflow.get_nodes():
+            opts = node.options
+            destroy = Default.get(opts.destroy_checkpoints, self._destroy_checkpoints)
+            ckpt_fact = Default.get(opts.checkpoint_factory, self._checkpoint_factory)
+            if destroy and ckpt_fact is not None:
+                ckpt_fact.destroy(id_.hex, node.name)

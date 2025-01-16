@@ -9,7 +9,16 @@ from pipewine.workflows.drawing import (
 )
 from pipewine.workflows.events import Event, EventQueue, ProcessSharedEventQueue
 from pipewine.workflows.execution import SequentialWorkflowExecutor, WorkflowExecutor
-from pipewine.workflows.model import AnyAction, Workflow, Node, Edge, Proxy
+from pipewine.workflows.model import (
+    AnyAction,
+    Workflow,
+    Node,
+    Edge,
+    Proxy,
+    CheckpointFactory,
+    UnderfolderCheckpointFactory,
+    NodeOptions,
+)
 from pipewine.workflows.tracking import (
     CursesTracker,
     NoTracker,
