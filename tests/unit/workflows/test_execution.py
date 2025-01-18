@@ -1,3 +1,4 @@
+import time
 from collections import deque
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
@@ -33,6 +34,15 @@ class MockQueue(EventQueue):
         if not self._queue:
             return None
         return self._queue.popleft()
+
+    def capture_blocking(self, timeout: float | None = None) -> Event | None:
+        t = time.perf_counter()
+        while True:
+            if self._queue:
+                return self._queue.popleft()
+            if timeout is not None and time.perf_counter() > t + timeout:
+                return None
+            time.sleep(0.01)
 
     def close(self) -> None:
         pass

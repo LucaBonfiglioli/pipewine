@@ -77,7 +77,7 @@ class SortOp[T: Sample](DatasetOperator[Dataset[T], Dataset[T]]):
 
     def __call__(self, x: Dataset[T]) -> Dataset[T]:
         keys: list[tuple[ComparableT, int]] = []
-        for i, sample in self.loop(x, self._grabber, name="Sorting"):
+        for i, sample in self.loop(x, self._grabber, name="Computing keys"):
             keys.append((self._fn(i, sample), i))
 
         index = [x[1] for x in sorted(keys, reverse=self._reverse)]

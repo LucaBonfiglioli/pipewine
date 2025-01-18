@@ -22,6 +22,9 @@ class EventQueue(ABC):
     def capture(self) -> Event | None: ...
 
     @abstractmethod
+    def capture_blocking(self, timeout: float | None = None) -> Event | None: ...
+
+    @abstractmethod
     def close(self) -> None: ...
 
 
@@ -32,7 +35,7 @@ class ProcessSharedEventQueue(EventQueue):
         self._id = uuid1().hex
 
     def start(self) -> None:
-        self._mp_q = get_context("spawn").Queue(1000)
+        self._mp_q = get_context("spawn").Queue(100)
         InheritedData.data[self._id] = self._mp_q
 
     def emit(self, event: Event) -> None:
@@ -48,12 +51,20 @@ class ProcessSharedEventQueue(EventQueue):
         except Empty:
             return None
 
+    def capture_blocking(self, timeout: float | None = None) -> Event | None:
+        if self._mp_q is None:
+            raise RuntimeError("Queue is closed")
+        try:
+            return self._mp_q.get(timeout=timeout)
+        except Empty:
+            return None
+
     def close(self) -> None:
         if self._mp_q is not None:
             self._mp_q.close()
-            self._mp_q.join_thread()
+            self._mp_q.cancel_join_thread()
             del InheritedData.data[self._id]
-        self._mp_q = None
+            self._mp_q = None
 
     def __getstate__(self) -> dict[str, Any]:  # pragma: no cover
         data = {**self.__dict__}
