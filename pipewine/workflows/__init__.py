@@ -39,14 +39,18 @@ def run_workflow(
 ) -> None:
     executor = executor or SequentialWorkflowExecutor()
     event_queue = event_queue or ProcessSharedEventQueue()
+    success = True
     try:
         if event_queue and tracker:
             event_queue.start()
             executor.attach(event_queue)
             tracker.attach(event_queue)
         executor.execute(workflow)
+    except BaseException as e:
+        success = False
+        raise e
     finally:
         if event_queue and tracker:
-            tracker.detach()
             executor.detach()
+            tracker.detach(graceful=success)
             event_queue.close()

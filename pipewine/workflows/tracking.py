@@ -34,7 +34,7 @@ class Tracker(ABC):
     def attach(self, event_queue: EventQueue) -> None: ...
 
     @abstractmethod
-    def detach(self) -> None: ...
+    def detach(self, graceful: bool = True) -> None: ...
 
 
 @dataclass
@@ -63,7 +63,8 @@ class CursesTracker(Tracker):
         self._tui_thread: threading.Thread | None = None
         self._read_thread: threading.Thread | None = None
         self._buffer: deque[Event] = deque()
-        self._stop_flag = threading.Event()
+        self._stop_flag_forced = threading.Event()
+        self._stop_flag_graceful = threading.Event()
 
     def attach(self, event_queue: EventQueue) -> None:
         if self._eq is not None or self._tui_thread is not None:
@@ -71,15 +72,19 @@ class CursesTracker(Tracker):
         self._eq = event_queue
         self._tui_thread = threading.Thread(target=self._tui_loop)
         self._read_thread = threading.Thread(target=self._read_loop)
-        self._stop_flag.clear()
+        self._stop_flag_forced.clear()
+        self._stop_flag_graceful.clear()
         self._tui_thread.start()
         self._read_thread.start()
 
-    def detach(self) -> None:
+    def detach(self, graceful: bool = True) -> None:
         if self._eq is None or self._tui_thread is None:
             raise RuntimeError("Not attached to any event queue.")
         assert self._read_thread is not None
-        self._stop_flag.set()
+        if graceful:
+            self._stop_flag_graceful.set()
+        else:
+            self._stop_flag_forced.set()
         self._tui_thread.join()
         self._read_thread.join()
         self._tui_thread = None
@@ -208,7 +213,7 @@ class CursesTracker(Tracker):
         self._init_colors()
         root = TaskGroup("__root__")
         global_step = -1
-        while not self._stop_flag.is_set():
+        while not self._stop_flag_forced.is_set():
             time.sleep(self._refresh_rate)
             global_step = global_step + 1 % 10000
             while True:
@@ -232,12 +237,22 @@ class CursesTracker(Tracker):
 
             self._render_tasks(stdscr, list_of_tasks, global_step)
 
+            if (
+                self._stop_flag_graceful.is_set()
+                and not self._buffer
+                and self._read_thread
+                and not self._read_thread.is_alive()
+            ):
+                break
+
     def _read_loop(self) -> None:
         eq = self._eq
         assert eq is not None
-        while not self._stop_flag.is_set():
+        while not self._stop_flag_forced.is_set():
             while (event := eq.capture_blocking(timeout=0.1)) is not None:
                 self._buffer.append(event)
+            if event is None and self._stop_flag_graceful.is_set():
+                break
 
     def _tui_loop(self) -> None:
         wrapper(self._curses)
