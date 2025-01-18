@@ -32,8 +32,7 @@ class ProcessSharedEventQueue(EventQueue):
         self._id = uuid1().hex
 
     def start(self) -> None:
-        self._mp_q = get_context("spawn").Queue()
-        self._mp_q.cancel_join_thread()
+        self._mp_q = get_context("spawn").Queue(1000)
         InheritedData.data[self._id] = self._mp_q
 
     def emit(self, event: Event) -> None:
@@ -52,6 +51,7 @@ class ProcessSharedEventQueue(EventQueue):
     def close(self) -> None:
         if self._mp_q is not None:
             self._mp_q.close()
+            self._mp_q.join_thread()
             del InheritedData.data[self._id]
         self._mp_q = None
 
@@ -63,4 +63,3 @@ class ProcessSharedEventQueue(EventQueue):
     def __setstate__(self, data: dict[str, Any]) -> None:
         self._id = data["_id"]
         self._mp_q = cast(Queue, InheritedData.data[self._id])
-        self._mp_q.cancel_join_thread()

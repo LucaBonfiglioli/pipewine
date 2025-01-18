@@ -21,7 +21,6 @@ from pipewine.workflows.model import (
 )
 from pipewine.workflows.tracking import (
     CursesTracker,
-    NoTracker,
     Task,
     TaskCompleteEvent,
     TaskGroup,
@@ -34,19 +33,20 @@ from pipewine.workflows.tracking import (
 
 def run_workflow(
     workflow: Workflow,
-    event_queue: EventQueue | None = None,
     executor: WorkflowExecutor | None = None,
+    event_queue: EventQueue | None = None,
     tracker: Tracker | None = None,
 ) -> None:
-    event_queue = event_queue or ProcessSharedEventQueue()
     executor = executor or SequentialWorkflowExecutor()
-    tracker = tracker or NoTracker()
+    event_queue = event_queue or ProcessSharedEventQueue()
     try:
-        event_queue.start()
-        executor.attach(event_queue)
-        tracker.attach(event_queue)
+        if event_queue and tracker:
+            event_queue.start()
+            executor.attach(event_queue)
+            tracker.attach(event_queue)
         executor.execute(workflow)
     finally:
-        tracker.detach()
-        executor.detach()
-        event_queue.close()
+        if event_queue and tracker:
+            tracker.detach()
+            executor.detach()
+            event_queue.close()

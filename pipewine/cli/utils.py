@@ -14,7 +14,7 @@ from pipewine.grabber import Grabber
 from pipewine.sample import Sample
 from pipewine.sinks import DatasetSink
 from pipewine.sources import DatasetSource
-from pipewine.workflows import CursesTracker, NoTracker, Workflow, run_workflow
+from pipewine.workflows import CursesTracker, Workflow, run_workflow
 
 
 def deep_get(sample: Sample, key: str) -> Any:
@@ -108,7 +108,7 @@ def _print_workflow_panel(
 def run_cli_workflow(workflow: Workflow, tui: bool = True) -> None:
     start_time = datetime.now()
     try:
-        run_workflow(workflow, tracker=CursesTracker() if tui else NoTracker())
+        run_workflow(workflow, tracker=CursesTracker() if tui else None)
     except KeyboardInterrupt:
         _print_workflow_panel(start_time, "Workflow canceled.", "bold bright_black")
         exit(1)

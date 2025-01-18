@@ -2,6 +2,7 @@ from collections.abc import Callable, Iterator, Sequence
 from multiprocessing.pool import Pool
 from multiprocessing import get_context
 from typing import Any
+from signal import SIGINT, SIG_IGN, signal
 
 
 class _GrabWorker[T]:
@@ -41,6 +42,7 @@ class _GrabContext[T]:
 
     @staticmethod
     def wrk_init(static_data: dict[str, Any], user_init_fn):  # pragma: no cover
+        signal(SIGINT, SIG_IGN)
         InheritedData.data = static_data
         if user_init_fn[0] is not None:
             user_init_fn[0](*user_init_fn[1])
@@ -68,10 +70,8 @@ class _GrabContext[T]:
 
     def __exit__(self, exc_type, exc_value, traceback):
         if self._pool is not None:
-            if exc_type != KeyboardInterrupt:  # pragma: no branch
-                self._pool.close()
-                self._pool.join()
             self._pool.__exit__(exc_type, exc_value, traceback)
+            self._pool = None
 
 
 class Grabber:

@@ -51,14 +51,6 @@ class TaskGroup:
     tasks: OrderedDict[str, Task] = field(default_factory=OrderedDict)
 
 
-class NoTracker(Tracker):  # pragma: no cover (useless)
-    def attach(self, event_queue: EventQueue) -> None:
-        return
-
-    def detach(self) -> None:
-        return
-
-
 class CursesTracker(Tracker):
     MAX_COLOR = 1000
 
@@ -207,14 +199,14 @@ class CursesTracker(Tracker):
 
     def _curses(self, stdscr: window) -> None:
         self._init_colors()
-        em = self._eq
-        assert em is not None
+        eq = self._eq
+        assert eq is not None
         root = TaskGroup("__root__")
         global_step = -1
         while not self._stop_flag:
             time.sleep(self._refresh_rate)
             global_step = global_step + 1 % 10000
-            while (event := em.capture()) is not None:
+            while (event := eq.capture()) is not None:
                 if isinstance(event, TaskStartEvent):
                     task = self._spawn_task(root, event.task_id, event.total)
                 elif isinstance(event, TaskUpdateEvent):
@@ -232,3 +224,4 @@ class CursesTracker(Tracker):
 
     def _loop(self) -> None:
         wrapper(self._curses)
+        # self._curses(None)
