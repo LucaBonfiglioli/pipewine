@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
+from collections import deque
 from functools import partial
+import random
 from threading import RLock
 from typing import Any
 from uuid import uuid4
@@ -9,6 +11,7 @@ from pipewine.dataset import Dataset, LazyDataset, ListDataset
 from pipewine.grabber import Grabber, InheritedData
 from pipewine.mappers import CacheMapper
 from pipewine.operators.base import DatasetOperator
+from pipewine.operators.functional import MapOp
 from pipewine.sample import Sample, TypelessSample
 
 
@@ -63,10 +66,83 @@ class MemoCache[K, V](Cache[K, V]):
         self._memo[key] = value
 
 
+class RRCache[K, V](Cache[K, V]):
+    def __init__(self, maxsize: int = 32) -> None:
+        super().__init__()
+        self._mp: dict[K, V] = {}
+        self._keys: list[K] = []
+        self._maxsize = maxsize
+
+    def _clear(self) -> None:
+        self._mp.clear()
+        self._keys.clear()
+
+    def _get(self, key: K) -> V | None:
+        return self._mp.get(key)
+
+    def _put(self, key: K, value: V) -> None:
+        if len(self._keys) < self._maxsize:
+            self._keys.append(key)
+        else:
+            idx = random.randint(0, self._maxsize)
+            prev_k = self._keys[idx]
+            self._keys[idx] = key
+            del self._mp[prev_k]
+        self._mp[key] = value
+
+
+class FIFOCache[K, V](Cache[K, V]):
+    def __init__(self, maxsize: int = 32) -> None:
+        super().__init__()
+        self._mp: dict[K, V] = {}
+        self._keys: deque[K] = deque()
+        self._maxsize = maxsize
+
+    def _clear(self) -> None:
+        self._mp.clear()
+        self._keys.clear()
+
+    def _get(self, key: K) -> V | None:
+        return self._mp.get(key)
+
+    def _put(self, key: K, value: V) -> None:
+        if len(self._keys) < self._maxsize:
+            self._keys.append(key)
+        else:
+            evicted = self._keys.popleft()
+            self._keys.append(key)
+            del self._mp[evicted]
+        self._mp[key] = value
+
+
+class LIFOCache[K, V](Cache[K, V]):
+    def __init__(self, maxsize: int = 32) -> None:
+        super().__init__()
+        self._mp: dict[K, V] = {}
+        self._keys: list[K] = []
+        self._maxsize = maxsize
+
+    def _clear(self) -> None:
+        self._mp.clear()
+        self._keys.clear()
+
+    def _get(self, key: K) -> V | None:
+        return self._mp.get(key)
+
+    def _put(self, key: K, value: V) -> None:
+        if len(self._keys) < self._maxsize:
+            self._keys.append(key)
+        else:
+            evicted = self._keys.pop()
+            self._keys.append(key)
+            del self._mp[evicted]
+        self._mp[key] = value
+
+
 class LRUCache[K, V](Cache[K, V]):
     _PREV, _NEXT, _KEY, _VALUE = 0, 1, 2, 3
 
-    def __init__(self, maxsize: int) -> None:
+    def __init__(self, maxsize: int = 32) -> None:
         super().__init__()
         self._maxsize = maxsize
         self._dll: list = []
@@ -78,25 +154,71 @@ class LRUCache[K, V](Cache[K, V]):
         self._dll[:] = [self._dll, self._dll, None, None]
 
     def _get(self, key: K) -> V | None:
-        with self._lock:
-            link = self._mp.get(key)
-            if link is not None:
-                link_prev, link_next, _key, value = link
-                link_prev[self._NEXT] = link_next
-                link_next[self._PREV] = link_prev
-                last = self._dll[self._PREV]
-                last[self._NEXT] = self._dll[self._PREV] = link
-                link[self._PREV] = last
-                link[self._NEXT] = self._dll
-                return value
+        link = self._mp.get(key)
+        if link is not None:
+            link_prev, link_next, _key, value = link
+            link_prev[self._NEXT] = link_next
+            link_next[self._PREV] = link_prev
+            last = self._dll[self._PREV]
+            last[self._NEXT] = self._dll[self._PREV] = link
+            link[self._PREV] = last
+            link[self._NEXT] = self._dll
+            return value
         return None
 
     def _put(self, key: K, value: V) -> None:
         if key in self._mp:
             self._mp[key][self._VALUE] = value
-            self.get(key)  # Set key as mru
+            self._get(key)  # Set key as mru
         elif len(self._mp) >= self._maxsize:
             oldroot = self._dll
+            oldroot[self._KEY] = key
+            oldroot[self._VALUE] = value
+            self._dll = oldroot[self._NEXT]
+            oldkey = self._dll[self._KEY]
+            oldvalue = self._dll[self._VALUE]
+            self._dll[self._KEY] = self._dll[self._VALUE] = None
+            del self._mp[oldkey]
+            self._mp[key] = oldroot
+        else:
+            last = self._dll[self._PREV]
+            link = [last, self._dll, key, value]
+            last[self._NEXT] = self._dll[self._PREV] = self._mp[key] = link
+
+
+class MRUCache[K, V](Cache[K, V]):
+    _PREV, _NEXT, _KEY, _VALUE = 0, 1, 2, 3
+
+    def __init__(self, maxsize: int = 32) -> None:
+        super().__init__()
+        self._maxsize = maxsize
+        self._dll: list = []
+        self._dll[:] = [self._dll, self._dll, None, None]
+        self._mp: dict[K, list] = {}
+
+    def _clear(self) -> None:
+        self._mp.clear()
+        self._dll[:] = [self._dll, self._dll, None, None]
+
+    def _get(self, key: K) -> V | None:
+        link = self._mp.get(key)
+        if link is not None:
+            link_prev, link_next, _key, value = link
+            link_prev[self._NEXT] = link_next
+            link_next[self._PREV] = link_prev
+            last = self._dll[self._PREV]
+            last[self._NEXT] = self._dll[self._PREV] = link
+            link[self._PREV] = last
+            link[self._NEXT] = self._dll
+            return value
+        return None
+
+    def _put(self, key: K, value: V) -> None:
+        if key in self._mp:
+            self._mp[key][self._VALUE] = value
+            self._get(key)  # Set key as mru
+        elif len(self._mp) >= self._maxsize:
+            oldroot = self._dll[self._PREV]
             oldroot[self._KEY] = key
             oldroot[self._VALUE] = value
             self._dll = oldroot[self._NEXT]
@@ -133,6 +255,15 @@ class CacheOp(DatasetOperator[Dataset, Dataset]):
         dataset = LazyDataset(len(x), partial(self._get_sample, x, id_))
         weakref.finalize(dataset, InheritedData.data.__delitem__, id_)
         return dataset
+
+
+class ItemCacheOp(DatasetOperator[Dataset, Dataset]):
+    def __init__(self) -> None:
+        super().__init__()
+        self._map_op = MapOp(CacheMapper())
+
+    def __call__[T: Sample](self, x: Dataset[T]) -> Dataset[T]:
+        return self._map_op(x)
 
 
 class MemorizeEverythingOp(DatasetOperator[Dataset, Dataset]):
