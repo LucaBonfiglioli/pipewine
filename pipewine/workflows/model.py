@@ -53,17 +53,19 @@ class UnderfolderCheckpointFactory(CheckpointFactory):
 
 class Default:
     @classmethod
-    def get[T](cls, maybe_value: T | "Default", default: T) -> T:
-        return default if isinstance(maybe_value, Default) else maybe_value
+    def get[T](cls, *optionals: T | "Default", default: T) -> T:
+        for maybe in optionals:
+            if not isinstance(maybe, Default):
+                return maybe
+        return default
 
 
 @dataclass
-class NodeOptions:
+class WfOptions:
     cache_type: type | None | Default = field(default_factory=Default)
     cache_params: dict[str, Any] | Default = field(default_factory=Default)
-    checkpoint_factory: CheckpointFactory | None | Default = field(
-        default_factory=Default
-    )
+    checkpoint: bool | Default = field(default_factory=Default)
+    checkpoint_factory: CheckpointFactory | Default = field(default_factory=Default)
     checkpoint_grabber: Grabber | Default = field(default_factory=Default)
     collect_after_checkpoint: bool | Default = field(default_factory=Default)
     destroy_checkpoints: bool | Default = field(default_factory=Default)
@@ -73,7 +75,7 @@ class NodeOptions:
 class Node[T: AnyAction]:
     name: str
     action: T = field(hash=False)
-    options: NodeOptions = field(default_factory=NodeOptions, hash=False, compare=False)
+    options: WfOptions = field(default_factory=WfOptions, hash=False, compare=False)
 
 
 @dataclass(unsafe_hash=True)
@@ -141,12 +143,17 @@ class Workflow:
     _INPUT_NAME = "input"
     _OUTPUT_NAME = "output"
 
-    def __init__(self) -> None:
+    def __init__(self, options: WfOptions | None = None) -> None:
+        self._options = options or WfOptions()
         self._nodes: set[Node] = set()
         self._nodes_by_name: dict[str, Node] = {}
         self._inbound_edges: dict[Node, set[Edge]] = defaultdict(set)
         self._outbound_edges: dict[Node, set[Edge]] = defaultdict(set)
         self._name_counters: dict[str, int] = defaultdict(int)
+
+    @property
+    def options(self) -> WfOptions:
+        return self._options
 
     def _gen_node_name(self, action: AnyAction) -> str:
         title = action.__class__.__name__
@@ -175,11 +182,9 @@ class Workflow:
 
     def node[
         T: AnyAction
-    ](
-        self, action: T, name: str | None = None, options: NodeOptions | None = None
-    ) -> T:
+    ](self, action: T, name: str | None = None, options: WfOptions | None = None) -> T:
         name = name or self._gen_node_name(cast(AnyAction, action))
-        options = options or NodeOptions()
+        options = options or WfOptions()
         node = Node(name=name, action=action, options=options)
         self._nodes.add(node)
         self._nodes_by_name[node.name] = node

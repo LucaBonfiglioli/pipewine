@@ -2,11 +2,14 @@ from abc import ABC, abstractmethod
 from functools import partial
 from threading import RLock
 from typing import Any
+from uuid import uuid4
+import weakref
 
-from pipewine.dataset import Dataset, LazyDataset
+from pipewine.dataset import Dataset, LazyDataset, ListDataset
+from pipewine.grabber import Grabber, InheritedData
 from pipewine.mappers import CacheMapper
 from pipewine.operators.base import DatasetOperator
-from pipewine.sample import Sample
+from pipewine.sample import Sample, TypelessSample
 
 
 class Cache[K, V](ABC):
@@ -115,9 +118,8 @@ class CacheOp(DatasetOperator[Dataset, Dataset]):
         self._cache_type = cache_type
         self._cache_params = cache_params
 
-    def _get_sample[
-        T: Sample
-    ](self, dataset: Dataset[T], cache: Cache[int, T], idx: int) -> T:
+    def _get_sample[T: Sample](self, dataset: Dataset[T], cache_id: str, idx: int) -> T:
+        cache: Cache[int, T] = InheritedData.data[cache_id]
         result = cache.get(idx)
         if result is None:
             result = self._cache_mapper(idx, dataset[idx])
@@ -126,4 +128,31 @@ class CacheOp(DatasetOperator[Dataset, Dataset]):
 
     def __call__[T: Sample](self, x: Dataset[T]) -> LazyDataset[T]:
         cache = self._cache_type(**self._cache_params)
-        return LazyDataset(len(x), partial(self._get_sample, x, cache))
+        id_ = uuid4().hex
+        InheritedData.data[id_] = cache
+        dataset = LazyDataset(len(x), partial(self._get_sample, x, id_))
+        weakref.finalize(dataset, InheritedData.data.__delitem__, id_)
+        return dataset
+
+
+class MemorizeEverythingOp(DatasetOperator[Dataset, Dataset]):
+    def __init__(self, grabber: Grabber | None = None) -> None:
+        super().__init__()
+        self._grabber = grabber or Grabber()
+        self._cache_mapper: CacheMapper = CacheMapper()
+
+    def _get_sample(self, cache_id: str, idx: int) -> Sample:
+        cache: Cache[int, Sample] = InheritedData.data[cache_id]
+        result = cache.get(idx)
+        assert result is not None
+        return result
+
+    def __call__(self, x: Dataset) -> Dataset:
+        cache = MemoCache()
+        id_ = uuid4().hex
+        InheritedData.data[id_] = cache
+        for i, sample in self.loop(x, self._grabber, "Caching"):
+            cache.put(i, self._cache_mapper(i, sample))
+        dataset = LazyDataset(len(x), partial(self._get_sample, id_))
+        weakref.finalize(dataset, InheritedData.data.__delitem__, id_)
+        return dataset

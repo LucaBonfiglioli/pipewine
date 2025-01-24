@@ -16,8 +16,9 @@ from pipewine.workflows.model import (
     AnyAction,
     Default,
     Node,
-    NodeOptions,
+    WfOptions,
     Proxy,
+    UnderfolderCheckpointFactory,
     Workflow,
 )
 from pipewine.workflows.tracking import (
@@ -63,18 +64,16 @@ class WorkflowExecutor(ABC):
 
 
 class SequentialWorkflowExecutor(WorkflowExecutor):
-    def __init__(self, node_options: NodeOptions | None = None) -> None:
+    def __init__(self) -> None:
         super().__init__()
         self._eq: EventQueue | None = None
-        opts = node_options or NodeOptions()
-        self._cache_type = Default.get(opts.cache_type, None)
-        self._cache_params = Default.get(opts.cache_params, {})
-        self._checkpoint_factory = Default.get(opts.checkpoint_factory, None)
-        self._checkpoint_grabber = Default.get(opts.checkpoint_grabber, Grabber())
-        self._collect_after_checkpoint = Default.get(
-            opts.collect_after_checkpoint, True
-        )
-        self._destroy_checkpoints = Default.get(opts.destroy_checkpoints, True)
+        self._def_cache_type = None
+        self._def_cache_params = {}
+        self._def_checkpoint = False
+        self._def_checkpoint_factory = UnderfolderCheckpointFactory()
+        self._def_checkpoint_grabber = Grabber()
+        self._def_collect_after_checkpoint = True
+        self._def_destroy_checkpoints = True
 
     def attach(self, event_queue: EventQueue) -> None:
         if self._eq is not None:
@@ -97,6 +96,7 @@ class SequentialWorkflowExecutor(WorkflowExecutor):
         node: Node,
         state: dict[Proxy, Dataset],
         id_: str,
+        wf_opts: WfOptions,
     ) -> None:
         action = cast(AnyAction, node.action)
         self._register_all_cbs(action, node)
@@ -137,18 +137,18 @@ class SequentialWorkflowExecutor(WorkflowExecutor):
         if output is None:
             return
         if isinstance(output, Dataset):
-            self._handle_output(state, Proxy(node, None), output, id_)
+            self._handle_output(state, Proxy(node, None), output, id_, wf_opts)
         elif isinstance(output, Sequence):
             for i, dataset in enumerate(output):
-                self._handle_output(state, Proxy(node, i), dataset, id_)
+                self._handle_output(state, Proxy(node, i), dataset, id_, wf_opts)
         elif isinstance(output, Mapping):
             for k, v in output.items():
                 state[Proxy(node, k)] = v
-                self._handle_output(state, Proxy(node, k), v, id_)
+                self._handle_output(state, Proxy(node, k), v, id_, wf_opts)
         else:
             assert isinstance(output, Bundle)
             for k, v in output.as_dict().items():
-                self._handle_output(state, Proxy(node, k), v, id_)
+                self._handle_output(state, Proxy(node, k), v, id_, wf_opts)
 
     def _handle_output(
         self,
@@ -156,15 +156,27 @@ class SequentialWorkflowExecutor(WorkflowExecutor):
         proxy: Proxy,
         dataset: Dataset,
         id_: str,
+        wf_opts: WfOptions,
     ) -> None:
         opts = proxy.node.options
-        ckpt_fact = Default.get(opts.checkpoint_factory, self._checkpoint_factory)
+        ckpt = Default.get(
+            opts.checkpoint, wf_opts.checkpoint, default=self._def_checkpoint
+        )
         if (
-            ckpt_fact is not None
+            ckpt
             and len(dataset) > 0
             and not isinstance(proxy.node.action, DatasetSource)
         ):
-            grabber = Default.get(opts.checkpoint_grabber, self._checkpoint_grabber)
+            ckpt_fact = Default.get(
+                opts.checkpoint_factory,
+                wf_opts.checkpoint_factory,
+                default=self._def_checkpoint_factory,
+            )
+            grabber = Default.get(
+                opts.checkpoint_grabber,
+                wf_opts.checkpoint_grabber,
+                default=self._def_checkpoint_grabber,
+            )
             sink, source = ckpt_fact.create(
                 id_, proxy.node.name, type(dataset[0]), grabber
             )
@@ -173,7 +185,9 @@ class SequentialWorkflowExecutor(WorkflowExecutor):
             sink(dataset)
 
             collect = Default.get(
-                opts.collect_after_checkpoint, self._collect_after_checkpoint
+                opts.collect_after_checkpoint,
+                wf_opts.collect_after_checkpoint,
+                default=self._def_collect_after_checkpoint,
             )
             if collect:
                 del dataset
@@ -181,9 +195,13 @@ class SequentialWorkflowExecutor(WorkflowExecutor):
 
             dataset = source()
 
-        cache_type = Default.get(opts.cache_type, self._cache_type)
+        cache_type = Default.get(
+            opts.cache_type, wf_opts.cache_type, default=self._def_cache_type
+        )
         if cache_type is not None:
-            cache_params = Default.get(opts.cache_params, self._cache_params)
+            cache_params = Default.get(
+                opts.cache_params, wf_opts.cache_params, default=self._def_cache_params
+            )
             cache_op = CacheOp(cache_type=cache_type, **{**cache_params})
             dataset = cache_op(dataset)
 
@@ -214,14 +232,23 @@ class SequentialWorkflowExecutor(WorkflowExecutor):
 
     def execute(self, workflow: Workflow) -> None:
         id_ = uuid1()
+        wf_opts = workflow.options
         sorted_graph = self._topological_sort(workflow)
         state: dict[Proxy, Dataset] = {}
         for node in sorted_graph:
-            self._execute_node(workflow, node, state, id_.hex)
+            self._execute_node(workflow, node, state, id_.hex, wf_opts)
 
         for node in workflow.get_nodes():
             opts = node.options
-            destroy = Default.get(opts.destroy_checkpoints, self._destroy_checkpoints)
-            ckpt_fact = Default.get(opts.checkpoint_factory, self._checkpoint_factory)
+            destroy = Default.get(
+                opts.destroy_checkpoints,
+                wf_opts.destroy_checkpoints,
+                default=self._def_destroy_checkpoints,
+            )
+            ckpt_fact = Default.get(
+                opts.checkpoint_factory,
+                wf_opts.checkpoint_factory,
+                default=self._def_checkpoint_factory,
+            )
             if destroy and ckpt_fact is not None:
                 ckpt_fact.destroy(id_.hex, node.name)

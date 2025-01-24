@@ -1,3 +1,4 @@
+from pathlib import Path
 from pipewine.workflows.drawing import (
     Drawer,
     Layout,
@@ -17,7 +18,7 @@ from pipewine.workflows.model import (
     Proxy,
     CheckpointFactory,
     UnderfolderCheckpointFactory,
-    NodeOptions,
+    WfOptions,
 )
 from pipewine.workflows.tracking import (
     CursesTracker,
@@ -54,3 +55,16 @@ def run_workflow(
             executor.detach()
             tracker.detach(graceful=success)
             event_queue.close()
+
+
+def draw_workflow(
+    workflow: Workflow,
+    path: Path,
+    layout: Layout | None = None,
+    drawer: Drawer | None = None,
+) -> None:
+    layout = layout or OptimizedLayout()
+    drawer = drawer or SVGDrawer()
+    vg = layout.layout(workflow)
+    with open(path, "wb") as fp:
+        drawer.draw(vg, fp)

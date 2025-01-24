@@ -1,5 +1,11 @@
 from pipewine.operators.base import DatasetOperator, IdentityOp
-from pipewine.operators.cache import Cache, CacheOp, LRUCache, MemoCache
+from pipewine.operators.cache import (
+    Cache,
+    CacheOp,
+    LRUCache,
+    MemoCache,
+    MemorizeEverythingOp,
+)
 from pipewine.operators.functional import FilterOp, GroupByOp, MapOp, SortOp
 from pipewine.operators.iter import (
     CycleOp,

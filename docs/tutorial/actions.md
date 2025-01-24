@@ -138,7 +138,7 @@ The second option is clearly better:
 
 - You still get the option to parallelize work in a relatively easy way without having to integrate complex bindings for execution environments other than the Python interpreter. 
 - Process creation and communication overhead becomes negligible when dealing with large amounts of relatively independent jobs that don't need much synchronization. This is a relatively common scenario in data pipelines.
-- It does not prevent you to implement optimized multi-threaded components in other languages. Think about it: whenever you use tools like Numpy inside a Pipewine action, you are doing exactly this. 
+- It does not prevent you from implementing optimized multi-threaded components in other languages. Think about it: whenever you use tools like Numpy inside a Pipewine action, you are doing exactly this. 
 
 ### Grabber
 
@@ -154,18 +154,18 @@ The `Grabber` object also does a few nice things for you:
 - Handles exceptions freeing resources and returning the errors transparently to the parent process.
 - Automatically invokes a callback function whenever a task is completed. The callback is run by the individual workers.
 
-When creating a `Grabber` you will need to choose three main parameters that govern the execution:
+When creating a `Grabber` you need to choose three main parameters that govern the execution:
 
 - `num_workers`: The number of concurrent workers. Ideally, in a magic world where all workload is perfectly distributed and communication overhead is zero, the total time is proportional to `num_jobs / num_workers`, so the higher the better. In reality, there are many factors that make the returns of adding more processes strongly diminishing, and sometimes even negative:
     - Work is not perfectly distributed and it's not complete until the slowest worker hasn't finished. 
     - Processes are expensive to create. With small enough workloads, a single process may actually be faster than a concurrent pool.
     - Everytime an object is passed from one process to the other it needs to be serialized and then de-serialized. This can become quite expensive when dealing with large data structures.
     - Processes need synchronization mechanisms that temporarily halt the computation.
-    - Sometimes the bottleneck is not the computation itself: if a single process reading data from the network completely saturates your bandwidth, adding more processes won't fix the problem.
+    - Sometimes the bottleneck is not the computation itself: if a single process reading data from the network completely saturates your bandwidth, adding more processes won't fix the issue.
     - Sometimes multiprocessing can be much slower than single processing. A typical example is when concurrently writing to a mechanical HDD, causing it to waste a lot of time going back and forth the writing locations.  
     - Your code may already be parallelized. Whenever you use libraries like Numpy, PyTorch, OpenCV (and many more), you are calling C/C++ bindings that run very efficient multi-threaded code outside of the Python interpreter, or even code that runs on devices other than your CPU (e.g. CUDA-enabled GPUs). Adding multiprocessing in these cases will only add overhead costs to something that already uses your computational resources nearly optimally.
     - Due to memory constraints the number of processes you can keep running may be limited to a small number. E.g. if each process needs to keep loaded a 10GB chunk of data and the available memory is just 32GB, the maximum amount of processes you can run without swapping is 3. Adding a 4th process will make the system start swapping, greatly deteriorating the overall execution speed.
-- `prefetch`: The number of tasks that are assigned to each worker whenever they are ready. It's easier to explain this with an analogy. Imagine you need to deliver 1000 products to customers and you have 4 couriers ready to deliver them. How inefficient would it be if every courier delivered one product at a time, returning to the warehouse whenever they complete a delivery? You would still parallelize work across 4 couriers, but would incur in massive synchronization costs (the extra time it takes for the courier to return to the warehouse each time). A smarter solution would be to assign a larger batch of deliveries to each courier (e.g. 50) so that they would have to return to the warehouse less often. 
+- `prefetch`: The number of tasks that are assigned to each worker whenever they are ready. It's easier to explain this with an analogy. Imagine you need to deliver 1000 products to customers and you have 4 couriers ready to deliver them. How inefficient would it be if every courier delivered one product at a time, returning to the warehouse whenever they complete a delivery? You would still parallelize work across 4 couriers, but would also incur in massive synchronization costs (the extra time it takes for the courier to return to the warehouse each time). A smarter solution would be to assign a larger batch of deliveries to each courier (e.g. 50) so that they would have to return to the warehouse less frequently. 
 - `keep_order`: Sometimes, the order in which the operations are performed is not that relevant. Executing tasks out-of-order requires even less synchronization, usually resulting in faster overall execution.
 
 Let's see an example of how a `Grabber` works. 
@@ -191,7 +191,7 @@ Let's see an example of how a `Grabber` works.
         @overload
         def __getitem__(self, idx: slice) -> "SlowSequence": ...
         def __getitem__(self, idx: int | slice) -> "SlowSequence | int":
-            # Let's not care about slicing for now
+            # Let's not worry about slicing for now
             if isinstance(idx, slice):
                 raise NotImplementedError()
 
@@ -199,7 +199,7 @@ Let's see an example of how a `Grabber` works.
             if idx >= len(self):
                 raise IndexError(idx)
 
-            # Simulate some slow operation and return
+            # Simulate a slow operation and return
             time.sleep(0.1)
             return idx + self._start
     ```
@@ -259,7 +259,7 @@ Let's see an example of how a `Grabber` works.
     ...
     ```
 
-    Important note: what `Grabber` parallelizes just the call to the `__getitem__` method and the callback function. The body of the for loop (the summation) is **not** parallelized and it's executed by the parent process.
+    Important note: what `Grabber` just parallelizes the `__getitem__` method and the callback function. The body of the for loop (the summation) is **not** parallelized and it's executed by the parent process.
 
 ## Sources and Sinks
 
@@ -587,7 +587,7 @@ Custom dataset operators can be registered to the Pipewine CLI to allow you to a
 
 Pipewine `Mapper` objects (essentially the same as Pipelime Stages), allow you to quickly implement dataset operators by defining a function that transforms individual samples.
 
-This allows you to write way less code when the following conditions apply:
+This allows you to write way less code when all the following conditions apply:
 
 - The operation accepts and returns a single dataset.
 - The input and output datasets have the same length.

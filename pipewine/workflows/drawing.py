@@ -209,7 +209,6 @@ class OptimizedLayout(Layout):
             for i, layout in enumerate(layouts):
                 fitness[i] = fitness_fn(layout)
                 if fitness[i] > best:
-                    print(global_step, sigma, best)
                     best = fitness[i]
                     argbest = layout
             fitness = (fitness - fitness.min()) / (fitness.max() - fitness.min() + 1e-5)
