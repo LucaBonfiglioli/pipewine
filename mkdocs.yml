@@ -45,6 +45,7 @@ nav:
     - tutorial/installation.md
     - tutorial/data.md
     - tutorial/actions.md
+    - tutorial/cache.md
     - tutorial/workflows.md
     - tutorial/cli.md
 

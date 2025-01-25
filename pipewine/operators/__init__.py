@@ -8,6 +8,7 @@ from pipewine.operators.cache import (
     MemoCache,
     MemorizeEverythingOp,
     MRUCache,
+    ItemCacheOp,
     RRCache,
 )
 from pipewine.operators.functional import FilterOp, GroupByOp, MapOp, SortOp
