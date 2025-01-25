@@ -133,8 +133,8 @@ class LIFOCache[K, V](Cache[K, V]):
         if len(self._keys) < self._maxsize:
             self._keys.append(key)
         else:
-            evicted = self._keys.pop()
-            self._keys.append(key)
+            evicted = self._keys[-1]
+            self._keys[-1] = key
             del self._mp[evicted]
         self._mp[key] = value
 
