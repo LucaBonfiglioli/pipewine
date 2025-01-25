@@ -10,6 +10,7 @@ from pipewine.bundle import Bundle
 from pipewine.dataset import Dataset
 from pipewine.grabber import Grabber
 from pipewine.operators import CacheOp, DatasetOperator
+from pipewine.operators.cache import FIFOCache
 from pipewine.sinks import DatasetSink
 from pipewine.sources import DatasetSource
 from pipewine.workflows.model import (
@@ -67,8 +68,9 @@ class SequentialWorkflowExecutor(WorkflowExecutor):
     def __init__(self) -> None:
         super().__init__()
         self._eq: EventQueue | None = None
-        self._def_cache_type = None
-        self._def_cache_params = {}
+        self._def_cache = True
+        self._def_cache_type = FIFOCache
+        self._def_cache_params = {"maxsize": 1}
         self._def_checkpoint = False
         self._def_checkpoint_factory = UnderfolderCheckpointFactory()
         self._def_checkpoint_grabber = Grabber()
@@ -195,10 +197,11 @@ class SequentialWorkflowExecutor(WorkflowExecutor):
 
             dataset = source()
 
-        cache_type = Default.get(
-            opts.cache_type, wf_opts.cache_type, default=self._def_cache_type
-        )
-        if cache_type is not None:
+        cache = Default.get(opts.cache, wf_opts.cache, default=self._def_cache)
+        if cache:
+            cache_type = Default.get(
+                opts.cache_type, wf_opts.cache_type, default=self._def_cache_type
+            )
             cache_params = Default.get(
                 opts.cache_params, wf_opts.cache_params, default=self._def_cache_params
             )

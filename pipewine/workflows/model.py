@@ -62,7 +62,8 @@ class Default:
 
 @dataclass
 class WfOptions:
-    cache_type: type | None | Default = field(default_factory=Default)
+    cache: bool | Default = field(default_factory=Default)
+    cache_type: type | Default = field(default_factory=Default)
     cache_params: dict[str, Any] | Default = field(default_factory=Default)
     checkpoint: bool | Default = field(default_factory=Default)
     checkpoint_factory: CheckpointFactory | Default = field(default_factory=Default)

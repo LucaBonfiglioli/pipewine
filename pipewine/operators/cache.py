@@ -1,18 +1,18 @@
+import random
+import weakref
 from abc import ABC, abstractmethod
 from collections import deque
 from functools import partial
-import random
 from threading import RLock
 from typing import Any
 from uuid import uuid4
-import weakref
 
-from pipewine.dataset import Dataset, LazyDataset, ListDataset
+from pipewine.dataset import Dataset, LazyDataset
 from pipewine.grabber import Grabber, InheritedData
 from pipewine.mappers import CacheMapper
 from pipewine.operators.base import DatasetOperator
 from pipewine.operators.functional import MapOp
-from pipewine.sample import Sample, TypelessSample
+from pipewine.sample import Sample
 
 
 class Cache[K, V](ABC):
@@ -84,7 +84,7 @@ class RRCache[K, V](Cache[K, V]):
         if len(self._keys) < self._maxsize:
             self._keys.append(key)
         else:
-            idx = random.randint(0, self._maxsize)
+            idx = random.randint(0, self._maxsize - 1)
             prev_k = self._keys[idx]
             self._keys[idx] = key
             del self._mp[prev_k]
@@ -218,15 +218,13 @@ class MRUCache[K, V](Cache[K, V]):
             self._mp[key][self._VALUE] = value
             self._get(key)  # Set key as mru
         elif len(self._mp) >= self._maxsize:
-            oldroot = self._dll[self._PREV]
-            oldroot[self._KEY] = key
-            oldroot[self._VALUE] = value
-            self._dll = oldroot[self._NEXT]
-            oldkey = self._dll[self._KEY]
-            oldvalue = self._dll[self._VALUE]
-            self._dll[self._KEY] = self._dll[self._VALUE] = None
+            mru = self._dll[self._PREV]
+            oldkey = mru[self._KEY]
+            oldvalue = mru[self._VALUE]
+            mru[self._KEY] = key
+            mru[self._VALUE] = value
             del self._mp[oldkey]
-            self._mp[key] = oldroot
+            self._mp[key] = mru
         else:
             last = self._dll[self._PREV]
             link = [last, self._dll, key, value]
@@ -248,12 +246,16 @@ class CacheOp(DatasetOperator[Dataset, Dataset]):
             cache.put(idx, result)
         return result
 
+    def _finalize_cache(self, id_: str) -> None:
+        if id_ in InheritedData.data:
+            del InheritedData.data[id_]
+
     def __call__[T: Sample](self, x: Dataset[T]) -> LazyDataset[T]:
         cache = self._cache_type(**self._cache_params)
         id_ = uuid4().hex
         InheritedData.data[id_] = cache
         dataset = LazyDataset(len(x), partial(self._get_sample, x, id_))
-        weakref.finalize(dataset, InheritedData.data.__delitem__, id_)
+        weakref.finalize(dataset, self._finalize_cache, id_=id_)
         return dataset
 
 
@@ -278,6 +280,10 @@ class MemorizeEverythingOp(DatasetOperator[Dataset, Dataset]):
         assert result is not None
         return result
 
+    def _finalize_cache(self, id_: str) -> None:
+        if id_ in InheritedData.data:
+            del InheritedData.data[id_]
+
     def __call__(self, x: Dataset) -> Dataset:
         cache = MemoCache()
         id_ = uuid4().hex
@@ -285,5 +291,5 @@ class MemorizeEverythingOp(DatasetOperator[Dataset, Dataset]):
         for i, sample in self.loop(x, self._grabber, "Caching"):
             cache.put(i, self._cache_mapper(i, sample))
         dataset = LazyDataset(len(x), partial(self._get_sample, id_))
-        weakref.finalize(dataset, InheritedData.data.__delitem__, id_)
+        weakref.finalize(dataset, self._finalize_cache, id_=id_)
         return dataset
