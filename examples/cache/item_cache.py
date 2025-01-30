@@ -9,7 +9,7 @@ if __name__ == "__main__":
     dataset = UnderfolderSource(path)()
     sample = dataset[0]
     t = time.perf_counter()
-    for _ in range(100):
+    for _ in range(1000):
         sample["image"]()
     print("Time without item cache:", time.perf_counter() - t)
 
@@ -19,7 +19,7 @@ if __name__ == "__main__":
     dataset = ItemCacheOp()(dataset)
     sample = dataset[0]
     t = time.perf_counter()
-    for _ in range(100):
+    for _ in range(1000):
         sample["image"]()
     print("Time with item cache:", time.perf_counter() - t)
 
@@ -28,13 +28,13 @@ if __name__ == "__main__":
     # using cached items won't make any difference.
     dataset = UnderfolderSource(path)()
     t = time.perf_counter()
-    for _ in range(100):
+    for _ in range(1000):
         dataset[0]["image"]()
     print("Time without item cache (reindexing):", time.perf_counter() - t)
 
     # This should take approximately the same time as the previous loop.
     dataset = ItemCacheOp()(dataset)
     t = time.perf_counter()
-    for _ in range(100):
+    for _ in range(1000):
         dataset[0]["image"]()
     print("Time with item cache (reindexing):", time.perf_counter() - t)

@@ -402,13 +402,6 @@ Currently Pipewine provides a `Reader` for locally available files called `Local
 
 `CachedItem` objects are items that offer a caching mechanism to avoid calling expensive read operations multiple times when the underlying data is left unchanged. 
 
-!!! warning
-
-    Caching everything at the item level is an exceptionally bad idea that is guaranteed to fill up your system memory in no time. Instead of using `CachedItem` directly, use Pipewine `CacheOp` operations that provide a smarter mechanism that mixes sample-level and item-level caches. 
-
-    This is an important lesson learnt from the old Pipelime library, where caching was always done at the item level and was enabled by default. 
-
-
 To create a `CachedItem`, you just need to pass an `Item` of your choice to the `CachedItem` constructor.
 
 !!! example

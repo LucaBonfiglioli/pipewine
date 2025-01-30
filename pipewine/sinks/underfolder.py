@@ -51,6 +51,7 @@ class _WriterMapper[T: Sample](Mapper[T, T]):
         exclude: set[str],
         overwrite_policy: OverwritePolicy,
         copy_policy: CopyPolicy,
+        offset: int,
     ) -> None:
         super().__init__()
         self._folder = folder
@@ -59,9 +60,10 @@ class _WriterMapper[T: Sample](Mapper[T, T]):
         self._exclude = exclude
         self._overwrite_policy = overwrite_policy
         self._copy_policy = copy_policy
+        self._offset = offset
 
     def __call__(self, idx: int, x: T) -> T:
-        prefix = str(idx).zfill(self._zfill)
+        prefix = str(idx + self._offset).zfill(self._zfill)
         fname_fmt = "{prefix}_{key}.{ext}"
         for k, item in x.items():
             if k in self._exclude:
@@ -151,8 +153,10 @@ class UnderfolderSink(DatasetSink[Dataset]):
             root_items,
             self._overwrite_policy,
             self._copy_policy,
+            1,
         )
-        data = MapOp(writer)(data)
+        writer(-1, data0)
+        data = MapOp(writer)(data[1:])
 
         for _ in self.loop(data, self._grabber, name="Writing"):
             pass

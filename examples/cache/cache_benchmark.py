@@ -52,6 +52,9 @@ if __name__ == "__main__":
         "Back and Forth": np.abs(np.arange(n) % (2 * maxind - 1) - maxind + 1).tolist(),
         "Hot Element": ((np.arange(n) // 2 % maxind) * (np.arange(n) % 2)).tolist(),
         "Blocks": (np.arange(n) // 4 % maxind).tolist(),
+        "Sliding Window": (
+            (np.arange(4)[None] + np.arange(6500)[:, None]).flatten() % 26
+        ).tolist(),
         "Uniform": np.random.randint(0, maxind - 1, [n]).tolist(),
         "Zipfian": (np.random.zipf(2, n) % maxind).tolist(),
         "Random Walk": (
