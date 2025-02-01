@@ -7,7 +7,7 @@ from typing import BinaryIO
 
 import numpy as np
 
-from pipewine.workflows.model import Node, Workflow
+from pipewine.workflows.model import All, Node, Workflow
 
 
 def _ccw(p: np.ndarray, q: np.ndarray, r: np.ndarray) -> np.ndarray:
@@ -58,6 +58,8 @@ class ViewNode:
     color: tuple[int, int, int]
     inputs: list[tuple[str, float]]
     outputs: list[tuple[str, float]]
+    has_collection_input: bool
+    has_collection_output: bool
 
 
 @dataclass
@@ -243,13 +245,21 @@ class OptimizedLayout(Layout):
                 node_to_idx[node] = i
                 inputs: set[str] = set()
                 outputs: set[str] = set()
+                has_collection_input = False
+                has_collection_output = False
                 for e in wf.get_inbound_edges(node):
-                    inputs.add(self._socket_name(e.dst.socket, "input"))
+                    if not isinstance(e.dst.socket, All):
+                        inputs.add(self._socket_name(e.dst.socket, "input"))
+                    else:
+                        has_collection_input = True
                 for e in wf.get_outbound_edges(node):
-                    outputs.add(self._socket_name(e.src.socket, "output"))
-                if len(inputs) == 0:
+                    if not isinstance(e.src.socket, All):
+                        outputs.add(self._socket_name(e.src.socket, "output"))
+                    else:
+                        has_collection_output = True
+                if len(wf.get_inbound_edges(node)) == 0:
                     col = self.RGB_SOURCE
-                elif len(outputs) == 0:
+                elif len(wf.get_outbound_edges(node)) == 0:
                     col = self.RGB_SINK
                 else:
                     col = self.RGB_OP
@@ -259,18 +269,33 @@ class OptimizedLayout(Layout):
                 in_sockets: list[tuple[str, float]] = []
                 out_sockets: list[tuple[str, float]] = []
                 current = title_h
+                m2 = margin / 2
+                if has_collection_input:
+                    socket = "inputs"
+                    sw, sh = get_text_size(socket, fontsize)
+                    in_sockets_w = max(in_sockets_w, sw)
+                    in_sockets_h += m2 + sh
+                    current += m2 + sh
+                    in_sockets.append((socket, current))
                 for socket in sorted(inputs):
                     sw, sh = get_text_size(socket, fontsize)
                     in_sockets_w = max(in_sockets_w, sw)
-                    in_sockets_h += margin + sh
-                    current += margin + sh
+                    in_sockets_h += m2 + sh
+                    current += m2 + sh
                     in_sockets.append((socket, current))
                 current = title_h
+                if has_collection_output:
+                    socket = "outputs"
+                    sw, sh = get_text_size(socket, fontsize)
+                    out_sockets_w = max(out_sockets_w, sw)
+                    out_sockets_h += m2 + sh
+                    current += m2 + sh
+                    out_sockets.append((socket, current))
                 for socket in sorted(outputs):
                     sw, sh = get_text_size(socket, fontsize)
                     out_sockets_w = max(out_sockets_w, sw)
-                    out_sockets_h += margin + sh
-                    current += margin + sh
+                    out_sockets_h += m2 + sh
+                    current += m2 + sh
                     out_sockets.append((socket, current))
 
                 w = max(title_w, in_sockets_w + out_sockets_w) + margin
@@ -284,6 +309,8 @@ class OptimizedLayout(Layout):
                     color=col,
                     inputs=in_sockets,
                     outputs=out_sockets,
+                    has_collection_input=has_collection_input,
+                    has_collection_output=has_collection_output,
                 )
                 current_y += h + node_distance
                 maxw = max(maxw, w)
@@ -295,12 +322,15 @@ class OptimizedLayout(Layout):
                 dst_node = view_nodes[e.dst.node]
                 src_node_idx = node_to_idx[node]
                 dst_node_idx = node_to_idx[e.dst.node]
-                src_s_idx = [x[0] for x in src_node.outputs].index(
-                    self._socket_name(e.src.socket, "output")
-                )
-                dst_s_idx = [x[0] for x in dst_node.inputs].index(
-                    self._socket_name(e.dst.socket, "input")
-                )
+                src_s_idx = dst_s_idx = 0
+                if not isinstance(e.src.socket, All):
+                    src_s_idx = [x[0] for x in src_node.outputs].index(
+                        self._socket_name(e.src.socket, "output")
+                    )
+                if not isinstance(e.dst.socket, All):
+                    dst_s_idx = [x[0] for x in dst_node.inputs].index(
+                        self._socket_name(e.dst.socket, "input")
+                    )
                 view_edges.append(
                     ViewEdge((src_node_idx, src_s_idx), (dst_node_idx, dst_s_idx))
                 )
@@ -325,6 +355,8 @@ class SVGDrawer(Drawer):
         w, h = node.size
         x, y = node.position
         fontsize = node.fontsize
+        margin = 15
+        sock_rad = 8
 
         col = f"rgb{node.color}"
         ET.SubElement(
@@ -341,7 +373,7 @@ class SVGDrawer(Drawer):
             parent,
             "text",
             x=str(x + w / 2),
-            y=str(y + (fontsize + 10) / 2),
+            y=str(y + (fontsize + margin) / 2),
             fill="white",
         )
         text_elem.set("text-anchor", "middle")
@@ -351,53 +383,121 @@ class SVGDrawer(Drawer):
         text_elem.set("font-weight", "bold")
         text_elem.text = text
 
-        for socket, sy in node.inputs:
-            circle = ET.SubElement(
-                parent,
-                "circle",
-                cx=str(x),
-                cy=str(y + sy),
-                r="8",
-                fill="white",
-                stroke=col,
-            )
-            circle.set("stroke-width", "2")
-            text_elem = ET.SubElement(
-                parent, "text", x=str(x + 12), y=str(y + sy), fill="white"
-            )
-            text_elem.set("dominant-baseline", "central")
-            text_elem.set("font-size", str(fontsize - 4))
-            text_elem.set("font-family", "Arial")
-            text_elem.text = socket
-        for socket, sy in node.outputs:
-            circle = ET.SubElement(
-                parent,
-                "circle",
-                cx=str(x + w),
-                cy=str(y + sy),
-                r="8",
-                fill="white",
-                stroke=col,
-            )
-            circle.set("stroke-width", "2")
-            text_elem = ET.SubElement(
-                parent, "text", x=str(x + w - 12), y=str(y + sy), fill="white"
-            )
-            text_elem.set("text-anchor", "end")
-            text_elem.set("dominant-baseline", "central")
-            text_elem.set("font-size", str(fontsize - 4))
-            text_elem.set("font-family", "Arial")
-            text_elem.text = socket
+        for i, (socket, sy) in enumerate(node.inputs):
+            if i == 0 and node.has_collection_input:
+                rectangle = ET.SubElement(
+                    parent,
+                    "rect",
+                    x=str(x - margin),
+                    y=str(y + sy - margin),
+                    width=str(w / 2 + margin),
+                    height=str(node.inputs[-1][1] + 2 * margin - sy),
+                    stroke="black",
+                    fill="#00000000",
+                    rx="10",
+                )
+                rectangle.set("stroke-width", "2")
+                text_elem = ET.SubElement(
+                    parent, "text", x=str(x + 12), y=str(y + sy), fill="white"
+                )
+                text_elem.set("dominant-baseline", "central")
+                text_elem.set("font-size", str(fontsize - 4))
+                text_elem.set("font-family", "Arial")
+                text_elem.set("font-weight", "bold")
+                text_elem.text = socket
+            else:
+                circle = ET.SubElement(
+                    parent,
+                    "circle",
+                    cx=str(x),
+                    cy=str(y + sy),
+                    r=str(sock_rad),
+                    fill="white",
+                    stroke=col,
+                )
+                circle.set("stroke-width", "2")
+                text_elem = ET.SubElement(
+                    parent,
+                    "text",
+                    x=str(x + sock_rad * 1.5),
+                    y=str(y + sy),
+                    fill="white",
+                )
+                text_elem.set("dominant-baseline", "central")
+                text_elem.set("font-size", str(fontsize - 4))
+                text_elem.set("font-family", "Arial")
+                text_elem.text = socket
+        for i, (socket, sy) in enumerate(node.outputs):
+            if i == 0 and node.has_collection_output:
+                rectangle = ET.SubElement(
+                    parent,
+                    "rect",
+                    x=str(x + w / 2),
+                    y=str(y + sy - margin),
+                    width=str(w / 2 + margin),
+                    height=str(node.outputs[-1][1] + 2 * margin - sy),
+                    stroke="black",
+                    fill="#00000000",
+                    rx="10",
+                )
+                rectangle.set("stroke-width", "2")
+                text_elem = ET.SubElement(
+                    parent,
+                    "text",
+                    x=str(x + w - sock_rad * 1.5),
+                    y=str(y + sy),
+                    fill="white",
+                )
+                text_elem.set("text-anchor", "end")
+                text_elem.set("dominant-baseline", "central")
+                text_elem.set("font-size", str(fontsize - 4))
+                text_elem.set("font-family", "Arial")
+                text_elem.set("font-weight", "bold")
+                text_elem.text = socket
+            else:
+                circle = ET.SubElement(
+                    parent,
+                    "circle",
+                    cx=str(x + w),
+                    cy=str(y + sy),
+                    r=str(sock_rad),
+                    fill="white",
+                    stroke=col,
+                )
+                circle.set("stroke-width", "2")
+                text_elem = ET.SubElement(
+                    parent,
+                    "text",
+                    x=str(x + w - sock_rad * 1.5),
+                    y=str(y + sy),
+                    fill="white",
+                )
+                text_elem.set("text-anchor", "end")
+                text_elem.set("dominant-baseline", "central")
+                text_elem.set("font-size", str(fontsize - 4))
+                text_elem.set("font-family", "Arial")
+                text_elem.text = socket
 
     def _draw_edge(
-        self, parent: ET.Element, x1: float, y1: float, x2: float, y2: float
+        self,
+        parent: ET.Element,
+        x1: float,
+        y1: float,
+        x2: float,
+        y2: float,
+        is_collection: bool,
     ) -> None:
-        x1 += 9
-        x2 -= 9
-        head_size = 15
-        xk = x2 - head_size / 2
-        tn = 0.5 * np.pi * (y1 - y2) / (x1 - x2) * np.sin(np.pi * (xk - x1) / (x2 - x1))
-        angle = np.arctan(tn) if x1 < x2 else np.pi - np.arctan(tn)
+        if is_collection:
+            margin = 15
+            stroke_w = 6
+            head_size = 15
+        else:
+            margin = 9
+            stroke_w = 2
+            head_size = 7
+
+        x1 += margin
+        x2 -= margin + head_size + 2
         h1 = (x2 - x1) * (0.5 - 0.134)
         h2 = (x2 - x1) * (0.5 + 0.134)
         line = ET.SubElement(
@@ -407,15 +507,15 @@ class SVGDrawer(Drawer):
             stroke="black",
             fill="none",
         )
-        line.set("stroke-width", "2")
-        line.set("stroke-linecap", "round")
+        line.set("stroke-width", str(stroke_w))
+
         tip = ET.SubElement(
             parent,
             "path",
-            d=f"M0,0 L-{head_size - 4},-{head_size / 2 - 2} V{head_size / 2 - 2} Z",
+            d=f"M{head_size},0 L0,-{head_size / 2} V{head_size / 2} Z",
             fill="black",
             stroke="black",
-            transform=f"translate({x2}, {y2}) rotate({angle * 180 / np.pi})",
+            transform=f"translate({x2}, {y2})",
         )
         tip.set("stroke-width", "4")
         tip.set("stroke-linejoin", "round")
@@ -432,12 +532,16 @@ class SVGDrawer(Drawer):
         for edge in vg.edges:
             src_node_idx, src_sock = edge.start
             dst_node_idx, dst_sock = edge.end
+            if (src_sock is None) or (dst_sock is None):
+                print(edge)
+                continue
             src_node, dst_node = vg.nodes[src_node_idx], vg.nodes[dst_node_idx]
             x1 = src_node.position[0] + src_node.size[0]
             y1 = src_node.position[1] + src_node.outputs[src_sock][1]
             x2 = dst_node.position[0]
             y2 = dst_node.position[1] + dst_node.inputs[dst_sock][1]
-            self._draw_edge(edges_group, x1, y1, x2, y2)
+            is_collection = src_node.has_collection_output and src_sock == 0
+            self._draw_edge(edges_group, x1, y1, x2, y2, is_collection)
 
         svg.append(nodes_group)
         svg.append(edges_group)

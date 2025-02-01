@@ -20,6 +20,7 @@ from pipewine.workflows.model import (
     WfOptions,
     Proxy,
     UnderfolderCheckpointFactory,
+    All,
     Workflow,
 )
 from pipewine.workflows.tracking import (
@@ -103,10 +104,12 @@ class SequentialWorkflowExecutor(WorkflowExecutor):
         action = cast(AnyAction, node.action)
         self._register_all_cbs(action, node)
         edges = workflow.get_inbound_edges(node)
-        all_none = len(edges) == 1 and all(x.dst.socket is None for x in edges)
-        all_int = all(isinstance(x.dst.socket, int) for x in edges)
-        all_str = all(isinstance(x.dst.socket, str) for x in edges)
-        assert len(edges) == 0 or all_none or all_int or all_str
+        all_or_none = len(edges) == 1 and all(
+            x.dst.socket is None or isinstance(x.dst.socket, All) for x in edges
+        )
+        all_int = all(isinstance(x.dst.socket, (int, All)) for x in edges)
+        all_str = all(isinstance(x.dst.socket, (str, All)) for x in edges)
+        assert len(edges) == 0 or all_or_none or all_int or all_str
 
         if len(edges) == 0:
             assert isinstance(action, DatasetSource)
@@ -114,7 +117,7 @@ class SequentialWorkflowExecutor(WorkflowExecutor):
         else:
             assert isinstance(action, (DatasetOperator, DatasetSink))
             input_: AnyDataset
-            if all_none:
+            if all_or_none:
                 edge = next(iter(edges))
                 input_ = state[edge.src]
             elif all_int:
@@ -138,19 +141,17 @@ class SequentialWorkflowExecutor(WorkflowExecutor):
 
         if output is None:
             return
+        state[Proxy(node, All())] = output
         if isinstance(output, Dataset):
             self._handle_output(state, Proxy(node, None), output, id_, wf_opts)
         elif isinstance(output, Sequence):
-            state[Proxy(node, None)] = output
             for i, dataset in enumerate(output):
                 self._handle_output(state, Proxy(node, i), dataset, id_, wf_opts)
         elif isinstance(output, Mapping):
-            state[Proxy(node, None)] = output
             for k, v in output.items():
                 self._handle_output(state, Proxy(node, k), v, id_, wf_opts)
         else:
             assert isinstance(output, Bundle)
-            state[Proxy(node, None)] = output
             for k, v in output.as_dict().items():
                 self._handle_output(state, Proxy(node, k), v, id_, wf_opts)
 

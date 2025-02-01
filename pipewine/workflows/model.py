@@ -52,6 +52,9 @@ class UnderfolderCheckpointFactory(CheckpointFactory):
 
 
 class Default:
+    def __repr__(self) -> str:
+        return "Default"
+
     @classmethod
     def get[T](cls, *optionals: T | "Default", default: T) -> T:
         for maybe in optionals:
@@ -71,6 +74,13 @@ class WfOptions:
     collect_after_checkpoint: bool | Default = field(default_factory=Default)
     destroy_checkpoints: bool | Default = field(default_factory=Default)
 
+    def __repr__(self) -> str:
+        opts = [
+            f"{k}={v}" for k, v in self.__dict__.items() if not isinstance(v, Default)
+        ]
+        opts_repr = ", ".join(opts)
+        return f"{self.__class__.__name__}({opts_repr})"
+
 
 @dataclass(unsafe_hash=True)
 class Node[T: AnyAction]:
@@ -79,10 +89,21 @@ class Node[T: AnyAction]:
     options: WfOptions = field(default_factory=WfOptions, hash=False, compare=False)
 
 
+class All:
+    def __hash__(self) -> int:
+        return 1
+
+    def __repr__(self) -> str:
+        return self.__class__.__name__
+
+    def __eq__(self, value: object) -> bool:
+        return isinstance(value, All)
+
+
 @dataclass(unsafe_hash=True)
 class Proxy:
     node: Node
-    socket: int | str | None
+    socket: int | str | None | All
 
 
 @dataclass(unsafe_hash=True)
@@ -229,12 +250,12 @@ class Workflow:
                     edges.append(Edge(arg, Proxy(node, None)))
                 elif isinstance(arg, _ProxySequence):
                     orig_node = arg._factory(0).node
-                    edges.append(Edge(Proxy(orig_node, None), Proxy(node, None)))
+                    edges.append(Edge(Proxy(orig_node, All()), Proxy(node, All())))
                 elif isinstance(arg, Sequence):
                     edges.extend([Edge(x, Proxy(node, i)) for i, x in enumerate(arg)])
                 elif isinstance(arg, _ProxyMapping):
                     orig_node = cast(Node, arg._factory("a").node)
-                    edges.append(Edge(Proxy(orig_node, None), Proxy(node, None)))
+                    edges.append(Edge(Proxy(orig_node, All()), Proxy(node, All())))
                 elif isinstance(arg, Mapping):
                     edges.extend([Edge(v, Proxy(node, k)) for k, v in arg.items()])
                 elif isinstance(arg, Bundle):

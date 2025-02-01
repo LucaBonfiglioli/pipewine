@@ -5,7 +5,7 @@ import pytest
 
 from pipewine import Bundle, Dataset, DatasetOperator, DatasetSink, DatasetSource
 from pipewine.workflows import Edge, Node, Proxy, Workflow
-from pipewine.workflows.model import _ProxyMapping, _ProxySequence
+from pipewine.workflows.model import _ProxyMapping, _ProxySequence, All
 
 
 class TestProxyMapping:
@@ -402,7 +402,7 @@ def __workflow__7() -> WorkflowFixture:
     edges: set[Edge] = {
         Edge(Proxy(source_0_node, None), Proxy(op1_node, 0)),
         Edge(Proxy(source_1_node, None), Proxy(op1_node, 1)),
-        Edge(Proxy(op1_node, None), Proxy(op2_node, None)),
+        Edge(Proxy(op1_node, All()), Proxy(op2_node, All())),
         Edge(Proxy(op2_node, 0), Proxy(sink_0_node, None)),
         Edge(Proxy(op2_node, 1), Proxy(sink_1_node, None)),
     }
