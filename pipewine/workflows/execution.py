@@ -96,7 +96,7 @@ class SequentialWorkflowExecutor(WorkflowExecutor):
         self,
         workflow: Workflow,
         node: Node,
-        state: dict[Proxy, Dataset],
+        state: dict[Proxy, AnyDataset],
         id_: str,
         wf_opts: WfOptions,
     ) -> None:
@@ -141,20 +141,22 @@ class SequentialWorkflowExecutor(WorkflowExecutor):
         if isinstance(output, Dataset):
             self._handle_output(state, Proxy(node, None), output, id_, wf_opts)
         elif isinstance(output, Sequence):
+            state[Proxy(node, None)] = output
             for i, dataset in enumerate(output):
                 self._handle_output(state, Proxy(node, i), dataset, id_, wf_opts)
         elif isinstance(output, Mapping):
+            state[Proxy(node, None)] = output
             for k, v in output.items():
-                state[Proxy(node, k)] = v
                 self._handle_output(state, Proxy(node, k), v, id_, wf_opts)
         else:
             assert isinstance(output, Bundle)
+            state[Proxy(node, None)] = output
             for k, v in output.as_dict().items():
                 self._handle_output(state, Proxy(node, k), v, id_, wf_opts)
 
     def _handle_output(
         self,
-        state: dict[Proxy, Dataset],
+        state: dict[Proxy, AnyDataset],
         proxy: Proxy,
         dataset: Dataset,
         id_: str,
@@ -237,7 +239,7 @@ class SequentialWorkflowExecutor(WorkflowExecutor):
         id_ = uuid1()
         wf_opts = workflow.options
         sorted_graph = self._topological_sort(workflow)
-        state: dict[Proxy, Dataset] = {}
+        state: dict[Proxy, AnyDataset] = {}
         for node in sorted_graph:
             self._execute_node(workflow, node, state, id_.hex, wf_opts)
 
