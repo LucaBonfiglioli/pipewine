@@ -182,9 +182,10 @@ class SequentialWorkflowExecutor(WorkflowExecutor):
                 wf_opts.checkpoint_grabber,
                 default=self._def_checkpoint_grabber,
             )
-            sink, source = ckpt_fact.create(
-                id_, proxy.node.name, type(dataset[0]), grabber
-            )
+            name = proxy.node.name
+            if proxy.socket is not None:
+                name += str(proxy.socket)
+            sink, source = ckpt_fact.create(id_, name, type(dataset[0]), grabber)
             self._register_all_cbs(sink, proxy.node)
             self._register_all_cbs(source, proxy.node)
             sink(dataset)
