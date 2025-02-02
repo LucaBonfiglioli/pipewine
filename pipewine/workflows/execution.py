@@ -10,17 +10,17 @@ from pipewine.bundle import Bundle
 from pipewine.dataset import Dataset
 from pipewine.grabber import Grabber
 from pipewine.operators import CacheOp, DatasetOperator
-from pipewine.operators.cache import FIFOCache
+from pipewine.operators.cache import LIFOCache
 from pipewine.sinks import DatasetSink
 from pipewine.sources import DatasetSource
 from pipewine.workflows.model import (
+    All,
     AnyAction,
     Default,
     Node,
-    WfOptions,
     Proxy,
     UnderfolderCheckpointFactory,
-    All,
+    WfOptions,
     Workflow,
 )
 from pipewine.workflows.tracking import (
@@ -70,7 +70,7 @@ class SequentialWorkflowExecutor(WorkflowExecutor):
         super().__init__()
         self._eq: EventQueue | None = None
         self._def_cache = True
-        self._def_cache_type = FIFOCache
+        self._def_cache_type = LIFOCache
         self._def_cache_params = {"maxsize": 1}
         self._def_checkpoint = False
         self._def_checkpoint_factory = UnderfolderCheckpointFactory()
