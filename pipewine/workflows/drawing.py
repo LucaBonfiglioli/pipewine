@@ -133,22 +133,27 @@ class OptimizedLayout(Layout):
         edges = vg.edges
         nodes = vg.nodes
 
+        eps = 1e-3
+        n = len(nodes)
+        e = len(edges)
         layout = np.array([x.position for x in nodes], dtype=np.float32)
         sizes = np.array([x.size for x in nodes], dtype=np.float32)
         w, h = layout.max(axis=0) * 1.5
         maxdist = (h**2 + w**2) ** 0.5
         maxsize = sizes.max()
-        eps = 1e-3
 
         def fitness_fn(layout: np.ndarray) -> float:
-            edge_start = np.zeros((len(edges), 2), dtype=np.float32)
-            edge_end = np.zeros((len(edges), 2), dtype=np.float32)
-            for i, x in enumerate(edges):
-                sx, sy = layout[x.start[0]]
-                ex, ey = layout[x.end[0]]
-                sw = sizes[x.start[0]][0]
-                edge_start[i] = (sx + sw, sy + nodes[x.start[0]].outputs[x.start[1]][1])
-                edge_end[i] = (ex, ey + nodes[x.end[0]].inputs[x.end[1]][1])
+            edge_start = np.zeros((e, 2), dtype=np.float32)
+            edge_end = np.zeros((e, 2), dtype=np.float32)
+            for i, edge in enumerate(edges):
+                sx, sy = layout[edge.start[0]]
+                ex, ey = layout[edge.end[0]]
+                sw = sizes[edge.start[0]][0]
+                edge_start[i] = (
+                    sx + sw,
+                    sy + nodes[edge.start[0]].outputs[edge.start[1]][1],
+                )
+                edge_end[i] = (ex, ey + nodes[edge.end[0]].inputs[edge.end[1]][1])
 
             edge_start[:, 0] += eps
             edge_end[:, 0] -= eps
@@ -163,7 +168,7 @@ class OptimizedLayout(Layout):
             # The chebyshev distance with the closest node should be close to the
             # maximum node size.
             cdist = np.max(np.abs(layout[None] - layout[:, None]), axis=-1)
-            cdist += np.eye(len(nodes)) * maxdist
+            cdist += np.eye(n) * maxdist
             mindist = cdist.min(axis=-1)
             node_distance_term = (np.clip(mindist, None, maxsize) / maxsize).mean()
 
@@ -174,11 +179,11 @@ class OptimizedLayout(Layout):
 
             # Penalty on edge/edge crossings
             mat = lines_intersect_matrix(edge_start, edge_end)
-            edge_edge_cross_term = (len(edges) - mat.any(-1).sum()) / len(edges)
+            edge_edge_cross_term = (e - mat.any(-1).sum()) / e
 
             # Penalty on edge/node crossings
             mat = lines_rects_intersect_matrix(edge_start, edge_end, layout, sizes)
-            edge_node_cross_term = (len(edges) - mat.any(-1).sum()) / len(edges)
+            edge_node_cross_term = (e - mat.any(-1).sum()) / e
 
             return (
                 node_distance_term
