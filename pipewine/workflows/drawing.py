@@ -130,33 +130,37 @@ class OptimizedLayout(Layout):
         return default if socket is None else str(socket)
 
     def _optimize(self, vg: ViewGraph) -> None:
-        edges = vg.edges
-        nodes = vg.nodes
-
         eps = 1e-3
-        n = len(nodes)
-        e = len(edges)
-        layout = np.array([x.position for x in nodes], dtype=np.float32)
-        sizes = np.array([x.size for x in nodes], dtype=np.float32)
+        n = len(vg.nodes)
+        e = len(vg.edges)
+        layout = np.array([x.position for x in vg.nodes], dtype=np.float32)
+        sizes = np.array([x.size for x in vg.nodes], dtype=np.float32)
+        start_node_idx = np.array([e.start[0] for e in vg.edges])
+        end_node_idx = np.array([e.end[0] for e in vg.edges])
+        start_socket_rel = np.array(
+            [
+                [
+                    eps + sizes[e.start[0]][0],
+                    eps + vg.nodes[e.start[0]].outputs[e.start[1]][1],
+                ]
+                for e in vg.edges
+            ],
+            dtype=np.float32,
+        )
+        end_socket_rel = np.array(
+            [[-eps, -eps + vg.nodes[e.end[0]].inputs[e.end[1]][1]] for e in vg.edges],
+            dtype=np.float32,
+        )
+
         w, h = layout.max(axis=0) * 1.5
         maxdist = (h**2 + w**2) ** 0.5
         maxsize = sizes.max()
 
         def fitness_fn(layout: np.ndarray) -> float:
-            edge_start = np.zeros((e, 2), dtype=np.float32)
-            edge_end = np.zeros((e, 2), dtype=np.float32)
-            for i, edge in enumerate(edges):
-                sx, sy = layout[edge.start[0]]
-                ex, ey = layout[edge.end[0]]
-                sw = sizes[edge.start[0]][0]
-                edge_start[i] = (
-                    sx + sw,
-                    sy + nodes[edge.start[0]].outputs[edge.start[1]][1],
-                )
-                edge_end[i] = (ex, ey + nodes[edge.end[0]].inputs[edge.end[1]][1])
-
-            edge_start[:, 0] += eps
-            edge_end[:, 0] -= eps
+            start_offsets = np.take_along_axis(layout, start_node_idx[:, None], 0)
+            end_offsets = np.take_along_axis(layout, end_node_idx[:, None], 0)
+            edge_start = start_offsets + start_socket_rel
+            edge_end = end_offsets + end_socket_rel
 
             # Minimize edge length
             dist = np.linalg.norm(edge_end - edge_start, ord=2, axis=-1)
@@ -168,7 +172,7 @@ class OptimizedLayout(Layout):
             # The chebyshev distance with the closest node should be close to the
             # maximum node size.
             cdist = np.max(np.abs(layout[None] - layout[:, None]), axis=-1)
-            cdist += np.eye(n) * maxdist
+            cdist += np.eye(n, dtype=np.float32) * maxdist
             mindist = cdist.min(axis=-1)
             node_distance_term = (np.clip(mindist, None, maxsize) / maxsize).mean()
 
