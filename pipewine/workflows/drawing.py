@@ -180,8 +180,8 @@ class OptimizedLayout(Layout):
             # Edge straightness
             dy = edge_end[..., 1] - edge_start[..., 1]
             dx = edge_end[..., 0] - edge_start[..., 0]
-            edge_straightness = (np.pi - np.abs(np.atan2(dy, dx))) / np.pi
-            edge_straightness_term = (edge_straightness**2).mean(-1)
+            edge_straightness = (1 - np.abs(np.atan2(dy, dx)) / (np.pi / 2)).clip(0, 1)
+            edge_straightness_term = edge_straightness.mean(-1)
 
             # Penalty on edge/edge crossings
             mat = lines_intersect_matrix(edge_start - xoffset, edge_end + xoffset)
@@ -205,6 +205,21 @@ class OptimizedLayout(Layout):
             )
 
         def spawn(layouts: np.ndarray, sigma: float) -> np.ndarray:
+            self_idx = np.random.randint(0, n - 1, layouts.shape[0])
+            xvals, yvals = layouts[..., 0], layouts[..., 1]
+            x_self = np.take_along_axis(xvals, self_idx[:, None], 1)
+            y_self = np.take_along_axis(yvals, self_idx[:, None], 1)
+            xdist = np.abs(xvals - x_self)
+            np.put_along_axis(xdist, self_idx[:, None], xdist.max() + 1, 1)
+            nn_idx = xdist.argmin(-1)
+            xnn_dist = xdist.min(-1)
+            nn_idx = np.where(xnn_dist < maxsize / 2, nn_idx, self_idx)
+            x_nn = np.take_along_axis(xvals, nn_idx[:, None], 1)
+            y_nn = np.take_along_axis(yvals, nn_idx[:, None], 1)
+            np.put_along_axis(xvals, self_idx[:, None], x_nn, 1)
+            np.put_along_axis(xvals, nn_idx[:, None], x_self, 1)
+            np.put_along_axis(yvals, self_idx[:, None], y_nn, 1)
+            np.put_along_axis(yvals, nn_idx[:, None], y_self, 1)
             noise = np.random.normal(0.0, sigma, layouts.shape).astype(np.float32)
             return layouts + noise
 
