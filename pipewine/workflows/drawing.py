@@ -93,9 +93,9 @@ class OptimizedLayout(Layout):
         self,
         optimize_steps: int = 2000,
         optimize_population: int = 100,
-        optimize_time_budget: float = 10.0,
+        optimize_time_budget: float = 3.0,
         optimize_noise_start: float = 10.0,
-        verbose: bool = True,
+        verbose: bool = False,
     ) -> None:
         super().__init__()
         self._optimize_steps = optimize_steps
@@ -530,9 +530,10 @@ class SVGDrawer(Drawer):
         tip.set("stroke-linejoin", "round")
 
     def draw(self, vg: ViewGraph, buffer: BinaryIO) -> None:
+        margin = 32
         svg = ET.Element("svg", xmlns="http://www.w3.org/2000/svg")
-        nodes_group = ET.Element("g")
-        edges_group = ET.Element("g")
+        nodes_group = ET.Element("g", transform=f"translate({margin}, {margin})")
+        edges_group = ET.Element("g", transform=f"translate({margin}, {margin})")
         groups: list[ET.Element] = []
         for node in vg.nodes:
             group = ET.SubElement(nodes_group, "g")
@@ -554,9 +555,12 @@ class SVGDrawer(Drawer):
 
         svg.append(nodes_group)
         svg.append(edges_group)
-        tree = ET.ElementTree(svg)
-        svg.set("width", str(max(node.position[0] + node.size[0] for node in vg.nodes)))
         svg.set(
-            "height", str(max(node.position[1] + node.size[1] for node in vg.nodes))
+            "width",
+            str(max(node.position[0] + node.size[0] for node in vg.nodes) + 2 * margin),
         )
-        tree.write(buffer)
+        svg.set(
+            "height",
+            str(max(node.position[1] + node.size[1] for node in vg.nodes) + 2 * margin),
+        )
+        ET.ElementTree(svg).write(buffer)
