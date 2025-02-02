@@ -91,16 +91,18 @@ class OptimizedLayout(Layout):
 
     def __init__(
         self,
-        optimize_steps: int = 200,
+        optimize_steps: int = 2000,
         optimize_population: int = 100,
-        optimize_time_budget: float = 100.0,
+        optimize_time_budget: float = 10.0,
         optimize_noise_start: float = 10.0,
+        verbose: bool = True,
     ) -> None:
         super().__init__()
         self._optimize_steps = optimize_steps
         self._optimize_population = optimize_population
         self._optimize_time_budget = optimize_time_budget
         self._optimize_noise_start = optimize_noise_start
+        self._verbose = verbose
 
     def _asap_sort(self, workflow: Workflow) -> list[list[Node]]:
         result: list[list[Node]] = []
@@ -165,9 +167,10 @@ class OptimizedLayout(Layout):
             mindist = cdist.min(axis=-1)
             node_distance_term = (np.clip(mindist, None, maxsize) / maxsize).mean()
 
-            # Penalty on backward edges (flow left to right)
-            n_backward = (edge_end[:, 0] - edge_start[:, 0] <= maxsize / 2).sum()
-            backward_term = (len(edges) - n_backward) / len(edges)
+            # Edge straightness
+            dy = edge_end[:, 1] - edge_start[:, 1]
+            dx = edge_end[:, 0] - edge_start[:, 0]
+            edge_straightness = (np.pi - np.abs(np.atan2(dy, dx)).mean()) / np.pi
 
             # Penalty on edge/edge crossings
             mat = lines_intersect_matrix(edge_start, edge_end)
@@ -180,7 +183,7 @@ class OptimizedLayout(Layout):
             return (
                 node_distance_term
                 + edge_distance_term
-                + backward_term
+                + edge_straightness
                 + edge_edge_cross_term
                 + edge_node_cross_term
             ) / 5
@@ -192,6 +195,7 @@ class OptimizedLayout(Layout):
         global_step = 0
         max_steps = self._optimize_steps
         max_population = self._optimize_population
+        max_time = self._optimize_time_budget
         sigma_s = self._optimize_noise_start
         sigma_e = sigma_s * 1e-4
         layouts = [spawn(layout, sigma_s) for _ in range(max_population - 1)] + [layout]
@@ -200,10 +204,8 @@ class OptimizedLayout(Layout):
         fitness = np.zeros((max_population,), dtype=np.float32)
         t_start = time.time()
         while True:
-            if (
-                time.time() - t_start > self._optimize_time_budget
-                or global_step > max_steps
-            ):
+            elapsed = time.time() - t_start
+            if elapsed > max_time or global_step > max_steps:
                 break
             sigma = sigma_s * np.exp(
                 np.log(sigma_e / sigma_s) * global_step / max_steps
@@ -213,16 +215,23 @@ class OptimizedLayout(Layout):
                 if fitness[i] > best:
                     best = fitness[i]
                     argbest = layout
+                    if self._verbose:
+                        print(
+                            f"Step {global_step}/{max_steps} | "
+                            f"Elapsed (s) {round(elapsed, 2)}/{max_time} | "
+                            f"Fitness {best}"
+                        )
             fitness = (fitness - fitness.min()) / (fitness.max() - fitness.min() + 1e-5)
             fsum = fitness.sum()
             if fsum > 0:
                 next_idx = np.random.choice(
-                    max_population, size=max_population, p=fitness / fsum
+                    max_population, size=max_population - 1, p=fitness / fsum
                 )
             else:
-                next_idx = np.arange(max_population)
+                next_idx = np.arange(max_population - 1)
             for i, idx in enumerate(next_idx):
                 layouts[i] = spawn(layouts[idx], sigma)
+            layouts[-1] = spawn(argbest, sigma)
             global_step += 1
 
         minxy = argbest.min(axis=0)
