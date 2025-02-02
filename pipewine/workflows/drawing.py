@@ -27,25 +27,25 @@ def lines_intersect(
 
 
 def lines_intersect_matrix(p1: np.ndarray, p2: np.ndarray) -> np.ndarray:
-    p1 = p1[:, np.newaxis, :]
-    p2 = p2[:, np.newaxis, :]
-    q1 = p1[np.newaxis, :, :]
-    q2 = p2[np.newaxis, :, :]
-    return lines_intersect(p1, p2, q1, q2)
+    p1_ = p1[:, :, None, :]
+    p2_ = p2[:, :, None, :]
+    q1 = p1[:, None, :, :]
+    q2 = p2[:, None, :, :]
+    return lines_intersect(p1_, p2_, q1, q2)
 
 
 def lines_rects_intersect_matrix(
     p1: np.ndarray, p2: np.ndarray, xy: np.ndarray, wh: np.ndarray
 ) -> np.ndarray:
-    p1 = p1[:, np.newaxis, :]
-    p2 = p2[:, np.newaxis, :]
+    p1 = p1[:, :, None, :]
+    p2 = p2[:, :, None, :]
     w_, h_ = np.zeros_like(wh), np.zeros_like(wh)
-    w_[:, 0] = wh[:, 0]
-    h_[:, 1] = wh[:, 1]
-    q1 = np.concatenate([xy, xy, xy + wh, xy + wh])
-    q2 = np.concatenate([xy + w_, xy + h_] * 2)
-    q1 = q1[np.newaxis, :, :]
-    q2 = q2[np.newaxis, :, :]
+    w_[..., 0] = wh[..., 0]
+    h_[..., 1] = wh[..., 1]
+    q1 = np.concatenate([xy, xy, xy + wh, xy + wh], 1)
+    q2 = np.concatenate([xy + w_, xy + h_] * 2, 1)
+    q1 = q1[:, None, :, :]
+    q2 = q2[:, None, :, :]
     return lines_intersect(p1, p2, q1, q2)
 
 
@@ -92,7 +92,7 @@ class OptimizedLayout(Layout):
     def __init__(
         self,
         optimize_steps: int = 2000,
-        optimize_population: int = 100,
+        optimize_population: int = 32,
         optimize_time_budget: float = 3.0,
         optimize_noise_start: float = 10.0,
         verbose: bool = False,
@@ -130,7 +130,7 @@ class OptimizedLayout(Layout):
         return default if socket is None else str(socket)
 
     def _optimize(self, vg: ViewGraph) -> None:
-        eps = 1e-3
+        xoffset = np.array([[[1, 0.0]]], dtype=np.float32)
         n = len(vg.nodes)
         e = len(vg.edges)
         layout = np.array([x.position for x in vg.nodes], dtype=np.float32)
@@ -140,66 +140,73 @@ class OptimizedLayout(Layout):
         start_socket_rel = np.array(
             [
                 [
-                    eps + sizes[e.start[0]][0],
-                    eps + vg.nodes[e.start[0]].outputs[e.start[1]][1],
+                    sizes[edge.start[0], 0],
+                    vg.nodes[edge.start[0]].outputs[edge.start[1]][1],
                 ]
-                for e in vg.edges
+                for edge in vg.edges
             ],
             dtype=np.float32,
         )
         end_socket_rel = np.array(
-            [[-eps, -eps + vg.nodes[e.end[0]].inputs[e.end[1]][1]] for e in vg.edges],
+            [[0.0, vg.nodes[edge.end[0]].inputs[edge.end[1]][1]] for edge in vg.edges],
             dtype=np.float32,
         )
 
         w, h = layout.max(axis=0) * 1.5
-        maxdist = (h**2 + w**2) ** 0.5
-        maxsize = sizes.max()
+        maxdist: float = (h**2 + w**2) ** 0.5
+        maxsize = float(sizes.max())
 
-        def fitness_fn(layout: np.ndarray) -> float:
-            start_offsets = np.take_along_axis(layout, start_node_idx[:, None], 0)
-            end_offsets = np.take_along_axis(layout, end_node_idx[:, None], 0)
+        def fitness_fn(layout: np.ndarray) -> np.ndarray:
+            b = layout.shape[0]
+            start_offsets = np.take_along_axis(layout, start_node_idx[None, :, None], 1)
+            end_offsets = np.take_along_axis(layout, end_node_idx[None, :, None], 1)
             edge_start = start_offsets + start_socket_rel
             edge_end = end_offsets + end_socket_rel
 
             # Minimize edge length
             dist = np.linalg.norm(edge_end - edge_start, ord=2, axis=-1)
-            bound = maxdist - maxsize
-            norm_dist = (bound - np.clip(dist - maxsize, 0.0, None)) / bound
-            edge_distance_term = (norm_dist**2).mean()
+            bound = 3 * maxsize
+            norm_dist: np.ndarray = 1.0 - np.clip(dist - maxsize, 0.0, bound) / bound
+            edge_distance_term = (norm_dist**2).mean(-1)
 
             # Keep nodes reasonably distanced
             # The chebyshev distance with the closest node should be close to the
             # maximum node size.
-            cdist = np.max(np.abs(layout[None] - layout[:, None]), axis=-1)
-            cdist += np.eye(n, dtype=np.float32) * maxdist
+            cdist = np.max(np.abs(layout[:, None] - layout[:, :, None]), axis=-1)
+            cdist += np.eye(n, dtype=np.float32)[None].repeat(b, 0) * maxdist
             mindist = cdist.min(axis=-1)
-            node_distance_term = (np.clip(mindist, None, maxsize) / maxsize).mean()
+            node_distance_term = (np.clip(mindist, None, maxsize) / maxsize).mean(-1)
 
             # Edge straightness
-            dy = edge_end[:, 1] - edge_start[:, 1]
-            dx = edge_end[:, 0] - edge_start[:, 0]
-            edge_straightness = (np.pi - np.abs(np.atan2(dy, dx)).mean()) / np.pi
+            dy = edge_end[..., 1] - edge_start[..., 1]
+            dx = edge_end[..., 0] - edge_start[..., 0]
+            edge_straightness = (np.pi - np.abs(np.atan2(dy, dx))) / np.pi
+            edge_straightness_term = (edge_straightness**2).mean(-1)
 
             # Penalty on edge/edge crossings
-            mat = lines_intersect_matrix(edge_start, edge_end)
-            edge_edge_cross_term = (e - mat.any(-1).sum()) / e
+            mat = lines_intersect_matrix(edge_start - xoffset, edge_end + xoffset)
+            edge_edge_cross_term = (e - mat.any(-1).sum(-1) / 2) / e
 
             # Penalty on edge/node crossings
-            mat = lines_rects_intersect_matrix(edge_start, edge_end, layout, sizes)
-            edge_node_cross_term = (e - mat.any(-1).sum()) / e
+            mat = lines_rects_intersect_matrix(
+                edge_start + xoffset, edge_end - xoffset, layout, sizes[None]
+            )
+            edge_node_cross_term = (e - mat.any(-1).sum(-1)) / e
 
-            return (
-                node_distance_term
-                + edge_distance_term
-                + edge_straightness
-                + edge_edge_cross_term
-                + edge_node_cross_term
-            ) / 5
+            return np.stack(
+                [
+                    edge_distance_term,
+                    node_distance_term,
+                    edge_straightness_term,
+                    edge_edge_cross_term,
+                    edge_node_cross_term,
+                ],
+                -1,
+            )
 
-        def spawn(layout: np.ndarray, sigma: float) -> np.ndarray:
-            noise = np.random.normal(0.0, sigma, layout.shape).astype(np.float32)
-            return layout + noise
+        def spawn(layouts: np.ndarray, sigma: float) -> np.ndarray:
+            noise = np.random.normal(0.0, sigma, layouts.shape).astype(np.float32)
+            return layouts + noise
 
         global_step = 0
         max_steps = self._optimize_steps
@@ -207,29 +214,30 @@ class OptimizedLayout(Layout):
         max_time = self._optimize_time_budget
         sigma_s = self._optimize_noise_start
         sigma_e = sigma_s * 1e-4
-        layouts = [spawn(layout, sigma_s) for _ in range(max_population - 1)] + [layout]
+        argbest = layout.copy()
+        layouts = layout[None].repeat(max_population, 0)
         best = -float("inf")
-        argbest = layout
-        fitness = np.zeros((max_population,), dtype=np.float32)
+        layouts = spawn(layouts, sigma_s)
+        layouts[-1] = argbest.copy()
         t_start = time.time()
         while True:
             elapsed = time.time() - t_start
             if elapsed > max_time or global_step > max_steps:
                 break
-            sigma = sigma_s * np.exp(
-                np.log(sigma_e / sigma_s) * global_step / max_steps
-            )
-            for i, layout in enumerate(layouts):
-                fitness[i] = fitness_fn(layout)
-                if fitness[i] > best:
-                    best = fitness[i]
-                    argbest = layout
-                    if self._verbose:
-                        print(
-                            f"Step {global_step}/{max_steps} | "
-                            f"Elapsed (s) {round(elapsed, 2)}/{max_time} | "
-                            f"Fitness {best}"
-                        )
+            fitness_comp = fitness_fn(layouts)
+            fitness = fitness_comp.mean(-1)
+            amaxfitness = int(np.argmax(fitness))
+            maxfitness = float(fitness[amaxfitness])
+            if maxfitness > best:
+                best = maxfitness
+                argbest = layouts[amaxfitness].copy()
+                if self._verbose:
+                    print(
+                        f"Step {global_step}/{max_steps} | "
+                        f"Elapsed (s) {round(elapsed, 2)}/{max_time} | "
+                        f"Fitness {best} | "
+                        f"Fitness components {fitness_comp[amaxfitness]}"
+                    )
             fitness = (fitness - fitness.min()) / (fitness.max() - fitness.min() + 1e-5)
             fsum = fitness.sum()
             if fsum > 0:
@@ -238,9 +246,13 @@ class OptimizedLayout(Layout):
                 )
             else:
                 next_idx = np.arange(max_population - 1)
-            for i, idx in enumerate(next_idx):
-                layouts[i] = spawn(layouts[idx], sigma)
-            layouts[-1] = spawn(argbest, sigma)
+            sigma = sigma_s * np.exp(
+                np.log(sigma_e / sigma_s) * global_step / max_steps
+            )
+            layouts[:-1] = spawn(
+                np.take_along_axis(layouts, next_idx[:, None, None], 0), sigma
+            )
+            layouts[-1] = argbest.copy()
             global_step += 1
 
         minxy = argbest.min(axis=0)
@@ -552,7 +564,6 @@ class SVGDrawer(Drawer):
             src_node_idx, src_sock = edge.start
             dst_node_idx, dst_sock = edge.end
             if (src_sock is None) or (dst_sock is None):
-                print(edge)
                 continue
             src_node, dst_node = vg.nodes[src_node_idx], vg.nodes[dst_node_idx]
             x1 = src_node.position[0] + src_node.size[0]
