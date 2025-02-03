@@ -91,7 +91,7 @@ class OptimizedLayout(Layout):
 
     def __init__(
         self,
-        optimize_steps: int = 2000,
+        optimize_steps: int = 5000,
         optimize_population: int = 32,
         optimize_time_budget: float = 3.0,
         optimize_noise_start: float = 10.0,

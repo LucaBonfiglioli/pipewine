@@ -206,6 +206,8 @@ class Workflow:
         T: AnyAction
     ](self, action: T, name: str | None = None, options: WfOptions | None = None) -> T:
         name = name or self._gen_node_name(cast(AnyAction, action))
+        if name in self._nodes_by_name:
+            raise ValueError(f"Name {name} is already associated to another node.")
         options = options or WfOptions()
         node = Node(name=name, action=action, options=options)
         self._nodes.add(node)
