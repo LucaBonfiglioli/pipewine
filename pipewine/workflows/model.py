@@ -233,7 +233,7 @@ class Workflow:
             ):
                 # If the size of the tuple is statically known, we can allow iter() and
                 # len() in the returned proxy object.
-                return_val = [Proxy(node, i) for i in range(len(ann.__args__))]
+                return_val = tuple(Proxy(node, i) for i in range(len(ann.__args__)))
             elif issubclass(return_t, Sequence):
                 return_val = _ProxySequence(lambda idx: Proxy(node, idx))
             elif issubclass(return_t, Mapping):

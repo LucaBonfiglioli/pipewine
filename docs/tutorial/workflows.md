@@ -172,9 +172,96 @@ This code is very similar to the previous and it behaves the same way if execute
 
 ## Workflow Creation
 
+Workflow objects can be created by simply calling the `Workflow()` constructor. However, you can customize some aspects of your workflow by customizing the workflow options.
+
+Workflow options are contained into the `WfOptions` class and currently include some settings to add a cache or a checkpoint after the operation, automatically collect garbage after an operation completes etc... You can find all details in the API reference. 
+
+All of these options do not provide a default value, but instead default to an object `Default`, which is simply a marker that acts as a sentinel. The reason behind this is that you can use `WfOptions` at the moment in which the workflow is created, but also when adding individual nodes. In these cases, the options of a node always override the ones of the workflow. 
+
+The true default values of the workflow options is instead specific of the `WorkflowExecutor`, a component (detailed later) that is responsible for scheduling and executing the pipeline. 
+
+The order in which the option values are resolved is as follows:
+
+1. The value specified in the node options, if not `Default`.
+1. The value specified in the workflow options, if not `Default`.
+2. The default value for this `WorkflowExecutor`. 
+
+<iframe style="border:none" width="800" height="450" src="https://whimsical.com/embed/S8SpLwdz7iiZ9HZFsjjJYB@or4CdLRbgro97wiNZZSLVY4XdesK1DCVyCVG8y1gg"></iframe>
+
+This is useful because if we want to always write a checkpoint after executing a node, except for a few places, we can write less code by setting `checkpoint=True` in the workflow options and then setting it to false for the one or two nodes that don't need it.
+
 ## Workflow Components
 
-### Limitations
+As demonstrated in the previous example, nothing really happens until the `run_workflow` function is called, despite our code looking pretty much the same as the example without workflows, but how does that happen in practice?
+
+When calling the `node()` method, the action (source, sink or operation) that is passed as first argument is memorized in a data structure inside the `Workflow` object and a mocked version of it is returned. This mocked version retains exactly the same interface as the true version, but when called it will only record that the operation needs to be called with the given inputs, without actually executing it.
+
+Inputs and outputs accepted and returned by the mocked actions are not actual datasets, but only `Proxy` objects whose only purpose is to serve as a placeholder to create new connections when a new action is called. As actions can accept/return a dataset, a sequence, a tuple, a mapping or a bundle of datasets, mocked actions accept/return proxies for every type of data. 
+
+!!! failure
+
+    With proxies you cannot do the things you would normally do with the actual outputs of an node. E.g. accessing a sample of a proxy dataset, or trying to get its length will raise an error.
+
+    The dataset is not actually been computed yet, there is no way to know its length in advance!
+
+Complete list of things that can or cannot be done with proxies:
+
+- Proxy `Dataset`:
+  
+  - ❌ Getting the length using `__len__`.
+  - ❌ Accessing a sample or a slice using `__getitem__`.
+  - ❌ Iterate through it using `__iter__`.
+  - ✅ Pass it to another node of the workflow, either directly or through a list/tuple/mapping/bundle.
+
+- Proxy `Sequence[Dataset]` or `tuple[Dataset, ...]` where the number of elements is not statically known:
+
+  - ❌ Getting the length using `__len__`.
+  - ✅ Accessing an element using `__getitem__`. In this case a proxy dataset will be returned.
+  - ❌ Extracting a slice using `__getitem__`. 
+  - ❌ Iterate through it using `__iter__`.
+  - ✅ Pass it to another node of the workflow.
+
+- Proxy `tuple[Dataset]` where the number of elements is statically known: 
+
+  - ✅ Getting the length using `__len__`.
+  - ✅ Accessing an element or a slice using `__getitem__`. In this case a proxy dataset or a tuple of proxy datasets will be returned.
+  - ✅ Iterate through it using `__iter__`.
+  - ✅ Pass it to another node of the workflow.
+
+- Proxy `Mapping[str, Dataset]`:
+  
+  - ❌ getting the length using `__len__`.
+  - ✅ Accessing an element using `__getitem__`. In this case a proxy dataset will be returned.
+  - ❌ Iterate through keys, values or items using `keys()`, `values()`, `items()` or `__iter__`.
+  - ❌ Determine whether the mapping contains a given key.
+  - ✅ Pass it to another node of the workflow.
+
+- Proxy `Bundle[Dataset]`:
+
+  - ✅ Accessing an element using the `__getattr__` (dot notation). In this case a proxy dataset will be returned.
+  - ✅ Convert it to a regular dictionary of proxy datasets with the `as_dict()` method.
+  - ✅ Pass it to another node of the workflow.
+
+!!! important
+
+    As you can see, there are many limitations to what can be done with these proxy objects and this may seem like a huge limitation. 
+    
+    In reality, these limitations only apply during the workflow definition phase: nothing prevents you from accessing the real length of a list of datasets **inside** a node of the workflow. 
+
+    These limitations are only apparent. Think about it: you must execute the workflow to get its results, and to execute it you must first construct it. It would not make any sense if in order to construct the workflow we would first need to take decisions based on its results, that would be a circular definition!
+
+Furthermore, while Pipewine makes these limitations apparent, they are not something new. In fact, even with the old Pipelime, you cannot take decision on the outputs of nodes before executing a DAG. A typical example of this is when splitting a dataset: you must know in advance the number of splits in order to use them in a DAG.
+
+Pipewine actually has less limitations in that regard, because lists (or mappings) of datasets can be passed as-is to other nodes of the workflow, even if their length and content is completely unknown, this was not possible using Pipelime DAGs.
+
+!!! tip
+
+    If you **really** need to know the result of a workflow in order to construct it, it may help to:
+
+    - Statically define certain aspects of the workflow using constants: e.g. if you know in advance the length of a list of datasets as a constant, it makes no sense to compute it using `__len__`, use the constant value instead.
+    - Restructure your code, maybe you are giving to the workflow a responsibility that should be given to one or more `DatasetOperator`. 
+    - Avoid using a workflow and instead resort to a plain python function.
+
 
 ## Workflow Execution
 
