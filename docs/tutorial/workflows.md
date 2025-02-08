@@ -208,39 +208,39 @@ Complete list of things that can or cannot be done with proxies:
 
 - Proxy `Dataset`:
   
-  - ❌ Getting the length using `__len__`.
-  - ❌ Accessing a sample or a slice using `__getitem__`.
-  - ❌ Iterate through it using `__iter__`.
-  - ✅ Pass it to another node of the workflow, either directly or through a list/tuple/mapping/bundle.
+    - ❌ Getting the length using `__len__`.
+    - ❌ Accessing a sample or a slice using `__getitem__`.
+    - ❌ Iterate through it using `__iter__`.
+    - ✅ Pass it to another node of the workflow, either directly or through a list/tuple/mapping/bundle.
 
 - Proxy `Sequence[Dataset]` or `tuple[Dataset, ...]` where the number of elements is not statically known:
 
-  - ❌ Getting the length using `__len__`.
-  - ✅ Accessing an element using `__getitem__`. In this case a proxy dataset will be returned.
-  - ❌ Extracting a slice using `__getitem__`. 
-  - ❌ Iterate through it using `__iter__`.
-  - ✅ Pass it to another node of the workflow.
+    - ❌ Getting the length using `__len__`.
+    - ✅ Accessing an element using `__getitem__`. In this case a proxy dataset will be returned.
+    - ❌ Extracting a slice using `__getitem__`. 
+    - ❌ Iterate through it using `__iter__`.
+    - ✅ Pass it to another node of the workflow.
 
 - Proxy `tuple[Dataset]` where the number of elements is statically known: 
 
-  - ✅ Getting the length using `__len__`.
-  - ✅ Accessing an element or a slice using `__getitem__`. In this case a proxy dataset or a tuple of proxy datasets will be returned.
-  - ✅ Iterate through it using `__iter__`.
-  - ✅ Pass it to another node of the workflow.
-
+    - ✅ Getting the length using `__len__`.
+    - ✅ Accessing an element or a slice using `__getitem__`. In this case a proxy dataset or a tuple of proxy datasets will be returned.
+    - ✅ Iterate through it using `__iter__`.
+    - ✅ Pass it to another node of the workflow.
+  
 - Proxy `Mapping[str, Dataset]`:
   
-  - ❌ getting the length using `__len__`.
-  - ✅ Accessing an element using `__getitem__`. In this case a proxy dataset will be returned.
-  - ❌ Iterate through keys, values or items using `keys()`, `values()`, `items()` or `__iter__`.
-  - ❌ Determine whether the mapping contains a given key.
-  - ✅ Pass it to another node of the workflow.
+    - ❌ getting the length using `__len__`.
+    - ✅ Accessing an element using `__getitem__`. In this case a proxy dataset will be returned.
+    - ❌ Iterate through keys, values or items using `keys()`, `values()`, `items()` or `__iter__`.
+    - ❌ Determine whether the mapping contains a given key.
+    - ✅ Pass it to another node of the workflow.
 
 - Proxy `Bundle[Dataset]`:
 
-  - ✅ Accessing an element using the `__getattr__` (dot notation). In this case a proxy dataset will be returned.
-  - ✅ Convert it to a regular dictionary of proxy datasets with the `as_dict()` method.
-  - ✅ Pass it to another node of the workflow.
+    - ✅ Accessing an element using the `__getattr__` (dot notation). In this case a proxy dataset will be returned.
+    - ✅ Convert it to a regular dictionary of proxy datasets with the `as_dict()` method.
+    - ✅ Pass it to another node of the workflow.
 
 !!! important
 
@@ -256,18 +256,111 @@ Pipewine actually has less limitations in that regard, because lists (or mapping
 
 !!! tip
 
-    If you **really** need to know the result of a workflow in order to construct it, it may help to:
+    If you ever need to know the result of a workflow in order to construct it, it may help to:
 
     - Statically define certain aspects of the workflow using constants: e.g. if you know in advance the length of a list of datasets as a constant, it makes no sense to compute it using `__len__`, use the constant value instead.
-    - Restructure your code, maybe you are giving to the workflow a responsibility that should be given to one or more `DatasetOperator`. 
-    - Avoid using a workflow and instead resort to a plain python function.
-
+    - Restructure your code, maybe you are giving a responsibility to the workflow  that should be given to one or more `DatasetOperator`. 
+    - As a last resort, avoid using a workflow and instead use a plain python function.
 
 ## Workflow Execution
 
-## Event Queues and Progress Tracking
+Workflows on their own do not do much: they only consist of the graph data structure that, plus some methods to conveniently add new nodes and edges or to inspect them.
 
-## Drawing Workflows
+To execute a workflow you need a `WorkflowExecutor`, an object whose main responsibility is running the actions contained in the `Workflow` object on the correct data inputs and in the correct order. It also manages caches, checkpoints, cleanup and sends events to whoever is listening.
+
+The only implementation provided (so far) by Pipewine is a very naive executor that simply topologically sorts the workflow and runs each action sequentially, hence the name `SequentialWorkflowExecutor`. 
+
+Using it is very simple: you just have to construct the executor and pass your workflow to the `execute` method: 
+
+``` py
+wf: Workflow
+
+executor = SequentialWorkflowExecutor()
+executor.execute(wf)
+```
+
+More conveniently, you can simply call the `run_workflow` function that does something similar under the hood. If not specified, the workflow executor will default to a new instance of `SequentialWorkflowExecutor`, to spare you the need to construct it and call it explicitly.
+
+``` py
+wf: Workflow
+
+run_workflow(wf)
+```
+
+## Worfklow Progress Tracking
+Each node of the workflow, which corresponds to an action, can start zero or more tasks. By "task" we mean a finite, ordered collection of units of work that are executed in a single call to an action.
+
+!!! example
+
+    In the `GroupByOp`, an operator that splits the input dataset into many parts that have in common a specific key, we need to iterate over the input dataset and retrieve the value associated to the group-by key. This is a task: 
+    
+      - It starts after the `GroupByOp` is called.
+      - It has a number of units equal to the length of the input dataset. 
+      - The i-th unit corresponds to the computation of the group-by key in the i-th sample.
+      - It finishes before the `GroupByOp` returns.
+
+!!! note
+
+    Lazy operators do not typically create tasks when called.
+
+!!! tip
+    The `self.loop()` method of a Pipewine action will automatically invoke callbacks to start, update and finish a new task each time it is called. 
+
+    If a `Grabber` is used (to speed up computation through parallelism), all worker sub-processes will be configured to automatically emit events each time they complete a unit of work.
+
+Workflow executors can be attached to an `EventQueue`, a FIFO queue that collects any progress update event from the executor and lets whoever is listening to it, typically a `Tracker`, receive these updates in the correct order. 
+
+`EventQueue` objects are designed so that the same queue can receive updates from many emitters, possibly located on different processes. This is crucial to enable progress tracking when using a `Grabber`. The only `EventQueue` implementation provided so far by Pipewine is the `ProcessSharedEventQueue`, built on top of a `multiprocessing.Pipe` object.
+
+`Tracker` objects are instead consumers of progress update events. They constantly listen for new updates and display them somewhere. The only `Tracker` implementation provided by Pipewine is `CursesTracker`, that conveniently displays progress updates in a ncurses TUI (*Text-based User Interface*) for immediate reading. 
+
+To connect all these things together, you need to do the following things:
+
+1. Construct and populate a `Workflow`.
+2. Construct a `WorkflowExecutor`.
+3. Construct a `EventQueue`.
+4. Construct a `Tracker`.
+5. Call the `start()` method of the `EventQueue`.
+6. Attach the executor to the running event queue.
+7. Attach the tracker to the running event queue.
+8. Execute the workflow.
+9. Detach the executor from the event queue.
+9. Detach the tracker from the event queue.
+10. Close the event queue.
+
+``` py
+# Workflows and other components
+workflow: Workflow
+executor = SequentialWorkflowExecutor()
+event_queue = ProcessSharedEventQueue()
+tracker = CursesTracker()
+
+# Setup
+event_queue.start()
+executor.attach(event_queue)
+tracker.attach(event_queue)
+
+# Execution
+executor.run(workflow)
+
+# Teardown
+executor.detach()
+tracker.detach()
+event_queue.close()
+```
+
+This is kind of complicated right? To simplify things a bit on your side, the `run_workflow` function does all this complicated stuff for you. Equivalently to the code above:
+
+``` py
+workflow: Workflow
+tracker = CursesTracker()
+
+run_workflow(workflow, tracker=tracker)
+```
+
+![alt text](../assets/tracker.png)
+
+## Workflow Drawing
 
 
 The `Workflow.node()` function 

@@ -48,40 +48,45 @@ class _WriterMapper[T: Sample](Mapper[T, T]):
         folder: Path,
         data_folder: Path,
         zfill: int,
-        exclude: set[str],
         overwrite_policy: OverwritePolicy,
         copy_policy: CopyPolicy,
-        offset: int,
     ) -> None:
         super().__init__()
         self._folder = folder
         self._data_folder = data_folder
         self._zfill = zfill
-        self._exclude = exclude
         self._overwrite_policy = overwrite_policy
         self._copy_policy = copy_policy
-        self._offset = offset
+
+    def _write_item(self, item, fpath: Path) -> None:
+        if fpath.is_file():
+            if self._overwrite_policy != OverwritePolicy.OVERWRITE_FILES:
+                raise FileExistsError(
+                    f"File {fpath} already exists and policy "
+                    f"{self._overwrite_policy} is used. Either change the "
+                    "destination path or set a weaker policy."
+                )
+            else:
+                fpath.unlink()
+        write_item_to_file(item, fpath, self._copy_policy)
 
     def __call__(self, idx: int, x: T) -> T:
-        prefix = str(idx + self._offset).zfill(self._zfill)
+        if idx == 0:
+            for k, item in x.items():
+                if item.is_shared:
+                    ext = next(iter(item.parser.extensions()))
+                    fpath = self._folder / f"{k}.{ext}"
+                    self._write_item(item, fpath)
+
+        prefix = str(idx).zfill(self._zfill)
         fname_fmt = "{prefix}_{key}.{ext}"
         for k, item in x.items():
-            if k in self._exclude:
+            if item.is_shared:
                 continue
             ext = next(iter(item.parser.extensions()))
             fname = fname_fmt.format(prefix=prefix, key=k, ext=ext)
             fpath = self._data_folder / fname
-            if fpath.is_file():
-                if self._overwrite_policy != OverwritePolicy.OVERWRITE_FILES:
-                    raise FileExistsError(
-                        f"File {fpath} already exists and policy "
-                        f"{self._overwrite_policy} is used. Either change the destination "
-                        "path or set a weaker policy."
-                    )
-                else:
-                    fpath.unlink()
-
-            write_item_to_file(item, fpath, self._copy_policy)
+            self._write_item(item, fpath)
 
         return x
 
@@ -128,35 +133,14 @@ class UnderfolderSink(DatasetSink[Dataset]):
         inner_folder.mkdir(parents=True, exist_ok=True)
         best_zfill = len(str(len(data) - 1))
 
-        root_items: set[str] = set()
-        data0 = data[0]
-        for k, item in data0.items():
-            if item.is_shared:
-                root_items.add(k)
-                ext = next(iter(item.parser.extensions()))
-                fpath = self._folder / f"{k}.{ext}"
-                if fpath.is_file():
-                    if self._overwrite_policy != OverwritePolicy.OVERWRITE_FILES:
-                        raise FileExistsError(
-                            f"File {fpath} already exists and policy "
-                            f"{self._overwrite_policy} is used. Either change the "
-                            "destination path or set a weaker policy."
-                        )
-                    else:
-                        fpath.unlink()
-                write_item_to_file(item, fpath, self._copy_policy)
-
         writer: _WriterMapper[T] = _WriterMapper(
             self._folder,
             inner_folder,
             best_zfill,
-            root_items,
             self._overwrite_policy,
             self._copy_policy,
-            1,
         )
-        writer(-1, data0)
-        data = MapOp(writer)(data[1:])
+        data = MapOp(writer)(data)
 
         for _ in self.loop(data, self._grabber, name="Writing"):
             pass
