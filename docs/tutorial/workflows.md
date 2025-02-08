@@ -362,5 +362,28 @@ run_workflow(workflow, tracker=tracker)
 
 ## Workflow Drawing
 
+Workflows can be drawn using the `draw_workflow` function:
 
-The `Workflow.node()` function 
+``` py
+workflow: Workflow
+
+draw_workflow(workflow, Path("/tmp/workflow.svg"))
+```
+
+Under the hood, this function calls two different components:
+
+- `Layout`: responsible for determining the position and size of workflow nodes in a 2D image plane.
+- `Drawer`: responsible for taking an already laid out workflow and writing a file that can be visualized by external software such as a web browser or an image viewer.
+
+As for the layout part, Pipewine provides `OptimizedLayout`, a class that attempts to position the nodes on a 2D grid such that the overall flow can be read from left to right such that:
+
+- Nodes are not too much spread out, nor too close to each other.
+- Excessively long edges are penalized.
+- Edge-edge intersections are minimized.
+- Edge-node intersections are minimized.
+- Edges are directed towards the right side of the image.
+
+This is achieved using a very simple evolutionary approach. The implementation is kind of difficult to follow due to heavy use of vectorization to eliminate all Python for loops and control flow, crucial to ensure acceptable performance (<1000ms execution time). 
+
+`SVGDrawer` takes the laid-out graph and writes it into a SVG file that can be opened in any modern web browser and embedded pretty much everywhere.
+
