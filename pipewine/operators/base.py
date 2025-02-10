@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from inspect import get_annotations
 
 from pipewine._op_typing import AnyDataset, origin_type
 from pipewine._register import LoopCallbackMixin
@@ -12,11 +13,11 @@ class DatasetOperator[T_IN: AnyDataset, T_OUT: AnyDataset](ABC, LoopCallbackMixi
 
     @property
     def input_type(self):
-        return origin_type(self.__call__.__annotations__["x"])
+        return origin_type(get_annotations(self.__call__, eval_str=True)["x"])
 
     @property
     def output_type(self):
-        return origin_type(self.__call__.__annotations__["return"])
+        return origin_type(get_annotations(self.__call__, eval_str=True)["return"])
 
 
 class IdentityOp(DatasetOperator[Dataset, Dataset]):

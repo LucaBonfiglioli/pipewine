@@ -2,7 +2,7 @@ import inspect
 import random
 import sys
 from collections import deque
-from collections.abc import Callable, Sequence, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from enum import Enum
 from functools import partial
@@ -16,7 +16,6 @@ from rich.table import Table
 from typer import Context, Option, Typer
 
 from pipewine._op_typing import origin_type
-from pipewine.parsers import ParserRegistry
 from pipewine.bundle import Bundle
 from pipewine.cli.sinks import SinkCLIRegistry
 from pipewine.cli.sources import SourceCLIRegistry
@@ -31,6 +30,7 @@ from pipewine.dataset import Dataset
 from pipewine.grabber import Grabber
 from pipewine.operators import *
 from pipewine.operators import DatasetOperator
+from pipewine.parsers import ParserRegistry
 from pipewine.sample import Sample
 from pipewine.sinks import DatasetSink
 from pipewine.sources import DatasetSource

@@ -1,14 +1,15 @@
 import os
 import warnings
+from inspect import get_annotations
 from itertools import chain
 from pathlib import Path
 
+from pipewine._op_typing import origin_type
 from pipewine.item import StoredItem
 from pipewine.parsers import ParserRegistry
+from pipewine.reader import LocalFileReader
 from pipewine.sample import Sample, TypedSample, TypelessSample
 from pipewine.sources.base import LazyDatasetSource
-from pipewine.reader import LocalFileReader
-from pipewine._op_typing import origin_type
 
 
 class UnderfolderSource[T: Sample](LazyDatasetSource[T]):
@@ -106,7 +107,7 @@ class UnderfolderSource[T: Sample](LazyDatasetSource[T]):
         reader = LocalFileReader(v)
         annotated_type = None
         if issubclass(self.sample_type, TypedSample):
-            annotation = self.sample_type.__annotations__.get(k)
+            annotation = get_annotations(self.sample_type, eval_str=True).get(k)
             if (
                 annotation is not None
                 and hasattr(annotation, "__args__")

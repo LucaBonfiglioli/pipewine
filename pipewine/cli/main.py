@@ -1,7 +1,10 @@
-from typer import Typer, Option
 from typing import Annotated
-from pipewine.cli.ops import op_app
+
+from typer import Option, Typer
+
 from pipewine.cli.mappers import map_app
+from pipewine.cli.ops import op_app
+from pipewine.cli.workflows import wf_app
 
 
 def main_callback(
@@ -25,6 +28,7 @@ pipewine_app = Typer(
 )
 pipewine_app.add_typer(op_app)
 pipewine_app.add_typer(map_app)
+pipewine_app.add_typer(wf_app)
 
 
 def main() -> None:  # pragma: no cover

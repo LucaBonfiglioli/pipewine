@@ -4,6 +4,7 @@ from pipewine._op_typing import AnyDataset, origin_type
 from pipewine._register import LoopCallbackMixin
 from pipewine.dataset import Dataset, LazyDataset
 from pipewine.sample import Sample
+from inspect import get_annotations
 
 
 class DatasetSource[T: AnyDataset](ABC, LoopCallbackMixin):
@@ -12,7 +13,7 @@ class DatasetSource[T: AnyDataset](ABC, LoopCallbackMixin):
 
     @property
     def output_type(self):
-        return origin_type(self.__call__.__annotations__["return"])
+        return origin_type(get_annotations(self.__call__, eval_str=True)["return"])
 
 
 class _LazySourceInterface[T_SAMPLE: Sample](ABC):

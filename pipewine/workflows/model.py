@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from collections import defaultdict
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
+from inspect import get_annotations
 from pathlib import Path
 from tempfile import gettempdir
 from types import GenericAlias
@@ -226,7 +227,8 @@ class Workflow:
             elif (
                 issubclass(return_t, tuple)
                 and isinstance(
-                    ann := action.__call__.__annotations__["return"], GenericAlias
+                    ann := get_annotations(action.__call__, eval_str=True)["return"],
+                    GenericAlias,
                 )
                 and len(ann.__args__) > 0
                 and ann.__args__[-1] is not Ellipsis
