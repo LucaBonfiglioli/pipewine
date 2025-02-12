@@ -507,6 +507,27 @@
   
   
     <li class="md-nav__item">
+      <a href="tutorial/cache/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    💾 Cache
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="tutorial/workflows/" class="md-nav__link">
         
   
@@ -620,7 +641,7 @@
 <li><strong>Common data encoding</strong> formats for images, text and metadata.</li>
 <li><strong>Common operators</strong> to manipulate existing datasets.</li>
 <li><strong>Workflows</strong> that transform data in complex DAGs (Directed Acyclic Graph) pipelines.</li>
-<li><strong>CLI</strong> (Command Line Interface) to perform operators without writing a full python script.</li>
+<li><strong>CLI</strong> (Command Line Interface) to quickly run simple workflows without writing a full python script.</li>
 <li><strong>Extendibility</strong>, allowing the user to easily extend the library in many aspects, adding components that seamlessly integrate with the built-in ones:<ul>
 <li>Add custom dataset formats</li>
 <li>Add custom data encoding formats</li>
@@ -630,7 +651,7 @@
 </li>
 </ul>
 <h2 id="rationale">⭐️ Rationale</h2>
-<p>Pipewine started from a refactoring of some core components of the Pipelime library, but it soon turned into a complete rewrite that aims at solving some <strong>architectural issues of Pipelime</strong>, namely:</p>
+<p>Pipewine started from a refactoring of some core components of the Pipelime library, but it soon turned into a complete rewrite that aims at solving some architectural issues of Pipelime, namely:</p>
 <ul>
 <li><strong>Dependency Hell</strong>: Pipelime had so many of dependencies and contstraints that made it very hard to install in many environments due to conflicts and incompatibilities. Outdated dependencies at the core of the library (e.g. Pydantic 1) make it incompatible with new python packages that use Pydantic 2+. Upgrading these dependencies is currently impossible without breaking everything.</li>
 <li><strong>Over-reliance on Pydantic</strong>: Making most library components inherit from Pydantic <code>BaseModel</code>'s (expecially with the 1.0 major) completely violate type-safety and result in type-checking errors if used with any modern python type-checker like MyPy or PyLance. As a result, IntelliSense and autocompletion do not work properly, requiring the user to fill their code with <code>type: ignore</code> directives. Furthermore, Pydantic runtime validation has some serious performance issues, slowing down the computation significantly (especially before rewriting the whole library in Rust).</li>

@@ -2,30 +2,34 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://github.com/lucabonfiglioli/</loc>
-         <lastmod>2025-01-07</lastmod>
+         <lastmod>2025-02-12</lastmod>
     </url>
     <url>
          <loc>https://github.com/lucabonfiglioli/tutorial/actions/</loc>
-         <lastmod>2025-01-07</lastmod>
+         <lastmod>2025-02-12</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/tutorial/cache/</loc>
+         <lastmod>2025-02-12</lastmod>
     </url>
     <url>
          <loc>https://github.com/lucabonfiglioli/tutorial/cli/</loc>
-         <lastmod>2025-01-07</lastmod>
+         <lastmod>2025-02-12</lastmod>
     </url>
     <url>
          <loc>https://github.com/lucabonfiglioli/tutorial/data/</loc>
-         <lastmod>2025-01-07</lastmod>
+         <lastmod>2025-02-12</lastmod>
     </url>
     <url>
          <loc>https://github.com/lucabonfiglioli/tutorial/installation/</loc>
-         <lastmod>2025-01-07</lastmod>
+         <lastmod>2025-02-12</lastmod>
     </url>
     <url>
          <loc>https://github.com/lucabonfiglioli/tutorial/overview/</loc>
-         <lastmod>2025-01-07</lastmod>
+         <lastmod>2025-02-12</lastmod>
     </url>
     <url>
          <loc>https://github.com/lucabonfiglioli/tutorial/workflows/</loc>
-         <lastmod>2025-01-07</lastmod>
+         <lastmod>2025-02-12</lastmod>
     </url>
 </urlset>

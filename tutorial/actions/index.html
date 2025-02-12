@@ -14,7 +14,7 @@
         <link rel="prev" href="../data/">
       
       
-        <link rel="next" href="../workflows/">
+        <link rel="next" href="../cache/">
       
       
       <link rel="icon" href="../../assets/pipewine.svg">
@@ -661,6 +661,27 @@
   
   
     <li class="md-nav__item">
+      <a href="../cache/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    💾 Cache
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../workflows/" class="md-nav__link">
         
   
@@ -932,9 +953,9 @@
 <ul>
 <li><code>DatasetSource</code> - A component that is able to create one or more <code>Dataset</code> objects.  </li>
 <li><code>DatasetSink</code> - A component that is able to consume one or more <code>Dataset</code> objects. </li>
-<li><code>DatasetOperator</code> - A components that takes as input and returns one or more <code>Dataset</code> objects.</li>
+<li><code>DatasetOperator</code> - A component that accepts and returns one or more <code>Dataset</code> objects.</li>
 </ul>
-<p>In general, actions can receive and return one of the following:</p>
+<p>In general, actions can accept and return one of the following:</p>
 <ul>
 <li>A single <code>Dataset</code> object.</li>
 <li>A <code>Sequence</code> of datasets.</li>
@@ -942,7 +963,7 @@
 <li>A <code>Mapping</code> of strings to datasets.</li>
 <li>A <code>Bundle</code> of datasets.</li>
 </ul>
-<p>Specific types of actions <strong>statically</strong> declare the type of inputs and outputs they accept/return to ensure that their type is always known at development time (as soon as you write the code).</p>
+<p>Specific types of actions statically declare the type of inputs and outputs they accept/return to ensure that their type is always known at development time (as soon as you write the code).</p>
 <div class="admonition example">
 <p class="admonition-title">Example</p>
 <p><code>CatOp</code> is a type of <code>DatasetOperation</code> that concatenates one or more datasets into a single one, therefore, its input type is <code>Sequence[Dataset]</code> and its output is <code>Dataset</code>.</p>
@@ -1039,7 +1060,7 @@
 </tbody>
 </table>
 <p>As you can see, there are positive and negative aspects in both approaches. You may be inclined to think that for this silly example of loading and displaying images, the lazy approach is clearly better. After all, who would use a software that needs to load the entire photo album of thousands of photos just to display a single image?</p>
-<p>As you may have noticed in the previous section, Pipewine allows you to choose both approaches, but when there is no clear reason to prefer the eager behavior, its components are implemented so that they behave <strong>lazily</strong>: <code>Item</code> only reads data when requested to do so, <code>LazyDataset</code> creates the actual <code>Sample</code> object upon indexing. As you will see, most Pipewine actions follow a similar pattern.</p>
+<p>As you may have noticed in the previous section, Pipewine allows you to choose both approaches, but when there is no clear reason to prefer the eager behavior, its components are implemented so that they behave lazily: <code>Item</code> only reads data when requested to do so, <code>LazyDataset</code> creates the actual <code>Sample</code> object upon indexing. As you will see, most Pipewine actions follow a similar pattern.</p>
 <p>This decision, inherited from the old Pipelime library, is motivated mainly by the following reasons:</p>
 <ul>
 <li>Data pipelines may operate on large amounts of data that we cannot afford to load upfront and keep loaded into system memory. Even small datasets with hundreds of images will impose a significant memory cost on any modern machine. Larger datasets may not be possible to load at all!</li>
@@ -1060,7 +1081,7 @@
 <ul>
 <li>You still get the option to parallelize work in a relatively easy way without having to integrate complex bindings for execution environments other than the Python interpreter. </li>
 <li>Process creation and communication overhead becomes negligible when dealing with large amounts of relatively independent jobs that don't need much synchronization. This is a relatively common scenario in data pipelines.</li>
-<li>It does not prevent you to implement optimized multi-threaded components in other languages. Think about it: whenever you use tools like Numpy inside a Pipewine action, you are doing exactly this. </li>
+<li>It does not prevent you from implementing optimized multi-threaded components in other languages. Think about it: whenever you use tools like Numpy inside a Pipewine action, you are doing exactly this. </li>
 </ul>
 <h3 id="grabber">Grabber</h3>
 <p>To parallelize tasks with Pipewine you can use a <code>Grabber</code> object: a simple wrapper around a multiprocessing <code>Pool</code> of workers iterate through an ordered sequence of objects.</p>
@@ -1074,21 +1095,20 @@
 <li>Handles exceptions freeing resources and returning the errors transparently to the parent process.</li>
 <li>Automatically invokes a callback function whenever a task is completed. The callback is run by the individual workers.</li>
 </ul>
-<p>When creating a <code>Grabber</code> you will need to choose three main parameters that govern the execution:</p>
+<p>When creating a <code>Grabber</code> you need to choose three main parameters that govern the execution:</p>
 <ul>
-<li><code>num_workers</code>: The number of concurrent workers. Ideally, in a magic world where all workload is perfectly distributed and communication overhead is zero, the total time is proportional to <code>num_jobs / num_workers</code>, so the higher the better. In reality:<ul>
-<li>Work is not perfectly distributed. If you need to run 100 jobs with 3 workers, 2 workers will be assigned 33 jobs each, but the 3rd worker is left with 34 jobs. </li>
-<li>Different jobs may have different computational costs. If you need to run 100 jobs with 4 workers, equal splits of 25 each may not guarantee that the actual workload is evenly split: a "lucky" worker may get the 25 easiest jobs and complete them way before the others have finished running. </li>
+<li><code>num_workers</code>: The number of concurrent workers. Ideally, in a magic world where all workload is perfectly distributed and communication overhead is zero, the total time is proportional to <code>num_jobs / num_workers</code>, so the higher the better. In reality, there are many factors that make the returns of adding more processes strongly diminishing, and sometimes even negative:<ul>
+<li>Work is not perfectly distributed and it's not complete until the slowest worker hasn't finished. </li>
 <li>Processes are expensive to create. With small enough workloads, a single process may actually be faster than a concurrent pool.</li>
 <li>Everytime an object is passed from one process to the other it needs to be serialized and then de-serialized. This can become quite expensive when dealing with large data structures.</li>
 <li>Processes need synchronization mechanisms that temporarily halt the computation.</li>
-<li>Sometimes the bottleneck is not the computation itself: if a single process reading data from the network completely saturates your bandwidth, adding more processes won't fix the problem.</li>
+<li>Sometimes the bottleneck is not the computation itself: if a single process reading data from the network completely saturates your bandwidth, adding more processes won't fix the issue.</li>
 <li>Sometimes multiprocessing can be much slower than single processing. A typical example is when concurrently writing to a mechanical HDD, causing it to waste a lot of time going back and forth the writing locations.  </li>
 <li>Your code may already be parallelized. Whenever you use libraries like Numpy, PyTorch, OpenCV (and many more), you are calling C/C++ bindings that run very efficient multi-threaded code outside of the Python interpreter, or even code that runs on devices other than your CPU (e.g. CUDA-enabled GPUs). Adding multiprocessing in these cases will only add overhead costs to something that already uses your computational resources nearly optimally.</li>
-<li>Due to memory constraints the number of processes you can keep running without swapping (and thus severely compromising the execution speed) may be limited to a small number. E.g. if each process needs to keep loaded a 10GB deep learning model and the available memory is just 32GB, the maximum amount of processes you can run without swapping is 3. </li>
+<li>Due to memory constraints the number of processes you can keep running may be limited to a small number. E.g. if each process needs to keep loaded a 10GB chunk of data and the available memory is just 32GB, the maximum amount of processes you can run without swapping is 3. Adding a 4th process will make the system start swapping, greatly deteriorating the overall execution speed.</li>
 </ul>
 </li>
-<li><code>prefetch</code>: The number of tasks that are assigned to each worker whenever they are ready. It's easier to explain this with an analogy. Imagine you need to deliver 1000 products to customers and you have 4 couriers ready to deliver them. How inefficient would it be if every courier delivered one product at a time, returning to the warehouse whenever they complete a delivery? You would still parallelize work across 4 couriers, but would incur in massive synchronization costs (the extra time it takes for the courier to return to the warehouse each time). A smarter solution would be to assign a larger batch of deliveries to each courier (e.g. 50) so that they would have to return to the warehouse less often. </li>
+<li><code>prefetch</code>: The number of tasks that are assigned to each worker whenever they are ready. It's easier to explain this with an analogy. Imagine you need to deliver 1000 products to customers and you have 4 couriers ready to deliver them. How inefficient would it be if every courier delivered one product at a time, returning to the warehouse whenever they complete a delivery? You would still parallelize work across 4 couriers, but would also incur in massive synchronization costs (the extra time it takes for the courier to return to the warehouse each time). A smarter solution would be to assign a larger batch of deliveries to each courier (e.g. 50) so that they would have to return to the warehouse less frequently. </li>
 <li><code>keep_order</code>: Sometimes, the order in which the operations are performed is not that relevant. Executing tasks out-of-order requires even less synchronization, usually resulting in faster overall execution.</li>
 </ul>
 <p>Let's see an example of how a <code>Grabber</code> works. </p>
@@ -1111,7 +1131,7 @@
 </span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>    <span class="nd">@overload</span>
 </span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">slice</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;SlowSequence&quot;</span><span class="p">:</span> <span class="o">...</span>
 </span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">slice</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;SlowSequence | int&quot;</span><span class="p">:</span>
-</span><span id="__span-1-16"><a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>        <span class="c1"># Let&#39;s not care about slicing for now</span>
+</span><span id="__span-1-16"><a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>        <span class="c1"># Let&#39;s not worry about slicing for now</span>
 </span><span id="__span-1-17"><a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
 </span><span id="__span-1-18"><a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
 </span><span id="__span-1-19"><a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>
@@ -1119,7 +1139,7 @@
 </span><span id="__span-1-21"><a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>        <span class="k">if</span> <span class="n">idx</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 </span><span id="__span-1-22"><a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>            <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
 </span><span id="__span-1-23"><a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>
-</span><span id="__span-1-24"><a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>        <span class="c1"># Simulate some slow operation and return</span>
+</span><span id="__span-1-24"><a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>        <span class="c1"># Simulate a slow operation and return</span>
 </span><span id="__span-1-25"><a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
 </span><span id="__span-1-26"><a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>        <span class="k">return</span> <span class="n">idx</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_start</span>
 </span></code></pre></div>
@@ -1165,20 +1185,379 @@
 </span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>Callback 8 invoked by process 21223
 </span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>...
 </span></code></pre></div>
-<p>Important note: what <code>Grabber</code> parallelizes just the call to the <code>__getitem__</code> method and the callback function. The body of the for loop (the summation) is <strong>not</strong> parallelized and it's executed by the parent process.</p>
+<p>Important note: what <code>Grabber</code> just parallelizes the <code>__getitem__</code> method and the callback function. The body of the for loop (the summation) is <strong>not</strong> parallelized and it's executed by the parent process.</p>
 </div>
 <h2 id="sources-and-sinks">Sources and Sinks</h2>
-<p><code>DatasetSource</code> and <code>DatasetSink</code> are the two base classes for every Pipewine action that respectively <strong>reads</strong> or <strong>writes</strong> datasets (or collections of datasets) from/to external storages.</p>
-<p>A <code>DatasetSource</code> creates and returns instances of Pipewine <code>Datasets</code>.
-A <code>DatasetSink</code> consumes instances of Pipewine <code>Datasets</code> </p>
+<p><code>DatasetSource</code> and <code>DatasetSink</code> are the two base classes for every Pipewine action that respectively reads or writes datasets (or collections of datasets) from/to external storages.</p>
+<p>Pipewine offers built-in support for <em>Underfolder</em> datasets, a flexible dataset format inherited by Pipelime that works well with many small-sized multi-modal datasets with arbitrary content. </p>
+<p>While Underfolder is the only format supported by Pipewine (currently), you are strongly encouraged to create custom dataset sources and sinks for whatever format you like.</p>
 <h3 id="underfolder">Underfolder</h3>
+<p>An underfolder dataset is a directory located anywhere on the file system, with no constraint on its name. Every underfolder must contain a subfolder named <code>data</code>, plus some additional files.</p>
+<p>Every file contained in the <code>data</code> subfolder corresponds to an item and must be named: <code>$INDEX_$KEY.$EXTENSION</code>, where:</p>
+<ul>
+<li><code>$INDEX</code> is a non-negative integer number representing the index of the sample in the dataset, prefixed with an arbitrary number of <code>0</code> characters that are ignored. </li>
+<li><code>$KEY</code>  is a string representing the key of the item in the sample. Every name that can be used as a Python variable name is a valid key.</li>
+<li><code>$EXTENSION</code> is the file extension you would normally use. Pipewine can only read files if there is a registered <code>Parser</code> class that supports its extension.  </li>
+</ul>
+<p>Every file outside of the <code>data</code> folder (also called "root file") represents a shared item that every sample in the dataset will inherit.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>All sample indices must be contiguous: if a sample with index N is present, then all the samples from 0 to N-1 must also be present in the dataset.</p>
+</div>
+<iframe style="border:none" width="800" height="450" src="https://whimsical.com/embed/S8SpLwdz7iiZ9HZFsjjJYB@or4CdLRbgroHUKdJDDwGHScPtCHyW8WkbahA1dJaH"></iframe>
+
+<p>Pros and cons of the Underfolder dataset format:</p>
+<ul>
+<li>✅ No need to setup databases, making them extremely easy to create and access. You can even create them by renaming a bunch of files using your favourite file explorer or a shell script.</li>
+<li>✅ You can easily inspect and edit the content of an underfolder dataset just by opening the individual files you are interested in with your favourite tools.</li>
+<li>✅ It's a very flexible format that you can use in many scenarios. </li>
+<li>❌ Databases exist for a reason. Putting 100.000 files in a local directory and expecting it to be efficient is pure fantasy. You should avoid using underfolders when dealing with large datasets or when performance is critical.</li>
+<li>❌ There is an issue when used with datasets where all items are shared (an edge case that's very rare in practice). In these cases, the original length of the dataset is lost after writing. Although fixing this issue is quite easy, it would break the forward-compatibility (reading data written by a future version of the library), so it will likely remain unfixed.</li>
+</ul>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<p>You can see an example of an Underfolder dataset <a href="https://github.com/LucaBonfiglioli/pipewine/tree/0ffaa9cb0ee829f78bcdf56cbbe21110045a94d8/tests/sample_data/underfolders/underfolder_0">here</a>. The dataset contains samples corresponding to the 26 letters of the english alphabet, with RGB images and metadata.</p>
+<p>Basic <code>UnderfolderSource</code> usage with no typing information:</p>
+<div class="language-py highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Create the source object from an existing directory Path.</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;tests/sample_data/underfolders/underfolder_0&quot;</span><span class="p">)</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">source</span> <span class="o">=</span> <span class="n">UnderfolderSource</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="c1"># Call the source object to create a new Dataset instance.</span>
+</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="n">dataset</span> <span class="o">=</span> <span class="n">source</span><span class="p">()</span>
+</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>
+</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="c1"># Do stuff with the dataset</span>
+</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="n">sample</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span>
+</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="nb">print</span><span class="p">(</span><span class="n">sample</span><span class="p">[</span><span class="s2">&quot;image&quot;</span><span class="p">]()</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>  <span class="c1"># &gt;&gt;&gt; [244.4, 231.4, 221.7]</span>
+</span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="nb">print</span><span class="p">(</span><span class="n">sample</span><span class="p">[</span><span class="s2">&quot;metadata&quot;</span><span class="p">]()[</span><span class="s2">&quot;color&quot;</span><span class="p">])</span>  <span class="c1">#            &gt;&gt;&gt; &quot;orange&quot;</span>
+</span><span id="__span-6-12"><a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="nb">print</span><span class="p">(</span><span class="n">sample</span><span class="p">[</span><span class="s2">&quot;shared&quot;</span><span class="p">]()[</span><span class="s2">&quot;vowels&quot;</span><span class="p">])</span>  <span class="c1">#             &gt;&gt;&gt; [&quot;a&quot;, &quot;e&quot;, &quot;i&quot;, &quot;o&quot;, &quot;u&quot;]</span>
+</span></code></pre></div>
+<p>Fully typed usage:</p>
+<div class="language-py highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">class</span> <span class="nc">LetterMetadata</span><span class="p">(</span><span class="n">pydantic</span><span class="o">.</span><span class="n">BaseModel</span><span class="p">):</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    <span class="n">letter</span><span class="p">:</span> <span class="nb">str</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    <span class="n">color</span><span class="p">:</span> <span class="nb">str</span>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="k">class</span> <span class="nc">SharedMetadata</span><span class="p">(</span><span class="n">pydantic</span><span class="o">.</span><span class="n">BaseModel</span><span class="p">):</span>
+</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>    <span class="n">vowels</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>    <span class="n">consonants</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>
+</span><span id="__span-7-9"><a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="k">class</span> <span class="nc">LetterSample</span><span class="p">(</span><span class="n">TypedSample</span><span class="p">):</span>
+</span><span id="__span-7-10"><a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>    <span class="n">image</span><span class="p">:</span> <span class="n">Item</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>
+</span><span id="__span-7-11"><a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>    <span class="n">metadata</span><span class="p">:</span> <span class="n">Item</span><span class="p">[</span><span class="n">LetterMetadata</span><span class="p">]</span>
+</span><span id="__span-7-12"><a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>    <span class="n">shared</span><span class="p">:</span> <span class="n">Item</span><span class="p">[</span><span class="n">SharedMetadata</span><span class="p">]</span>
+</span><span id="__span-7-13"><a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>
+</span><span id="__span-7-14"><a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="c1"># Create the source object from an existing directory Path.</span>
+</span><span id="__span-7-15"><a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a><span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;tests/sample_data/underfolders/underfolder_0&quot;</span><span class="p">)</span>
+</span><span id="__span-7-16"><a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a><span class="n">source</span> <span class="o">=</span> <span class="n">UnderfolderSource</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">sample_type</span><span class="o">=</span><span class="n">LetterSample</span><span class="p">)</span>
+</span><span id="__span-7-17"><a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a>
+</span><span id="__span-7-18"><a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a><span class="c1"># Call the source object to create a new Dataset instance.</span>
+</span><span id="__span-7-19"><a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a><span class="n">dataset</span> <span class="o">=</span> <span class="n">source</span><span class="p">()</span>
+</span><span id="__span-7-20"><a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a>
+</span><span id="__span-7-21"><a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a><span class="c1"># Do stuff with the dataset</span>
+</span><span id="__span-7-22"><a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a><span class="n">sample</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span>
+</span><span id="__span-7-23"><a id="__codelineno-7-23" name="__codelineno-7-23" href="#__codelineno-7-23"></a><span class="nb">print</span><span class="p">(</span><span class="n">sample</span><span class="o">.</span><span class="n">image</span><span class="p">()</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>  <span class="c1"># &gt;&gt;&gt; [244.4, 231.4, 221.7]</span>
+</span><span id="__span-7-24"><a id="__codelineno-7-24" name="__codelineno-7-24" href="#__codelineno-7-24"></a><span class="nb">print</span><span class="p">(</span><span class="n">sample</span><span class="o">.</span><span class="n">metadata</span><span class="p">()</span><span class="o">.</span><span class="n">color</span><span class="p">)</span>  <span class="c1">#               &gt;&gt;&gt; &quot;orange&quot;</span>
+</span><span id="__span-7-25"><a id="__codelineno-7-25" name="__codelineno-7-25" href="#__codelineno-7-25"></a><span class="nb">print</span><span class="p">(</span><span class="n">sample</span><span class="o">.</span><span class="n">shared</span><span class="p">()</span><span class="o">.</span><span class="n">vowels</span><span class="p">)</span>  <span class="c1">#                &gt;&gt;&gt; [&quot;a&quot;, &quot;e&quot;, &quot;i&quot;, &quot;o&quot;, &quot;u&quot;]</span>
+</span></code></pre></div>
+<p>You can use <code>UnderfolderSink</code> to write any Pipewine dataset, even if it wasn't previously read as an underfolder.</p>
+<div class="language-py highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Write the dataset with an underfolder sink</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="n">output_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">gettempdir</span><span class="p">())</span> <span class="o">/</span> <span class="s2">&quot;underfolder_write_example&quot;</span>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="n">sink</span> <span class="o">=</span> <span class="n">UnderfolderSink</span><span class="p">(</span><span class="n">output_path</span><span class="p">)</span>
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="n">sink</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span> <span class="c1"># &lt;-- Writes data to the specified path.</span>
+</span></code></pre></div>
+</div>
 <h3 id="custom-formats">Custom Formats</h3>
+<p>You can add custom implementations of the <code>DatasetSource</code> and <code>DatasetSink</code> interfaces that allow reading and writing datasets with custom formats. To better illustrate how to do so, this section will walk you through an example use case of a source and a sink for folders containing JPEG image files.</p>
+<p>Before you start, you should always think of the type of datasets you are going to read. Some formats may be flexible enough to support any kind of dataset, while others may be restricted to only a specific type. Pipewine gives you the tools to choose any of the two options in a type-safe way, but also to completely ignore all the typing part and to always return un-typed structures as it was with the old Pipelime.</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<p>In this example case it's very simple: we only want to read samples that contain a single item named "image" that loads as a numpy array:</p>
+<div class="language-py highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="k">class</span> <span class="nc">ImageSample</span><span class="p">(</span><span class="n">TypedSample</span><span class="p">):</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>    <span class="n">image</span><span class="p">:</span> <span class="n">Item</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>
+</span></code></pre></div>
+</div>
+<p>Next, let's implement the dataset source:</p>
+<ol>
+<li>Inherit from <code>DatasetSource</code> and specify the type of data that will be read.</li>
+<li>[Optional] Implement an <code>__init__</code> method. </li>
+<li>Implement the <code>__call__</code> method, accepting no arguments and returning an instance of chosen type of dataset. You can choose to load the whole dataset upfront (eager), or to return a <code>LazyDataset</code> that will load the samples only when needed.</li>
+</ol>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>When overriding the <code>__init__</code> method, always remember to call <code>super().__init__()</code>, otherwise the object won't be correctly initialized.</p>
+</div>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<div class="language-py highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="k">class</span> <span class="nc">ImagesFolderSource</span><span class="p">(</span><span class="n">DatasetSource</span><span class="p">[</span><span class="n">Dataset</span><span class="p">[</span><span class="n">ImageSample</span><span class="p">]]):</span>
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">folder</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>  <span class="c1"># Always call the superclass constructor!</span>
+</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_folder</span> <span class="o">=</span> <span class="n">folder</span>
+</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_files</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span>
+</span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>
+</span><span id="__span-10-7"><a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dataset</span><span class="p">[</span><span class="n">ImageSample</span><span class="p">]:</span>
+</span><span id="__span-10-8"><a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>        <span class="c1"># Find all JPEG files in the folder in lexicographic order.</span>
+</span><span id="__span-10-9"><a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>        <span class="n">jpeg_files</span> <span class="o">=</span> <span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s2">&quot;.jpeg&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_folder</span><span class="o">.</span><span class="n">iterdir</span><span class="p">())</span>
+</span><span id="__span-10-10"><a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_files</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">jpeg_files</span><span class="p">))</span>
+</span><span id="__span-10-11"><a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a>
+</span><span id="__span-10-12"><a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a>        <span class="c1"># Return a lazy dataset thet loads the samples with the _get_sample method</span>
+</span><span id="__span-10-13"><a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a>        <span class="k">return</span> <span class="n">LazyDataset</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_files</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_sample</span><span class="p">)</span>
+</span><span id="__span-10-14"><a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a>
+</span><span id="__span-10-15"><a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a>    <span class="k">def</span> <span class="nf">_get_sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ImageSample</span><span class="p">:</span>
+</span><span id="__span-10-16"><a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a>        <span class="c1"># Create an Item that reads a JPEG image from the i-th file.</span>
+</span><span id="__span-10-17"><a id="__codelineno-10-17" name="__codelineno-10-17" href="#__codelineno-10-17"></a>        <span class="n">reader</span> <span class="o">=</span> <span class="n">LocalFileReader</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_files</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span>
+</span><span id="__span-10-18"><a id="__codelineno-10-18" name="__codelineno-10-18" href="#__codelineno-10-18"></a>        <span class="n">parser</span> <span class="o">=</span> <span class="n">JpegParser</span><span class="p">()</span>
+</span><span id="__span-10-19"><a id="__codelineno-10-19" name="__codelineno-10-19" href="#__codelineno-10-19"></a>        <span class="n">image_item</span> <span class="o">=</span> <span class="n">StoredItem</span><span class="p">(</span><span class="n">reader</span><span class="p">,</span> <span class="n">parser</span><span class="p">)</span>
+</span><span id="__span-10-20"><a id="__codelineno-10-20" name="__codelineno-10-20" href="#__codelineno-10-20"></a>
+</span><span id="__span-10-21"><a id="__codelineno-10-21" name="__codelineno-10-21" href="#__codelineno-10-21"></a>        <span class="c1"># Return an ImageSample that only contains the image item.</span>
+</span><span id="__span-10-22"><a id="__codelineno-10-22" name="__codelineno-10-22" href="#__codelineno-10-22"></a>        <span class="k">return</span> <span class="n">ImageSample</span><span class="p">(</span><span class="n">image</span><span class="o">=</span><span class="n">image_item</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<p>Next, let's implement the dataset sink, which is somewhat specular to the source:</p>
+<ol>
+<li>Inherit from <code>DatasetSink</code> and specify the type of data that will be written.</li>
+<li>[Optional] Implement an <code>__init__</code> method. </li>
+<li>Implement the <code>__call__</code> method, accepting an instance of the chosen type of dataset and returning nothing. </li>
+</ol>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>Since sinks are always placed at the end of pipelines, computation cannot be delayed any further, giving them no option but to loop over the data in an eager way inside the <code>__call__</code> method. We recommend doing this using the <code>self.loop</code> method with a grabber. Doing this has two advantages:</p>
+<ol>
+<li>It loops over the data using a grabber, meaning that if there are some lazy operations that still need to be computed, they can be run efficiently in parallel.</li>
+<li>It automatically invokes callbacks that send progress updates to whoever is listening to them, enabling live progress tracking in long-running jobs.</li>
+</ol>
+</div>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<div class="language-py highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="k">class</span> <span class="nc">ImagesFolderSink</span><span class="p">(</span><span class="n">DatasetSink</span><span class="p">[</span><span class="n">Dataset</span><span class="p">[</span><span class="n">ImageSample</span><span class="p">]]):</span>
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">folder</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">grabber</span><span class="p">:</span> <span class="n">Grabber</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>  <span class="c1"># Always call the superclass constructor!</span>
+</span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_folder</span> <span class="o">=</span> <span class="n">folder</span>
+</span><span id="__span-11-5"><a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_grabber</span> <span class="o">=</span> <span class="n">grabber</span> <span class="ow">or</span> <span class="n">Grabber</span><span class="p">()</span>
+</span><span id="__span-11-6"><a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>
+</span><span id="__span-11-7"><a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Dataset</span><span class="p">[</span><span class="n">ImageSample</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="__span-11-8"><a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_folder</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="__span-11-9"><a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>
+</span><span id="__span-11-10"><a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>        <span class="c1"># Compute the amount of 0-padding to preserve lexicographic order.</span>
+</span><span id="__span-11-11"><a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>        <span class="n">zpadding</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)))</span>
+</span><span id="__span-11-12"><a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a>
+</span><span id="__span-11-13"><a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a>        <span class="c1"># Iterate over the dataset and write each sample.</span>
+</span><span id="__span-11-14"><a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a>        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">sample</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">loop</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_grabber</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Writing&quot;</span><span class="p">):</span>
+</span><span id="__span-11-15"><a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a>            <span class="n">fname</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_folder</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="n">zpadding</span><span class="p">)</span><span class="si">}</span><span class="s2">.jpeg&quot;</span>
+</span><span id="__span-11-16"><a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a>            <span class="n">write_item_to_file</span><span class="p">(</span><span class="n">sample</span><span class="o">.</span><span class="n">image</span><span class="p">,</span> <span class="n">fname</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<p>Custom dataset sources and sinks can be registered to the Pipewine CLI to allow you to manipulate your own datasets using the same commands you would normally use for every other dataset format. This is covered in the <a href="../cli/">CLI</a> tutorial. </p>
 <h2 id="operators">Operators</h2>
+<p>We have seen how to read and write datasets using dataset sources and sinks, now it's time to see how to apply operations that transform datasets into other datasets. This is done by implementations of the <code>DatasetOperator</code> base class. </p>
+<p>Similarly to sources and sinks, operators must statically declare the type of data they accept as input and the one they return, for a total of 25 (5x5) possible combinations of input and output types.</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<p>For example, a dataset operator that splits a single dataset into exactly 3 parts, should specify:</p>
+<ul>
+<li>Input type: <code>Dataset</code></li>
+<li>Output type: <code>tuple[Dataset, Dataset, Dataset]</code></li>
+</ul>
+</div>
+<p>Operators are constructed as plain Python objects, then they behave like a Python <code>Callable</code> accepting and returning either a dataset or a collection of datasets.</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<p>Here is an example of how to use a <code>DatasetOperator</code> that concatenates two or more datasets into a single one.</p>
+<div class="language-py highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># Given N datasets</span>
+</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="n">dataset1</span><span class="p">:</span> <span class="n">Dataset</span>
+</span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="n">dataset2</span><span class="p">:</span> <span class="n">Dataset</span>
+</span><span id="__span-12-4"><a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="n">dataset3</span><span class="p">:</span> <span class="n">Dataset</span>
+</span><span id="__span-12-5"><a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>
+</span><span id="__span-12-6"><a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="c1"># Construct the operator object</span>
+</span><span id="__span-12-7"><a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="n">concatenate</span> <span class="o">=</span> <span class="n">CatOp</span><span class="p">()</span>
+</span><span id="__span-12-8"><a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>
+</span><span id="__span-12-9"><a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="c1"># Call the object</span>
+</span><span id="__span-12-10"><a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a><span class="n">full_dataset</span> <span class="o">=</span> <span class="n">concatenate</span><span class="p">([</span><span class="n">dataset1</span><span class="p">,</span> <span class="n">dataset2</span><span class="p">,</span> <span class="n">dataset3</span><span class="p">])</span>
+</span></code></pre></div>
+</div>
+<p>Just like most Pipewine components, dataset operators can either be:</p>
+<ul>
+<li>Eager: performing all the computation when called and returning dataset/s containing the computation results. This is similar to the way old Pipelime's <code>PipelimeCommand</code> objects behave.</li>
+<li>Lazy: the call immediately returns a <code>LazyDataset</code> instance that performs the actual computation when requested. </li>
+</ul>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>In reality, it often makes sense to use a mix of the two approaches. You can perform some eager computation upfront then return a lazy dataset that uses the result of the previous computation.  </p>
+</div>
 <h3 id="built-in-operators">Built-in Operators</h3>
+<p>Pipewine has some useful generic operators that are commonly used in many workflows. Here is a list of the currently available built-in operators with a brief explanation. More in-depth documentation in the API reference.</p>
+<p><strong>Iteration operators:</strong> operators that operate on single datasets changing their length or the order of samples.</p>
+<ul>
+<li><code>SliceOp</code>: return a slice (as in Python slices) of a dataset.</li>
+<li><code>RepeatOp</code>: replicate the samples of a dataset N times.</li>
+<li><code>CycleOp</code>: replicate the samples of a dataset until the desired number of samples is reached.</li>
+<li><code>IndexOp</code>: select a sub-sequence of samples of a dataset with arbitrary order.</li>
+<li><code>ReverseOp</code>: invert the order of samples in a dataset (same as <code>SliceOp(step=-1)</code>).</li>
+<li><code>PadOp</code>: extend a dataset to a desired length by replicating the i-th sample.</li>
+</ul>
+<p><strong>Merge operators:</strong> operators that merge a collection of datasets into a single one.</p>
+<ul>
+<li><code>CatOp</code>: concatenate one or more datasets into a single dataset preserving the order of samples.</li>
+<li><code>ZipOp</code>: zip two or more dataset with the same length by merging the contents of the individual samples.</li>
+</ul>
+<p><strong>Split operators:</strong> operators that split a single dataset into a collection of datasets.</p>
+<ul>
+<li><code>BatchOp</code>: split a dataset into many datasets of the desired size.</li>
+<li><code>ChunkOp</code>: split a dataset into a desired number of chunks (of approximately the same size).</li>
+<li><code>SplitOp</code>: split a dataset into an arbitrary amount of splits with arbitrary size.</li>
+</ul>
+<p><strong>Functional operators:</strong> operators that transform datasets based on the result of a user-defined function.</p>
+<ul>
+<li><code>FilterOp</code>: keep only (or discard) samples that verify an arbitrary predicate.</li>
+<li><code>GroupByOp</code>: split a dataset grouping together samples that evaluate to the same value of a given function.</li>
+<li><code>SortOp</code>: sort a dataset with a user-defined sorting key function.</li>
+<li><code>MapOp</code>: apply a user-defined function (<code>Mapper</code>) to each sample of a dataset.</li>
+</ul>
+<p><strong>Random operators:</strong> operators that apply non-deterministic random transformations.</p>
+<ul>
+<li><code>ShuffleOp</code>: sort the samples of a dataset in random order.</li>
+</ul>
+<p><strong>Cache operators:</strong> operators that do not apply any transformation to the actual data, bu only change the way they are accessed.</p>
+<ul>
+<li><code>CacheOp</code>: adds a caching layer that memorizes samples to avoid computing them multiple times.</li>
+</ul>
 <h3 id="custom-operators">Custom Operators</h3>
+<p>As with sources and sinks, you can implement your own operators that manipulate data as you wish. To help you understand how to do so, this section will walk you through the implementation of an example operator that normalizes images.</p>
+<p>To implement the dataset operator:</p>
+<ol>
+<li>Inherit from <code>DatasetOperator</code> and specify both the input and output types. You can choose to implement operators that work with specific types of data or to allow usage with arbitrary types.</li>
+<li>[Optional] Implement an <code>__init__</code> method.</li>
+<li>Implement the <code>__call__</code> method, accepting and returning the previously specified types of data. </li>
+</ol>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<p>Here is the code for the <code>NormalizeOp</code>, an example operator that applies a channel-wise z-score normalization to all images of a dataset. </p>
+<p>The implementation is realatively naive: reading and stacking all images in a dataset is not a good strategy memory-wise. In a real-world scenario, you want to compute mean and standard deviation using constant-memory approaches. However, for the sake of this tutorial we can disregard this aspect and focus on other aspects of the code.</p>
+<p>Important things to consider:</p>
+<ul>
+<li>Since we want to be able to use this operator with many types of dataset, we inherit from <code>DatasetOperator[Dataset, Dataset]</code>, leaving the type of dataset unspecified for now.</li>
+<li>The <code>__call__</code> method has a typevar <code>T</code> that is used to tell the type-checker that the type of samples contained in the input dataset is preserved in the output dataset, allowing us to use this operator with any dataset we want.</li>
+<li>In the first part of the <code>__call__</code> method, we eagerly compute mu and sigma vectors iterating over the whole dataset.</li>
+<li>In the second part of the <code>__call__</code> method we return a lazy dataset instance that applies the normalization.</li>
+</ul>
+<div class="language-py highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="k">class</span> <span class="nc">NormalizeOp</span><span class="p">(</span><span class="n">DatasetOperator</span><span class="p">[</span><span class="n">Dataset</span><span class="p">,</span> <span class="n">Dataset</span><span class="p">]):</span>
+</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">grabber</span><span class="p">:</span> <span class="n">Grabber</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+</span><span id="__span-13-4"><a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_grabber</span> <span class="o">=</span> <span class="n">grabber</span> <span class="ow">or</span> <span class="n">Grabber</span><span class="p">()</span>
+</span><span id="__span-13-5"><a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>
+</span><span id="__span-13-6"><a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>    <span class="k">def</span> <span class="nf">_normalize</span><span class="p">[</span>
+</span><span id="__span-13-7"><a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>        <span class="n">T</span><span class="p">:</span> <span class="n">Sample</span>
+</span><span id="__span-13-8"><a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>    <span class="p">](</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="n">Dataset</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">mu</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">sigma</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T</span><span class="p">:</span>
+</span><span id="__span-13-9"><a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>        <span class="c1"># Get the image of the i-th sample</span>
+</span><span id="__span-13-10"><a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>        <span class="n">sample</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+</span><span id="__span-13-11"><a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>        <span class="n">image</span> <span class="o">=</span> <span class="n">sample</span><span class="p">[</span><span class="s2">&quot;image&quot;</span><span class="p">]()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+</span><span id="__span-13-12"><a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>
+</span><span id="__span-13-13"><a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a>        <span class="c1"># Apply normalization then bring values back to the [0, 255] range, </span>
+</span><span id="__span-13-14"><a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a>        <span class="c1"># clipping values below -sigma to 0 and above sigma to 255.</span>
+</span><span id="__span-13-15"><a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a>        <span class="n">image</span> <span class="o">=</span> <span class="p">(</span><span class="n">image</span> <span class="o">-</span> <span class="n">mu</span><span class="p">)</span> <span class="o">/</span> <span class="n">sigma</span>
+</span><span id="__span-13-16"><a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a>        <span class="n">image</span> <span class="o">=</span> <span class="p">(</span><span class="n">image</span> <span class="o">*</span> <span class="mi">255</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="mi">255</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+</span><span id="__span-13-17"><a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a>
+</span><span id="__span-13-18"><a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a>        <span class="c1"># Replace the image item value</span>
+</span><span id="__span-13-19"><a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a>        <span class="k">return</span> <span class="n">sample</span><span class="o">.</span><span class="n">with_value</span><span class="p">(</span><span class="s2">&quot;image&quot;</span><span class="p">,</span> <span class="n">image</span><span class="p">)</span>
+</span><span id="__span-13-20"><a id="__codelineno-13-20" name="__codelineno-13-20" href="#__codelineno-13-20"></a>
+</span><span id="__span-13-21"><a id="__codelineno-13-21" name="__codelineno-13-21" href="#__codelineno-13-21"></a>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">[</span><span class="n">T</span><span class="p">:</span> <span class="n">Sample</span><span class="p">](</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Dataset</span><span class="p">[</span><span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Dataset</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
+</span><span id="__span-13-22"><a id="__codelineno-13-22" name="__codelineno-13-22" href="#__codelineno-13-22"></a>        <span class="c1"># Compute mu and sigma on the dataset (eager)</span>
+</span><span id="__span-13-23"><a id="__codelineno-13-23" name="__codelineno-13-23" href="#__codelineno-13-23"></a>        <span class="n">all_images</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="__span-13-24"><a id="__codelineno-13-24" name="__codelineno-13-24" href="#__codelineno-13-24"></a>        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">sample</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">loop</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_grabber</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Computing stats&quot;</span><span class="p">):</span>
+</span><span id="__span-13-25"><a id="__codelineno-13-25" name="__codelineno-13-25" href="#__codelineno-13-25"></a>            <span class="n">all_images</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sample</span><span class="p">[</span><span class="s2">&quot;image&quot;</span><span class="p">]())</span>
+</span><span id="__span-13-26"><a id="__codelineno-13-26" name="__codelineno-13-26" href="#__codelineno-13-26"></a>        <span class="n">all_images_np</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">all_images</span><span class="p">)</span>
+</span><span id="__span-13-27"><a id="__codelineno-13-27" name="__codelineno-13-27" href="#__codelineno-13-27"></a>        <span class="n">mu</span> <span class="o">=</span> <span class="n">all_images_np</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="__span-13-28"><a id="__codelineno-13-28" name="__codelineno-13-28" href="#__codelineno-13-28"></a>        <span class="n">sigma</span> <span class="o">=</span> <span class="n">all_images_np</span><span class="o">.</span><span class="n">std</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="__span-13-29"><a id="__codelineno-13-29" name="__codelineno-13-29" href="#__codelineno-13-29"></a>
+</span><span id="__span-13-30"><a id="__codelineno-13-30" name="__codelineno-13-30" href="#__codelineno-13-30"></a>        <span class="c1"># Lazily apply the normalization with precomputed mu and sigma</span>
+</span><span id="__span-13-31"><a id="__codelineno-13-31" name="__codelineno-13-31" href="#__codelineno-13-31"></a>        <span class="k">return</span> <span class="n">LazyDataset</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_normalize</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">sigma</span><span class="p">))</span>
+</span></code></pre></div>
+</div>
+<p>Custom dataset operators can be registered to the Pipewine CLI to allow you to apply custom transformations to your datasets using a common CLI. This is covered in the <a href="../cli/">CLI</a> tutorial. </p>
 <h2 id="mappers">Mappers</h2>
+<p>Pipewine <code>Mapper</code> objects (essentially the same as Pipelime Stages), allow you to quickly implement dataset operators by defining a function that transforms individual samples.</p>
+<p>This allows you to write way less code when all the following conditions apply:</p>
+<ul>
+<li>The operation accepts and returns a single dataset.</li>
+<li>The input and output datasets have the same length.</li>
+<li>The i-th sample of the output dataset can be computed as a pure function of the i-th sample of the input dataset.</li>
+</ul>
+<div class="admonition danger">
+<p class="admonition-title">Danger</p>
+<p>Never use mappers when the function that transforms samples is stateful. Not only Pipewine does not preserve the order of samples when calling mappers, but the execution may be run concurrently in different processes that do not share memory.</p>
+<p>In these cases, use a <code>DatasetOperator</code> instead of a <code>Mapper</code>.</p>
+</div>
+<p>Mappers must be used in combination with <code>MapOp</code>, a built-in dataset operator that lazily applies a mapper to every sample of a dataset.</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<p>Example usage of a mapper that renames items in a dataset:</p>
+<div class="language-py highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># Given a dataset</span>
+</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="n">dataset</span><span class="p">:</span> <span class="n">Dataset</span>
+</span><span id="__span-14-3"><a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
+</span><span id="__span-14-4"><a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="c1"># Rename all items named &quot;image&quot; into &quot;my_image&quot;</span>
+</span><span id="__span-14-5"><a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="n">op</span> <span class="o">=</span> <span class="n">MapOp</span><span class="p">(</span><span class="n">RenameMapper</span><span class="p">({</span><span class="s2">&quot;image&quot;</span><span class="p">:</span> <span class="s2">&quot;my_image&quot;</span><span class="p">}))</span>
+</span><span id="__span-14-6"><a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>
+</span><span id="__span-14-7"><a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="c1"># Apply the mapper</span>
+</span><span id="__span-14-8"><a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a><span class="n">dataset</span> <span class="o">=</span> <span class="n">op</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<p>If you need to apply multiple mappers, instead of applying them individually using multiple <code>MapOp</code>, you should compose the mappers into a single one using the built-in <code>ComposeMapper</code> and then apply it with a single <code>MapOp</code>.</p>
+<p>All mappers are statically annotated with two type variables representing the type of input and output samples they accept/return, enabling static type checking. E.g. <code>Mapper[SampleA, SampleB]</code> accepts samples of type <code>SampleA</code> and returns samples of type <code>SampleB</code>. When composed in a <code>ComposeMapper</code>, it will automatically detect the input and output type from the sequence of mappers it is constructed with.</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<p>Here, the static type-checker automatically infers type <code>Mapper[SampleA, SampleE]</code> for the variable <code>composed</code>:</p>
+<div class="language-py highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="n">mapper_ab</span><span class="p">:</span> <span class="n">Mapper</span><span class="p">[</span><span class="n">SampleA</span><span class="p">,</span> <span class="n">SampleB</span><span class="p">]</span>
+</span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="n">mapper_bc</span><span class="p">:</span> <span class="n">Mapper</span><span class="p">[</span><span class="n">SampleB</span><span class="p">,</span> <span class="n">SampleC</span><span class="p">]</span>
+</span><span id="__span-15-3"><a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="n">mapper_cd</span><span class="p">:</span> <span class="n">Mapper</span><span class="p">[</span><span class="n">SampleC</span><span class="p">,</span> <span class="n">SampleD</span><span class="p">]</span>
+</span><span id="__span-15-4"><a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="n">mapper_de</span><span class="p">:</span> <span class="n">Mapper</span><span class="p">[</span><span class="n">SampleD</span><span class="p">,</span> <span class="n">SampleE</span><span class="p">]</span>
+</span><span id="__span-15-5"><a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>
+</span><span id="__span-15-6"><a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="n">composed</span> <span class="o">=</span> <span class="n">ComposeMapper</span><span class="p">((</span><span class="n">mapper_ab</span><span class="p">,</span> <span class="n">mapper_bc</span><span class="p">,</span> <span class="n">mapper_cd</span><span class="p">,</span> <span class="n">mapper_de</span><span class="p">))</span>
+</span></code></pre></div>
+</div>
 <h3 id="built-in-mappers">Built-in Mappers</h3>
+<p>Pipewine has some useful generic mappers that are commonly used in many workflows. Here is a list of the currently available built-in mappers with a brief explanation. More in-depth documentation in the API reference.</p>
+<p><strong>Key transformation mappers:</strong> modify the samples by adding, removing and renaming keys.</p>
+<ul>
+<li><code>DuplicateItemMapper</code>: create a copy of an existing item and give it a different name.</li>
+<li><code>FormatKeysMapper</code>: rename items using a format string.</li>
+<li><code>RenameMapper</code>: rename items using a mapping from old to new keys.</li>
+<li><code>FilterKeysMapper</code>: keep or discard a subset of items.</li>
+</ul>
+<p><strong>Item transformation mappers:</strong> modify item properties such as parser and sharedness.</p>
+<ul>
+<li><code>ConvertMapper</code>: change the parser of a subset of items, e.g. convert PNG to JPEG.</li>
+<li><code>ShareMapper</code>: change the sharedness of a subset of items.</li>
+</ul>
+<p><strong>Cryptography mappers:</strong> currently contains only <code>HashMapper</code>.</p>
+<ul>
+<li><code>HashMapper</code>: computes a secure hash of a subset of items, useful to perform deduplication or integrity checks.</li>
+</ul>
+<p><strong>Special mappers:</strong></p>
+<ul>
+<li><code>CacheMapper</code>: converts all items to <code>CachedItem</code>. </li>
+<li><code>ComposeMapper</code>: composes many mappers into a single object that applies all functions sequentially. </li>
+</ul>
 <h3 id="custom-mappers">Custom Mappers</h3>
+<p>To implement a <code>Mapper</code>:</p>
+<ol>
+<li>Inherit from <code>Mapper</code> and specify both the input and output sample types.</li>
+<li>[Optional] Implement an <code>__init__</code> method.</li>
+<li>Implement the <code>__call__</code> method, accepting an integer and the input sample, and returning the output sample.</li>
+</ol>
+<div class="admonition danger">
+<p class="admonition-title">Danger</p>
+<p>Remember: mappers are stateless. Never use object fields to store state between subsequent calls.</p>
+</div>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<p>In this example we will implement a mapper that inverts the colors of an image.</p>
+<div class="language-py highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="k">class</span> <span class="nc">ImageSample</span><span class="p">(</span><span class="n">TypedSample</span><span class="p">):</span>
+</span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>    <span class="n">image</span><span class="p">:</span> <span class="n">Item</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>
+</span><span id="__span-16-3"><a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>
+</span><span id="__span-16-4"><a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="k">class</span> <span class="nc">InvertRGBMapper</span><span class="p">(</span><span class="n">Mapper</span><span class="p">[</span><span class="n">ImageSample</span><span class="p">,</span> <span class="n">ImageSample</span><span class="p">]):</span>
+</span><span id="__span-16-5"><a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">ImageSample</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ImageSample</span><span class="p">:</span>
+</span><span id="__span-16-6"><a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>        <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">with_value</span><span class="p">(</span><span class="s2">&quot;image&quot;</span><span class="p">,</span> <span class="mi">255</span> <span class="o">-</span> <span class="n">x</span><span class="o">.</span><span class="n">image</span><span class="p">())</span>
+</span></code></pre></div>
+</div>
+<p>Custom mappers can be registered to the Pipewine CLI to allow you to apply custom transformations to your datasets using a common CLI. This is covered in the <a href="../cli/">CLI</a> tutorial. </p>
 
 
 

@@ -1,0 +1,1290 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://github.com/lucabonfiglioli/tutorial/cache/">
+      
+      
+        <link rel="prev" href="../actions/">
+      
+      
+        <link rel="next" href="../workflows/">
+      
+      
+      <link rel="icon" href="../../assets/pipewine.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.49">
+    
+    
+      
+        <title>💾 Cache - Pipewine</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.6f8fc17f.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../css/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#cache" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Pipewine" class="md-header__button md-logo" aria-label="Pipewine" data-md-component="logo">
+      
+  <img src="../../assets/pipewine.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Pipewine
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              💾 Cache
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1M8 13h8v-2H8zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4a5 5 0 0 0 5-5 5 5 0 0 0-5-5"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="pink"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="pink"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6m0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4M7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/lucabonfiglioli/pipewine" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    lucabonfiglioli/pipewine
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+    
+  
+  Pipewine
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../overview/" class="md-tabs__link">
+          
+  
+  📖 Tutorial
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Pipewine" class="md-nav__button md-logo" aria-label="Pipewine" data-md-component="logo">
+      
+  <img src="../../assets/pipewine.svg" alt="logo">
+
+    </a>
+    Pipewine
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/lucabonfiglioli/pipewine" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    lucabonfiglioli/pipewine
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pipewine
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    📖 Tutorial
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            📖 Tutorial
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../overview/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    💠 Overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../installation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    🛠️ Installation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../data/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    🗃️ Data Model
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../actions/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    ⚙️ Actions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    💾 Cache
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    💾 Cache
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overwiew" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overwiew
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#item-cache" class="md-nav__link">
+    <span class="md-ellipsis">
+      Item Cache
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dataset-cache" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dataset Cache
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Dataset Cache">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#memocache" class="md-nav__link">
+    <span class="md-ellipsis">
+      MemoCache
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rrcache" class="md-nav__link">
+    <span class="md-ellipsis">
+      RRCache
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fifocache" class="md-nav__link">
+    <span class="md-ellipsis">
+      FIFOCache
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lifocache" class="md-nav__link">
+    <span class="md-ellipsis">
+      LIFOCache
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lrucache" class="md-nav__link">
+    <span class="md-ellipsis">
+      LRUCache
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mrucache" class="md-nav__link">
+    <span class="md-ellipsis">
+      MRUCache
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#benchmark" class="md-nav__link">
+    <span class="md-ellipsis">
+      Benchmark
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#checkpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      Checkpoints
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cache-and-multi-processing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Cache and Multi-processing
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#comparison-with-pipelime" class="md-nav__link">
+    <span class="md-ellipsis">
+      Comparison with Pipelime
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../workflows/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    ♻️ Workflows
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    🖥️ CLI
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overwiew" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overwiew
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#item-cache" class="md-nav__link">
+    <span class="md-ellipsis">
+      Item Cache
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dataset-cache" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dataset Cache
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Dataset Cache">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#memocache" class="md-nav__link">
+    <span class="md-ellipsis">
+      MemoCache
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rrcache" class="md-nav__link">
+    <span class="md-ellipsis">
+      RRCache
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fifocache" class="md-nav__link">
+    <span class="md-ellipsis">
+      FIFOCache
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lifocache" class="md-nav__link">
+    <span class="md-ellipsis">
+      LIFOCache
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lrucache" class="md-nav__link">
+    <span class="md-ellipsis">
+      LRUCache
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mrucache" class="md-nav__link">
+    <span class="md-ellipsis">
+      MRUCache
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#benchmark" class="md-nav__link">
+    <span class="md-ellipsis">
+      Benchmark
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#checkpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      Checkpoints
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cache-and-multi-processing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Cache and Multi-processing
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#comparison-with-pipelime" class="md-nav__link">
+    <span class="md-ellipsis">
+      Comparison with Pipelime
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="cache">💾 Cache</h1>
+<h2 id="overwiew">Overwiew</h2>
+<p>By default, accessing a Pipewine dataset via the <code>__getitem__</code> method often implies calling a function that performs some computation and then constructs a new Sample object. Furthermore, accessing items on a sample may require a read from external storages e.g. a file system or a remote DB. </p>
+<p>When dealing with deterministic operations (i.e. same inputs imply the same outputs) it makes little sense to perform these computations and/or reads more than once: we could store the output of the first call and then, for every successive call, just look it up and return it. </p>
+<p>That's a technique called <em>Memoization</em> that while being very effective at speeding computation up, it also has no bound on the number of elements it keeps stored, meaning that it will eventually end up using all the available memory on our system, if the data we are trying to store does not entirely fit in system memory.</p>
+<p>Note that if we had the guarantee that every dataset could fit in the system memory, we could just apply every operation eagerly and avoid dealing with this caching headache altogether, but unfortunately (a) it's surprisingly common to deal with datasets that cannot fit in your system's RAM and (b) even if they did, would you be ok with Pipewine using 95% of your system memory?</p>
+<p>Pipewine has some built-in tools to provide a reasonable trade-off between (a) wasting time performing the same computation multiple times but minimizing the memory usage and (b) eliminating all waste but keeping everything memorized, because often, something in between these two extreme cases is highly preferable. </p>
+<p>Pipewine allows you to cache data in three different ways:</p>
+<ul>
+<li>Cache at the item level, to accelerate consecutive accesses to the same item object, mainly to avoid multiple I/O for the same data.</li>
+<li>Cache at the dataset level, to accelerate consecutive accesses (<code>__getitem__</code>) to the same dataset, avoiding the re-computation of lazy operations.  </li>
+<li>Checkpoints, to save all intermediate results to disk (applying all the lazy operations) and then read the results.</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>There is no cache at the sample level, because sample objects receive all their items at construction time and they always own a reference to all items they contain, making them always immediately available. </p>
+</div>
+<h2 id="item-cache">Item Cache</h2>
+<p>Item cache converts all items of a sample into <code>CachedItem</code> instances. As you may have seen on the previous section of this tutorial, <code>CachedItem</code> is a wrapper of a regular <code>Item</code> store the result of the <code>__call__</code> method when called for the first time, then, every subsequent call simply returns the stored value without calling the inner item twice. <code>CachedItem</code> are lightweight and computationally inexpensive, they merely store a reference and return it.</p>
+<p>The <code>__call__</code> method of a stored item implies a read from disk (or other sources),
+calling it multiple times results in the slow read operation being repeated!</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<p>Very slow code, without item cache every time we access the "image" item we read it from disk!</p>
+<p>This runs in approximately 130 ms on my system. </p>
+<div class="language-py highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">dataset</span> <span class="o">=</span> <span class="n">UnderfolderSource</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;my_dataset&quot;</span><span class="p">))()</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">sample</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1000</span><span class="p">):</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">sample</span><span class="p">[</span><span class="s2">&quot;image&quot;</span><span class="p">]()</span>
+</span></code></pre></div>
+</div>
+<p>We can improve this situation by using item caches, storing the result of the first read, then immediately return it in every subsequent call.</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<p>Same code with item caches, this time it takes only 0.2 ms!</p>
+<div class="language-py highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">dataset</span><span class="p">:</span> <span class="n">Dataset</span> <span class="o">=</span> <span class="n">UnderfolderSource</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;my_dataset&quot;</span><span class="p">))()</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">dataset</span> <span class="o">=</span> <span class="n">ItemCacheOp</span><span class="p">()(</span><span class="n">dataset</span><span class="p">)</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="n">sample</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1000</span><span class="p">):</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="n">sample</span><span class="p">[</span><span class="s2">&quot;image&quot;</span><span class="p">]()</span>
+</span></code></pre></div>
+</div>
+<p>Contrary to Pipelime, item caches die with the sample object: whenever we index the dataset, we get a brand new sample object with newly created (thus empty) <code>CachedItem</code> instances.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Even though we call <code>ItemCacheOp</code>, this is as slow as the first example where we did not use item caching at all! </p>
+<p>This is because the sample is re-created every time we index the dataset.
+<div class="language-py highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">dataset</span><span class="p">:</span> <span class="n">Dataset</span> <span class="o">=</span> <span class="n">UnderfolderSource</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;my_dataset&quot;</span><span class="p">))()</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">dataset</span> <span class="o">=</span> <span class="n">ItemCacheOp</span><span class="p">()(</span><span class="n">dataset</span><span class="p">)</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1000</span><span class="p">):</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="n">dataset</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;image&quot;</span><span class="p">]()</span>
+</span></code></pre></div></p>
+</div>
+<p>This also means that unless you keep references to samples, you cannot possibly blow up your memory using item cache.</p>
+<p>A few tips on item caches:</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>Use <code>ItemCacheOp</code> when you need to access the same item on the same sample multiple times and you want to avoid reading from disk.</p>
+<p>The following code runs in approximately 19ms on my system. Without item caches, it would take 29ms, roughly 50% longer!</p>
+<div class="language-py highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">def</span> <span class="nf">function1</span><span class="p">(</span><span class="n">sample</span><span class="p">:</span> <span class="n">Sample</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Average Color: &quot;</span><span class="p">,</span> <span class="n">sample</span><span class="p">[</span><span class="s2">&quot;image&quot;</span><span class="p">]()</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)))</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="k">def</span> <span class="nf">function2</span><span class="p">(</span><span class="n">sample</span><span class="p">:</span> <span class="n">Sample</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Color Standard Deviation: &quot;</span><span class="p">,</span> <span class="n">sample</span><span class="p">[</span><span class="s2">&quot;image&quot;</span><span class="p">]()</span><span class="o">.</span><span class="n">std</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)))</span>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>    <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;tests/sample_data/underfolders/underfolder_0&quot;</span><span class="p">)</span>
+</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>
+</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>    <span class="n">dataset</span> <span class="o">=</span> <span class="n">UnderfolderSource</span><span class="p">(</span><span class="n">path</span><span class="p">)()</span>
+</span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>    <span class="n">dataset</span> <span class="o">=</span> <span class="n">ItemCacheOp</span><span class="p">()(</span><span class="n">dataset</span><span class="p">)</span>
+</span><span id="__span-3-14"><a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>
+</span><span id="__span-3-15"><a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>    <span class="k">for</span> <span class="n">sample</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">:</span>
+</span><span id="__span-3-16"><a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>        <span class="n">function1</span><span class="p">(</span><span class="n">sample</span><span class="p">)</span>
+</span><span id="__span-3-17"><a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>        <span class="n">function2</span><span class="p">(</span><span class="n">sample</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>Results of previous operations are always stored inside <code>MemoryItems</code>. It makes no sense to cache those.</p>
+</div>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>If you only access an item once for every sample in the dataset, your code won't benefit from using item cache.</p>
+</div>
+<h2 id="dataset-cache">Dataset Cache</h2>
+<p>Item caches are very simple, inexpensive and relatively safe to use, but they cannot do anything about repeated computations of lazy operations. </p>
+<p>Let's consider the following example: </p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<p>We have a dataset of 26 samples, for each of them we compute statistics about an item named "image", like the average color, the standard deviation, the minimum and maximum pixel values. We then repeat the results 100 times to artificially increase the dataset length.</p>
+<div class="language-py highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">class</span> <span class="nc">ComputeStatsMapper</span><span class="p">(</span><span class="n">Mapper</span><span class="p">[</span><span class="n">Sample</span><span class="p">,</span> <span class="n">Sample</span><span class="p">]):</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Sample</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Sample</span><span class="p">:</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>        <span class="n">image</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="s2">&quot;image&quot;</span><span class="p">]()</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>        <span class="n">mean</span> <span class="o">=</span> <span class="n">image</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>        <span class="n">std</span> <span class="o">=</span> <span class="n">image</span><span class="o">.</span><span class="n">std</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>        <span class="n">min_</span><span class="p">,</span> <span class="n">max_</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">image</span><span class="o">.</span><span class="n">min</span><span class="p">()),</span> <span class="nb">int</span><span class="p">(</span><span class="n">image</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>        <span class="n">stats_item</span> <span class="o">=</span> <span class="n">MemoryItem</span><span class="p">(</span>
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>            <span class="p">{</span><span class="s2">&quot;mean&quot;</span><span class="p">:</span> <span class="n">mean</span><span class="p">,</span> <span class="s2">&quot;std&quot;</span><span class="p">:</span> <span class="n">std</span><span class="p">,</span> <span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="n">min_</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="n">max_</span><span class="p">},</span> <span class="n">YAMLParser</span><span class="p">()</span>
+</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>        <span class="p">)</span>
+</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>        <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">with_item</span><span class="p">(</span><span class="s2">&quot;stats&quot;</span><span class="p">,</span> <span class="n">stats_item</span><span class="p">)</span>
+</span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>
+</span><span id="__span-4-12"><a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>
+</span><span id="__span-4-13"><a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;tests/sample_data/underfolders/underfolder_0&quot;</span><span class="p">)</span>
+</span><span id="__span-4-14"><a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>
+</span><span id="__span-4-15"><a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="n">dataset</span> <span class="o">=</span> <span class="n">UnderfolderSource</span><span class="p">(</span><span class="n">path</span><span class="p">)()</span>
+</span><span id="__span-4-16"><a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a><span class="n">dataset</span> <span class="o">=</span> <span class="n">MapOp</span><span class="p">(</span><span class="n">ComputeStatsMapper</span><span class="p">())(</span><span class="n">dataset</span><span class="p">)</span>
+</span><span id="__span-4-17"><a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="n">dataset</span> <span class="o">=</span> <span class="n">RepeatOp</span><span class="p">(</span><span class="mi">100</span><span class="p">)(</span><span class="n">dataset</span><span class="p">)</span>
+</span><span id="__span-4-18"><a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>
+</span><span id="__span-4-19"><a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a><span class="k">for</span> <span class="n">sample</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">:</span> 
+</span><span id="__span-4-20"><a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">sample</span><span class="p">[</span><span class="s2">&quot;stats&quot;</span><span class="p">]())</span>
+</span></code></pre></div>
+<p>The code above runs (on my system) in about 750 ms. That's a very long time, even considering the slow speed of the Python interpreter. That's because <code>RepeatOp</code> is lazy, and the i-th sample is only computed when the dataset is indexed. In total, the dataset is indexed 26 * 100 = 2600 times, each time computing the image stats from scratch:</p>
+<ul>
+<li>User requests sample 0 -&gt; maps to sample 0 of original dataset -&gt; compute stats on image 0</li>
+<li>User requests sample 1 -&gt; maps to sample 1 of original dataset -&gt; compute stats on image 1</li>
+<li>...</li>
+<li>User requests sample 26 -&gt; maps to sample 0 of original dataset -&gt; compute stats on image 0</li>
+<li>User requests sample 27 -&gt; maps to sample 1 of original dataset -&gt; compute stats on image 1</li>
+<li>...</li>
+</ul>
+<p>If the program were run eagerly (that's not the case with Pipewine), the stats were computed on the 26 original images, then the results would be repeated 100 times with virtually no cost.</p>
+<p>To solve this problem we can use <code>CacheOp</code>, a special operator that adds a layer of cache to the result of an operation, combined with <code>MemoCache</code>, a very simple cache that memorizes everything with no bound on the number of cached elements.</p>
+<div class="language-py highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">dataset</span> <span class="o">=</span> <span class="n">UnderfolderSource</span><span class="p">(</span><span class="n">path</span><span class="p">)()</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">dataset</span> <span class="o">=</span> <span class="n">MapOp</span><span class="p">(</span><span class="n">ComputeStatsMapper</span><span class="p">())(</span><span class="n">dataset</span><span class="p">)</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">dataset</span> <span class="o">=</span> <span class="n">CacheOp</span><span class="p">(</span><span class="n">MemoCache</span><span class="p">)(</span><span class="n">dataset</span><span class="p">)</span>  <span class="c1"># &lt;- Activates dataset caching</span>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="n">dataset</span> <span class="o">=</span> <span class="n">RepeatOp</span><span class="p">(</span><span class="mi">100</span><span class="p">)(</span><span class="n">dataset</span><span class="p">)</span>
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="k">for</span> <span class="n">sample</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">:</span> 
+</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">sample</span><span class="p">[</span><span class="s2">&quot;stats&quot;</span><span class="p">]())</span>
+</span></code></pre></div>
+<p>The code now runs in 45 ms and the stats computation is only performed 26 times:</p>
+<ul>
+<li>User requests sample 0 -&gt; maps to sample 0 of original dataset -&gt; compute stats on image 0 -&gt; cache result 0</li>
+<li>User requests sample 1 -&gt; maps to sample 1 of original dataset -&gt; compute stats on image 1 -&gt; cache result 1</li>
+<li>...</li>
+<li>User requests sample 26 -&gt; maps to sample 0 of original dataset -&gt; return cached sample 0</li>
+<li>User requests sample 27 -&gt; maps to sample 1 of original dataset -&gt; return cached sample 1</li>
+<li>...</li>
+</ul>
+</div>
+<p>As you might have noticed, <code>CacheOp</code> can be parametrized with the type of cache to use, and optionally implementation-specific parameters to further customize the way data is cached. There is no silver bullet here, and the type of cache you should use strongly depends on the order the data is accessed, and if chosen wrongly it can lead to 0% hit rate: the worst case scenario where you pay the price of increased memory utilization, additional overhead, and get nothing in return.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code>CacheOp</code>, regardless of the policy, always applies item-level caching and inherits all its benefits.</p>
+<p>This is useful because if you want dataset-level caching, you probably want item-level caching as well, sparing you the effort of always applying two <code>ItemCacheOp</code> after <code>CacheOp</code>.</p>
+</div>
+<p>For Pipewine, <code>Cache</code> objects are anything that behaves like this:</p>
+<div class="language-py highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">class</span> <span class="nc">Cache</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">]:</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span> <span class="c1"># &lt;- Removes everything from the cache.</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">K</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">V</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span> <span class="c1"># Return the value of key, if any.</span>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    <span class="k">def</span> <span class="nf">put</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">K</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">V</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span> <span class="c1"># Assign a value to a key.</span>
+</span></code></pre></div>
+<p>Let'see the available cache types, together with their pros and cons.</p>
+<h3 id="memocache">MemoCache</h3>
+<p><code>MemoCache</code> is a basic memoization. It can only grow in size since it never evicts elements and has no upper bound to the number of elements it can keep memorized.</p>
+<p>Access and insertion are both O(1) and are the fastest among all the cache types implemented in Pipewine.</p>
+<div class="admonition success">
+<p class="admonition-title">Success</p>
+<p>Best used to cache the output of long computations where either:</p>
+<ul>
+<li>The number of samples in the dataset is small (better if known a-priori).</li>
+<li>The size of the cached data is relatively small. </li>
+<li>You don't care about memory, you just want to always guarantee the maximum possible cache hit rate by brute-force.</li>
+</ul>
+</div>
+<div class="admonition failure">
+<p class="admonition-title">Failure</p>
+<p><code>MemoCache</code> is unbounded: it may end up using all the available memory on your system.</p>
+</div>
+<h3 id="rrcache">RRCache</h3>
+<p><code>RRCache</code> is a bounded cache that follows a stochastic replacement rule. Whenever an element needs to be added to the cache and no space is available, the cache will make space by evicting a random element.</p>
+<p>Access and insertion are both O(1). Access is exactly as fast as with <code>MemoCache</code>, insertion includes additional overhead due to the RNG.</p>
+<div class="admonition success">
+<p class="admonition-title">Success</p>
+<p>You can use a random replacement cache when the order in which samples are accessed is unknown, but still you want to statistically do better than the worst case scenario (0% hit rate).</p>
+</div>
+<div class="admonition failure">
+<p class="admonition-title">Failure</p>
+<p>Random replacement cache is not optimal if:</p>
+<ul>
+<li>You need deterministic running time.</li>
+<li>You know the order in which samples are accessed and you can select a more appropriate cache type.</li>
+</ul>
+</div>
+<h3 id="fifocache">FIFOCache</h3>
+<p><code>FIFOCache</code> is a bounded cache that stores element in a queue data structure. Whenever an element needs to be added to the cache and no space is available, the cache will make space by evicting the element that was least recently <strong>inserted</strong> in the cache (not to be confused with LRU caches), regardless of how many times they were accessed before.</p>
+<p>Basically, the first element that is inserted is going to be the first that gets evicted.</p>
+<p>Access and insertion are both O(1). Access is exactly as fast as with <code>MemoCache</code>, insertion includes additional overhead due the eviction policy implementation.</p>
+<div class="admonition success">
+<p class="admonition-title">Success</p>
+<p>Use <code>FIFOCache</code> when an element is likely going to be accessed multiple times shortly after being inserted in the cache.</p>
+</div>
+<div class="admonition failure">
+<p class="admonition-title">Failure</p>
+<p>The FIFO eviction policy guarantees a 0% hit rate when the elements are accessed in order from first to last in multiple cycles. </p>
+</div>
+<h3 id="lifocache">LIFOCache</h3>
+<p><code>LIFOCache</code> is a bounded cache that stores element in a stack data structure. Whenever an element needs to be added to the cache and no space is available, the cache will make space by evicting the element that was most recently <strong>inserted</strong> in the cache (not to be confused with MRU caches), regardless of how many times they were accessed before.</p>
+<p>Basically, the first element that is inserted is going to be the last that gets evicted.</p>
+<p>Access and insertion are both O(1), same cost as with <code>FIFOCache</code>. </p>
+<div class="admonition success">
+<p class="admonition-title">Success</p>
+<p>Use <code>LIFOCache</code> when:</p>
+<ul>
+<li>Elements are accessed in order from first to last in multiple cycles.  </li>
+<li>The first elements to be inserted are likely going to be accessed more frequently.  </li>
+</ul>
+</div>
+<div class="admonition failure">
+<p class="admonition-title">Failure</p>
+<p>The LIFO eviction policy performs terribly when recently inserted elements are likely going to be accessed in subsequent, but not immediately consecutive, calls.</p>
+</div>
+<h3 id="lrucache">LRUCache</h3>
+<p><code>LRUCache</code> (Least Recently Used Cache) is a bounded cache that whenever an element needs to be added and no space is available, it will forget the element that was least recently <strong>accessed</strong>. In contrast with the <code>FIFOCache</code>, the eviction policy takes into account the way elements are accessed, making this solution slightly more complex.</p>
+<p>Access and insertion are both O(1), both include additional overhead due to potential state changes in the underlying data structure. The implementation is a modified version of the one proposed in the Python3.12 standard library that uses a circular doubly linked list + hashmap. </p>
+<div class="admonition success">
+<p class="admonition-title">Success</p>
+<p>Use <code>LRUCache</code> when an element that was recently accessed is likely going to be accessed again in the future.</p>
+</div>
+<div class="admonition failure">
+<p class="admonition-title">Failure</p>
+<p>The LRU eviction policy guarantees a 0% hit rate when the elements are accessed in order from first to last in multiple cycles, similarly to <code>FIFOCache</code>.</p>
+</div>
+<h3 id="mrucache">MRUCache</h3>
+<p><code>MRUCache</code> (Most Recently Used Cache) is a bounded cache that whenever an element needs to be added and no space is available, it will forget the element that was most recently <strong>accessed</strong>. In contrast with the <code>LIFOCache</code>, the eviction policy takes into account the way elements are accessed, making this solution slightly more complex.</p>
+<p>Access and insertion are both O(1), same costs as <code>LRUCache</code>. </p>
+<div class="admonition success">
+<p class="admonition-title">Success</p>
+<p>Use <code>MRUCache</code> when:</p>
+<ul>
+<li>Elements are accessed in order from first to last in multiple cycles.  </li>
+<li>Elements that are recently accessed are likely not going to be accessed again for a long time.</li>
+</ul>
+</div>
+<div class="admonition failure">
+<p class="admonition-title">Failure</p>
+<p>The MRU eviction policy performs terribly when recently inserted elements are likely going to be accessed in subsequent calls.</p>
+</div>
+<h3 id="benchmark">Benchmark</h3>
+<p>Here is a very naive benchmark of different cache eviction policies compared under different access patterns, under the following conditions:</p>
+<ul>
+<li>The dataset consists of 26 elements.</li>
+<li>The total number of calls is 26000.</li>
+<li>The maximum cache size is set to 5.</li>
+</ul>
+<p>Types of access patterns used:</p>
+<ul>
+<li>
+<p>"Cyclic" accesses elements from first to last in multiple cycles. E.g.</p>
+<p><code>0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 ...</code></p>
+</li>
+<li>
+<p>"Back and Forth" accesses elements from first to last in even cycles, and from last to first in odd cycles. E.g. </p>
+<p><code>0 1 2 3 4 5 6 7 8 9 9 8 7 6 5 4 3 2 1 0 0 1 2 3 ...</code></p>
+</li>
+<li>
+<p>"Hot Element" accesses the elements similarly to "Cyclic" in odd indexes, but in every even index it accesses the first "hot" element:</p>
+<p><code>0 0 0 1 0 2 0 3 0 4 0 5 0 6 0 7 0 8 0 9 0 0 0 1 0 2 ...</code></p>
+</li>
+<li>
+<p>"Blocks" accesses the elements similarly to "Cyclic" in odd indexes, but in chunks of K elements. E.g. with K=4:</p>
+<p><code>0 0 0 0 1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 ...</code></p>
+</li>
+<li>
+<p>"Sliding Window" accesses the elements in groups of K increasing indexes. E.g. with K=4:</p>
+<p><code>0 1 2 3 1 2 3 4 2 3 4 5 3 4 5 6 4 5 6 7 5 6 7 8 6 7 8 9 ...</code></p>
+</li>
+<li>
+<p>"Uniform" accesses the elements in random order, sampling from a uniform distribution.</p>
+</li>
+<li>"Zipfian" accesses the elements in random order, sampling from a zipfian distribution.</li>
+<li>"Random Walk" accesses the items in random order, where the i-th index is computed by adding a random shift from the previous one, sampled from a normal distribution with a small positive shift.</li>
+</ul>
+<p><img alt="alt text" src="../../assets/cache_benchmark.png" /></p>
+<h2 id="checkpoints">Checkpoints</h2>
+<p>So far we have seen how to mitigate the problem of multiple accesses to the same item using <code>ItemCacheOp</code> cache and how to avoid re-computing the same lazy operation when accessing a dataset with the same index multiple times <code>CacheOp</code>. Pipewine has a final caching mechanism called "checkpoint" that can be used when both:</p>
+<ul>
+<li>Datasets are not guaranteed to entirely fit into system memory. E.g. using <code>MemoCache</code> would crash your pipeline.</li>
+<li>Some operations are very slow and the risk of computing them multiple times due to a cache miss is unacceptable. In this case using any policy other than <code>MemoCache</code> would not eliminate this risk entirely.</li>
+</ul>
+<p>Checkpoints are a rather stupid but effective idea to deal with this situation: we eagerly write the whole dataset to disk (or to a DB) and then return a lazy dataset that reads from it. </p>
+<p>This way we use disk space (which we can safely assume to be enough to store the dataset) to cache intermediate results, so that future accesses won't have to re-compute all the lazy operations that were needed to reach that intermediate state.</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>Checkpoints are not a free lunch: you shift the cost from computation to I/O. 
+As a very approximate rule of thumb, under many simplifying assumptions, checkpoints should be convenient if:</p>
+<div class="language-text highlight"><pre><span></span><code>(N - 1) * compute_cost &gt; (N + 1) * io_cost
+</code></pre></div>
+<p>Where <code>N</code> is the average number of times that the same computation is repeated, <code>compute_cost</code> is the total cost of computing all computations once, <code>io_cost</code> is the total cost of reading or writing the results of all comptuation once. </p>
+</div>
+<p>Checkpoints are currently not a class or any software component you can import from Pipewine, they are a functionality of Pipewine <a href="../workflows/">Workflows</a>, a higher level concept that was not explained in this tutorial so far. However, you don't need Workflows to use checkpoints, you can simply use a pair of a <code>DatasetSink</code> and <code>DatasetSource</code>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>When using workflows, placing a checkpoint in the middle of a pipeline is way easier than this: all you need to do is set a boolean flag <code>checkpoint=True</code> where needed, or, if you want to use a checkpoint after every single operation, you can set a flag to enable them by default.</p>
+<p>Refer to the <a href="../workflows/">Workflows</a> section for more info.</p>
+</div>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<p>A rather extreme example of checkpoint usage: starting from the "letters" toy dataset used in the examples so far, we want to replace the 26 (badly) hand-drawn images with AI-generated ones. Then, we want to replicate the whole dataset 100 times.</p>
+<p>Yes, we only want to generate a total of 26 images, not 2600, using Gen-AI.</p>
+<p>Suppose we have access to an API that costs us 1$ per generated image and we wrapped that into a <code>Mapper</code>:</p>
+<div class="language-py highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">class</span> <span class="nc">RegenerateImage</span><span class="p">(</span><span class="n">Mapper</span><span class="p">[</span><span class="n">Sample</span><span class="p">,</span> <span class="n">Sample</span><span class="p">]):</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Sample</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Sample</span><span class="p">:</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>        <span class="n">metadata</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="s2">&quot;metadata&quot;</span><span class="p">]()</span>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>        <span class="n">letter</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;letter&quot;</span><span class="p">],</span> <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;color&quot;</span><span class="p">]</span>
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>        <span class="n">prompt</span> <span class="o">=</span> <span class="p">(</span>
+</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>            <span class="sa">f</span><span class="s2">&quot;Create an artistic representation of the letter </span><span class="si">{</span><span class="n">letter</span><span class="si">}</span><span class="s2"> in a visually &quot;</span>
+</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>            <span class="sa">f</span><span class="s2">&quot;striking style. The letter should be prominently displayed in </span><span class="si">{</span><span class="n">color</span><span class="si">}</span><span class="s2">, &quot;</span>
+</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>            <span class="s2">&quot;with a background that complements or contrasts it artistically. Use &quot;</span>
+</span><span id="__span-7-9"><a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>            <span class="s2">&quot;textures, lighting, and creative elements to make the design unique &quot;</span>
+</span><span id="__span-7-10"><a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>            <span class="s2">&quot;and aesthetically appealing.&quot;</span>
+</span><span id="__span-7-11"><a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>        <span class="p">)</span>
+</span><span id="__span-7-12"><a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>        <span class="n">gen_image</span> <span class="o">=</span> <span class="n">extremely_expensive_api_that_costs_1_USD_per_image</span><span class="p">(</span><span class="n">prompt</span><span class="p">)</span>
+</span><span id="__span-7-13"><a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>        <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">with_value</span><span class="p">(</span><span class="s2">&quot;image&quot;</span><span class="p">,</span> <span class="n">gen_image</span><span class="p">)</span>
+</span></code></pre></div>
+<p>To (correclty) generate only 26 images, then repeat the whole dataset 100 times, we can use a checkpoint just after applying the <code>RegenerateImage</code> mapper:</p>
+<div class="language-py highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;tests/sample_data/underfolders/underfolder_0&quot;</span><span class="p">)</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="n">dataset</span> <span class="o">=</span> <span class="n">UnderfolderSource</span><span class="p">(</span><span class="n">path</span><span class="p">)()</span>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="n">dataset</span> <span class="o">=</span> <span class="n">MapOp</span><span class="p">(</span><span class="n">RegenerateImage</span><span class="p">())(</span><span class="n">dataset</span><span class="p">)</span>
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>
+</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="c1"># Checkpoint</span>
+</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="n">UnderfolderSink</span><span class="p">(</span><span class="n">ckpt</span> <span class="o">:=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;/tmp/ckpt&quot;</span><span class="p">))(</span><span class="n">dataset</span><span class="p">)</span>
+</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="n">dataset</span> <span class="o">=</span> <span class="n">UnderfolderSource</span><span class="p">(</span><span class="n">ckpt</span><span class="p">)()</span>
+</span><span id="__span-8-8"><a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>
+</span><span id="__span-8-9"><a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="n">dataset</span> <span class="o">=</span> <span class="n">RepeatOp</span><span class="p">(</span><span class="mi">100</span><span class="p">)(</span><span class="n">dataset</span><span class="p">)</span>
+</span></code></pre></div>
+<p>Without the checkpoint, we would instead call the API a total of 2600 times, generating 100x more images than we originally intended and wasting a lot of money.</p>
+</div>
+<h2 id="cache-and-multi-processing">Cache and Multi-processing</h2>
+<p>Multiprocessing in python does not allow processes to hold references to arbitrary python objects in shared memory. Besides a restricted set of built-in types, all the communication between processes uses the message passing paradigm. For process A to send an object to process B, many expensive things need to happen:
+- A and B need to hold a pair of connected sockets.
+- A must serialize the object into bytes.
+- A must write the bytes into the socket.
+- B must read the bytes from the socket.
+- B must de-serialize the bytes into a copy of the original object.</p>
+<p>As pointed out in the Python docs, using shared state between multiple processes should be avoided as much as possible, for the following reasons:</p>
+<ul>
+<li><strong>Synchronization</strong>: when processes need to share state, they need mechanisms like locks, semaphores or other synchronization primitives to prevent race conditions and mess everything up.</li>
+<li><strong>Performance overhead</strong>: each time an object is passed from one process to the other, it needs to be serialized and de-serialized, which is generally an expensive operation.</li>
+<li><strong>Memory overhead</strong>: each time an object is passed from one process to the other it is basically as if it were deep-copied, vastly increasing memory usage.</li>
+<li><strong>Debugging difficulty</strong>: debugging race conditions is not fun, they can be very hard to detect and reproduce.</li>
+<li><strong>Scalability</strong>: if many processes depend on shared state, the system might not scale well with increasing number of processes due to contention and synchronization overhead.</li>
+</ul>
+<p>To avoid these issues Pipewine caches are <strong>not shared</strong> between processes, meaning that if process A computes a sample and caches it, the result will only be cached for process A. Later, if process B needs that sample and looks for it in its own cache, it won't find it and will have to compute it.</p>
+<p>The only exception is if the cache was partially populated in the main process: in this case the cache is cloned and every child process inherits its own copy at the moment of spawning. All state changes that occur later are independent for each child process and are discarded when the processes die. No change is reflected on the original copy of the cache in the main process.</p>
+<p>We can say that multi-processing makes caching less effective: since processes do not share state and potentially the same sample can be cached multiple times in more than one process we use memory less efficiently. With a pool of N processes we can either have the same hit rate as with a single process by using N times the amount of memory, or we can keep the memory fixed but accomplish a much smaller hit rate.</p>
+<p>Checkpoints in contrast, assuming that N python processes are not enough to saturate your read/write bandwith, do not suffer this problem: each sample is written exactly once independently from the others without need for synchronization.</p>
+<h2 id="comparison-with-pipelime">Comparison with Pipelime</h2>
+<p>Comparison of cache-related features in Pipelime and Pipewine:</p>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Pipelime (OLD)</th>
+<th>Pipewine (NEW)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Item Cache</strong></td>
+<td>Enabled by default, can be disabled with <code>@no_data_cache()</code> decorator.</td>
+<td>Disabled by default, can be enabled by either adding a <code>ItemCacheOp</code> or <code>CacheMapper</code> where necessary.</td>
+</tr>
+<tr>
+<td><strong>Dataset Cache</strong></td>
+<td>Depends on how the <code>SourceSequence</code> or <code>PipedSequence</code> steps of your pipeline are implemented: some of them construct samples when the <code>__getitem__</code> is called, others construct them upfront and hold references to them. In the former case, no dataset caching is done. In the latter case, if item caching is not disabled, everything will be memorized as the pipeline progresses. In some cases, it is necessary to turn off caching completely to avoid running out of memory.</td>
+<td>Disabled by default, can be enabled by using <code>CacheOp</code> with the desired eviction policy. Supports many cache eviction policies to bound the number of cached samples to a safe amount and avoid out of memory issues.</td>
+</tr>
+<tr>
+<td><strong>Checkpoints</strong></td>
+<td>Every <code>PipelimeCommand</code> reads inputs and writes outputs from/to external sources, essentially making checkpoints enabled by default for every <code>PipelimeCommand</code>. The command also specifies where intermediate steps are written and in which format. Any change in either location and format requires you to apply changes to the command that writes the intermediate result and to every command that reads them.</td>
+<td>Checkpoints are disabled by default but can be enabled by adding a pair of sink and source between any two steps of the pipeline. The individual steps of the pipeline do not know anything about checkpoints, requiring you to apply no change to your operators. When using workflows Pipewine can be configured to automatically inject a pair of source and sink between any two steps of the pipeline.</td>
+</tr>
+<tr>
+<td><strong>Cache and Multi-processing</strong></td>
+<td>No sharing is performed, child processes inherit a copy of the parent process cache. Cache state is lost on process exit.</td>
+<td>Same as Pipelime.</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "content.code.copy"], "search": "../../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.88dd0f4e.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -11,7 +11,7 @@
         <link rel="canonical" href="https://github.com/lucabonfiglioli/tutorial/workflows/">
       
       
-        <link rel="prev" href="../actions/">
+        <link rel="prev" href="../cache/">
       
       
         <link rel="next" href="../cli/">
@@ -453,6 +453,27 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../cache/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    💾 Cache
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -465,6 +486,17 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    ♻️ Workflows
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -474,6 +506,88 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overwiew" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overwiew
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example Workflow
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#workflow-creation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Workflow Creation
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#workflow-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      Workflow Components
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#workflow-execution" class="md-nav__link">
+    <span class="md-ellipsis">
+      Workflow Execution
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#worfklow-progress-tracking" class="md-nav__link">
+    <span class="md-ellipsis">
+      Worfklow Progress Tracking
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#workflow-drawing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Workflow Drawing
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -528,6 +642,77 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overwiew" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overwiew
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example Workflow
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#workflow-creation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Workflow Creation
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#workflow-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      Workflow Components
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#workflow-execution" class="md-nav__link">
+    <span class="md-ellipsis">
+      Workflow Execution
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#worfklow-progress-tracking" class="md-nav__link">
+    <span class="md-ellipsis">
+      Worfklow Progress Tracking
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#workflow-drawing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Workflow Drawing
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -545,6 +730,346 @@
 
 
 <h1 id="workflows">♻️ Workflows</h1>
+<h2 id="overwiew">Overwiew</h2>
+<p>So far in this tutorial we always focused on simple cases where we only needed to apply a single operation to our data, with the only exception of a few cache-related examples where we saw the interactions and side-effects of two lazy operations applied sequentially. </p>
+<p>While applying a single operation to your data may be useful in some situations, more often than not you will need to apply multiple operations in a repeatable and organized way. One way of doing this is to write a python script that calls the right operations in the right order and that's it, but with a little extra effort you can turn your script into a Pipewine <code>Workflow</code>: a <em>Directed Acyclic Graph</em> (DAG) where nodes represent Actions (either a source, operator or sinks) and edges represent the dependencies between them.</p>
+<p>When using Pipewine workflows, you have the following advantages:</p>
+<ul>
+<li>Pipewine can automatically draw a 2D representation of your workflow to help you (and others) understand what it does without reading your code. </li>
+<li>Pipewine automatically attaches callbacks to all operations to track the progress of your workflow while it's running. Progress updates can be visualized live in a TUI (Text-based User Interface) to monitor the progress of long workflows.</li>
+<li>The code is transformed into a data structure that can be inspected before running it. </li>
+<li>Pipewine can inject logic into your code (e.g. caches or checkpoints) without you having to write them manually.  </li>
+</ul>
+<h2 id="example-workflow">Example Workflow</h2>
+<p>Instead of going through every single workflow component, we will instead focus on how to create and run workflows at a higher level, with an example use case where we perform some operations to augment and rearrange the same old dataset with letters.</p>
+<p>Here is a summary of all the operations we want to perform in our example DAG:</p>
+<ol>
+<li>Read a "Letter" dataset - used many times as an example toy dataset in this tutorial. </li>
+<li>Repeat the dataset 10 times.</li>
+<li>Apply random color jitter to each sample.</li>
+<li>Group letters by their type (either 'vowel' or 'consonant').</li>
+<li>Concatenate the two (vowels and consonants) splits into a single dataset.</li>
+<li>Write the dataset (A).</li>
+<li>Sort the vowels by average color brightness.</li>
+<li>Sort the consonants by average color brightness.</li>
+<li>Contatenate the sorted splits into a single dataset.</li>
+<li>Write the dataset (B).</li>
+</ol>
+<p>A graphical representation of the operations involved in the workflow (this image was generated using a Pipewine utility to draw workflows). 
+<img alt="Workflow Example" src="../../assets/wf.svg" /></p>
+<p>We start by defining the schema of our data, in this case it's the same as the one used previously in this tutorial:</p>
+<div class="language-py highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">class</span> <span class="nc">LetterMetadata</span><span class="p">(</span><span class="n">pydantic</span><span class="o">.</span><span class="n">BaseModel</span><span class="p">):</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">letter</span><span class="p">:</span> <span class="nb">str</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">color</span><span class="p">:</span> <span class="nb">str</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="k">class</span> <span class="nc">SharedMetadata</span><span class="p">(</span><span class="n">pydantic</span><span class="o">.</span><span class="n">BaseModel</span><span class="p">):</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">vowels</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">consonants</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="k">class</span> <span class="nc">LetterSample</span><span class="p">(</span><span class="n">TypedSample</span><span class="p">):</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="n">image</span><span class="p">:</span> <span class="n">Item</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="n">metadata</span><span class="p">:</span> <span class="n">Item</span><span class="p">[</span><span class="n">LetterMetadata</span><span class="p">]</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    <span class="n">shared</span><span class="p">:</span> <span class="n">Item</span><span class="p">[</span><span class="n">SharedMetadata</span><span class="p">]</span>
+</span></code></pre></div>
+<p>Some steps of our workflow need a custom implementation, or are simply not provided by Pipewine, namely:</p>
+<ul>
+<li>The mapper that applies random color jittering (very rudimental):
+<div class="language-py highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">class</span> <span class="nc">ColorJitter</span><span class="p">(</span><span class="n">Mapper</span><span class="p">[</span><span class="n">LetterSample</span><span class="p">,</span> <span class="n">LetterSample</span><span class="p">]):</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">LetterSample</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LetterSample</span><span class="p">:</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>        <span class="n">image</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">image</span><span class="p">()</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>        <span class="n">col</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>        <span class="n">alpha</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">,</span> <span class="p">[])</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>        <span class="n">image</span> <span class="o">=</span> <span class="p">(</span><span class="n">image</span> <span class="o">*</span> <span class="n">alpha</span> <span class="o">+</span> <span class="n">col</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">alpha</span><span class="p">))</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>        <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">with_values</span><span class="p">(</span><span class="n">image</span><span class="o">=</span><span class="n">image</span><span class="p">)</span>
+</span></code></pre></div></li>
+<li>The group-by function that separates vowels from consonants:
+<div class="language-py highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">def</span> <span class="nf">group_fn</span><span class="p">(</span><span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">sample</span><span class="p">:</span> <span class="n">LetterSample</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    <span class="k">return</span> <span class="s2">&quot;vowel&quot;</span> <span class="k">if</span> <span class="n">sample</span><span class="o">.</span><span class="n">metadata</span><span class="p">()</span><span class="o">.</span><span class="n">letter</span> <span class="ow">in</span> <span class="s2">&quot;aeiou&quot;</span> <span class="k">else</span> <span class="s2">&quot;consonant&quot;</span>
+</span></code></pre></div></li>
+<li>The sort function needed to sort samples by image brightness:
+<div class="language-py highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">def</span> <span class="nf">sort_fn</span><span class="p">(</span><span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">sample</span><span class="p">:</span> <span class="n">LetterSample</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">sample</span><span class="o">.</span><span class="n">image</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+</span></code></pre></div></li>
+<li>An operation to concatenate all datasets in a dictionary of datasets. Needed because <code>CatOp</code> accepts a sequence of datasets, not a mapping. 
+<div class="language-py highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">class</span> <span class="nc">GroupCat</span><span class="p">(</span><span class="n">DatasetOperator</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dataset</span><span class="p">],</span> <span class="n">Dataset</span><span class="p">]):</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dataset</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Dataset</span><span class="p">:</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>        <span class="k">return</span> <span class="n">CatOp</span><span class="p">()(</span><span class="nb">list</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+</span></code></pre></div></li>
+</ul>
+<p>Let's pretend we don't know anything about workflows and just write some Python code to apply the operations in the correct order:</p>
+<div class="language-py highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Input, outputs, grabber</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">input_folder</span><span class="p">:</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;tests/sample_data/underfolders/underfolder_0&quot;</span><span class="p">)</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">output_a</span><span class="p">:</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;/tmp/out_a&quot;</span><span class="p">)</span>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="n">output_b</span><span class="p">:</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;/tmp/out_b&quot;</span><span class="p">)</span>
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="n">grabber</span> <span class="o">=</span> <span class="n">Grabber</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>
+</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="c1"># (1) Read the data</span>
+</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="n">data</span> <span class="o">=</span> <span class="n">UnderfolderSource</span><span class="p">(</span><span class="n">input_folder</span><span class="p">,</span> <span class="n">sample_type</span><span class="o">=</span><span class="n">LetterSample</span><span class="p">)()</span>
+</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>
+</span><span id="__span-5-10"><a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="c1"># (2) Repeat the dataset 10 times</span>
+</span><span id="__span-5-11"><a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="n">data</span> <span class="o">=</span> <span class="n">RepeatOp</span><span class="p">(</span><span class="mi">10</span><span class="p">)(</span><span class="n">data</span><span class="p">)</span>
+</span><span id="__span-5-12"><a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>
+</span><span id="__span-5-13"><a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="c1"># (3) Apply random color jitter </span>
+</span><span id="__span-5-14"><a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="c1"># We need a checkpoint after this operation to avoid recomputing a random function! </span>
+</span><span id="__span-5-15"><a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="n">data</span> <span class="o">=</span> <span class="n">MapOp</span><span class="p">(</span><span class="n">ColorJitter</span><span class="p">())(</span><span class="n">data</span><span class="p">)</span>
+</span><span id="__span-5-16"><a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="n">UnderfolderSink</span><span class="p">(</span><span class="n">ckpt_path</span> <span class="o">:=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;/tmp/checkpoint&quot;</span><span class="p">),</span> <span class="n">grabber</span><span class="o">=</span><span class="n">grabber</span><span class="p">)</span>
+</span><span id="__span-5-17"><a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a><span class="n">data</span> <span class="o">=</span> <span class="n">UnderfolderSource</span><span class="p">(</span><span class="n">ckpt_path</span><span class="p">,</span> <span class="n">sample_type</span><span class="o">=</span><span class="n">LetterSample</span><span class="p">)()</span>
+</span><span id="__span-5-18"><a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a>
+</span><span id="__span-5-19"><a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="c1"># (4) Group letters by their type</span>
+</span><span id="__span-5-20"><a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a><span class="n">groups</span> <span class="o">=</span> <span class="n">GroupByOp</span><span class="p">(</span><span class="n">group_fn</span><span class="p">)(</span><span class="n">data</span><span class="p">)</span>
+</span><span id="__span-5-21"><a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a>
+</span><span id="__span-5-22"><a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a><span class="c1"># (5) Concatenate the two types</span>
+</span><span id="__span-5-23"><a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a><span class="n">data</span> <span class="o">=</span> <span class="n">GroupCat</span><span class="p">()(</span><span class="n">groups</span><span class="p">)</span>
+</span><span id="__span-5-24"><a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a>
+</span><span id="__span-5-25"><a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a><span class="c1"># (6) Write the dataset A</span>
+</span><span id="__span-5-26"><a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a><span class="n">UnderfolderSink</span><span class="p">(</span><span class="n">out_a</span><span class="p">,</span> <span class="n">grabber</span><span class="o">=</span><span class="n">grabber</span><span class="p">)(</span><span class="n">data</span><span class="p">)</span>
+</span><span id="__span-5-27"><a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a>
+</span><span id="__span-5-28"><a id="__codelineno-5-28" name="__codelineno-5-28" href="#__codelineno-5-28"></a><span class="c1"># (7, 8) Sort the two splits by average color brightness</span>
+</span><span id="__span-5-29"><a id="__codelineno-5-29" name="__codelineno-5-29" href="#__codelineno-5-29"></a><span class="n">vowels</span> <span class="o">=</span> <span class="n">SortOp</span><span class="p">(</span><span class="n">sort_fn</span><span class="p">)(</span><span class="n">groups</span><span class="p">[</span><span class="s2">&quot;vowel&quot;</span><span class="p">])</span>
+</span><span id="__span-5-30"><a id="__codelineno-5-30" name="__codelineno-5-30" href="#__codelineno-5-30"></a><span class="n">consonants</span> <span class="o">=</span> <span class="n">SortOp</span><span class="p">(</span><span class="n">sort_fn</span><span class="p">)(</span><span class="n">groups</span><span class="p">[</span><span class="s2">&quot;consonant&quot;</span><span class="p">])</span>
+</span><span id="__span-5-31"><a id="__codelineno-5-31" name="__codelineno-5-31" href="#__codelineno-5-31"></a>
+</span><span id="__span-5-32"><a id="__codelineno-5-32" name="__codelineno-5-32" href="#__codelineno-5-32"></a><span class="c1"># (9) Concatenate the sorted splits </span>
+</span><span id="__span-5-33"><a id="__codelineno-5-33" name="__codelineno-5-33" href="#__codelineno-5-33"></a><span class="n">data</span> <span class="o">=</span> <span class="n">CatOp</span><span class="p">()([</span><span class="n">vowels</span><span class="p">,</span> <span class="n">consonants</span><span class="p">])</span>
+</span><span id="__span-5-34"><a id="__codelineno-5-34" name="__codelineno-5-34" href="#__codelineno-5-34"></a>
+</span><span id="__span-5-35"><a id="__codelineno-5-35" name="__codelineno-5-35" href="#__codelineno-5-35"></a><span class="c1"># (10) Write the dataset B</span>
+</span><span id="__span-5-36"><a id="__codelineno-5-36" name="__codelineno-5-36" href="#__codelineno-5-36"></a><span class="n">UnderfolderSink</span><span class="p">(</span><span class="n">out_b</span><span class="p">,</span> <span class="n">grabber</span><span class="o">=</span><span class="n">grabber</span><span class="p">)(</span><span class="n">data</span><span class="p">)</span>
+</span></code></pre></div>
+<p>Now, let's re-write our code using workflows, by applying the following changes:</p>
+<ol>
+<li>Create an empty <code>Workflow</code> object named <code>wf</code> at the beginning of our code.</li>
+<li>Wrap each action call using <code>wf.node()</code>. </li>
+<li>Call the <code>run_workflow</code> function at the end of our code.</li>
+</ol>
+<div class="language-py highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Input, outputs, grabber</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="n">input_folder</span><span class="p">:</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;tests/sample_data/underfolders/underfolder_0&quot;</span><span class="p">)</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">output_a</span><span class="p">:</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;/tmp/out_a&quot;</span><span class="p">)</span>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="n">output_b</span><span class="p">:</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;/tmp/out_b&quot;</span><span class="p">)</span>
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="n">grabber</span> <span class="o">=</span> <span class="n">Grabber</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
+</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>
+</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="c1"># Create the worfklow object</span>
+</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="n">wf</span> <span class="o">=</span> <span class="n">Workflow</span><span class="p">(</span><span class="n">WfOptions</span><span class="p">(</span><span class="n">checkpoint_grabber</span><span class="o">=</span><span class="n">grabber</span><span class="p">))</span>
+</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>
+</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="c1"># (1) Read the data</span>
+</span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="n">data</span> <span class="o">=</span> <span class="n">wf</span><span class="o">.</span><span class="n">node</span><span class="p">(</span><span class="n">UnderfolderSource</span><span class="p">(</span><span class="n">input_folder</span><span class="p">,</span> <span class="n">sample_type</span><span class="o">=</span><span class="n">LetterSample</span><span class="p">))()</span>
+</span><span id="__span-6-12"><a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>
+</span><span id="__span-6-13"><a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="c1"># (2) Repeat the dataset 10 times</span>
+</span><span id="__span-6-14"><a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="n">data</span> <span class="o">=</span> <span class="n">wf</span><span class="o">.</span><span class="n">node</span><span class="p">(</span><span class="n">RepeatOp</span><span class="p">(</span><span class="mi">10</span><span class="p">))(</span><span class="n">data</span><span class="p">)</span>
+</span><span id="__span-6-15"><a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a>
+</span><span id="__span-6-16"><a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a><span class="c1"># (3) Apply random color jitter (with checkpointing)</span>
+</span><span id="__span-6-17"><a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a><span class="n">data</span> <span class="o">=</span> <span class="n">wf</span><span class="o">.</span><span class="n">node</span><span class="p">(</span><span class="n">MapOp</span><span class="p">(</span><span class="n">ColorJitter</span><span class="p">()),</span> <span class="n">options</span><span class="o">=</span><span class="n">WfOptions</span><span class="p">(</span><span class="n">checkpoint</span><span class="o">=</span><span class="kc">True</span><span class="p">))(</span><span class="n">data</span><span class="p">)</span>
+</span><span id="__span-6-18"><a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a>
+</span><span id="__span-6-19"><a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a><span class="c1"># (4) Group letters by their type</span>
+</span><span id="__span-6-20"><a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a><span class="n">groups</span> <span class="o">=</span> <span class="n">wf</span><span class="o">.</span><span class="n">node</span><span class="p">(</span><span class="n">GroupByOp</span><span class="p">(</span><span class="n">group_fn</span><span class="p">))(</span><span class="n">data</span><span class="p">)</span>
+</span><span id="__span-6-21"><a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a>
+</span><span id="__span-6-22"><a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a><span class="c1"># (5) Concatenate the two types</span>
+</span><span id="__span-6-23"><a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a><span class="n">data</span> <span class="o">=</span> <span class="n">wf</span><span class="o">.</span><span class="n">node</span><span class="p">(</span><span class="n">GroupCat</span><span class="p">())(</span><span class="n">groups</span><span class="p">)</span>
+</span><span id="__span-6-24"><a id="__codelineno-6-24" name="__codelineno-6-24" href="#__codelineno-6-24"></a>
+</span><span id="__span-6-25"><a id="__codelineno-6-25" name="__codelineno-6-25" href="#__codelineno-6-25"></a><span class="c1"># (6) Write the dataset A</span>
+</span><span id="__span-6-26"><a id="__codelineno-6-26" name="__codelineno-6-26" href="#__codelineno-6-26"></a><span class="n">wf</span><span class="o">.</span><span class="n">node</span><span class="p">(</span><span class="n">UnderfolderSink</span><span class="p">(</span><span class="n">out_a</span><span class="p">,</span> <span class="n">grabber</span><span class="o">=</span><span class="n">grabber</span><span class="p">))(</span><span class="n">data</span><span class="p">)</span>
+</span><span id="__span-6-27"><a id="__codelineno-6-27" name="__codelineno-6-27" href="#__codelineno-6-27"></a>
+</span><span id="__span-6-28"><a id="__codelineno-6-28" name="__codelineno-6-28" href="#__codelineno-6-28"></a><span class="c1"># (7, 8) Sort the two splits by average color brightness</span>
+</span><span id="__span-6-29"><a id="__codelineno-6-29" name="__codelineno-6-29" href="#__codelineno-6-29"></a><span class="n">vowels</span> <span class="o">=</span> <span class="n">wf</span><span class="o">.</span><span class="n">node</span><span class="p">(</span><span class="n">SortOp</span><span class="p">(</span><span class="n">sort_fn</span><span class="p">))(</span><span class="n">groups</span><span class="p">[</span><span class="s2">&quot;vowel&quot;</span><span class="p">])</span>
+</span><span id="__span-6-30"><a id="__codelineno-6-30" name="__codelineno-6-30" href="#__codelineno-6-30"></a><span class="n">consonants</span> <span class="o">=</span> <span class="n">wf</span><span class="o">.</span><span class="n">node</span><span class="p">(</span><span class="n">SortOp</span><span class="p">(</span><span class="n">sort_fn</span><span class="p">))(</span><span class="n">groups</span><span class="p">[</span><span class="s2">&quot;consonant&quot;</span><span class="p">])</span>
+</span><span id="__span-6-31"><a id="__codelineno-6-31" name="__codelineno-6-31" href="#__codelineno-6-31"></a>
+</span><span id="__span-6-32"><a id="__codelineno-6-32" name="__codelineno-6-32" href="#__codelineno-6-32"></a><span class="c1"># (9) Concatenate the sorted splits </span>
+</span><span id="__span-6-33"><a id="__codelineno-6-33" name="__codelineno-6-33" href="#__codelineno-6-33"></a><span class="n">data</span> <span class="o">=</span> <span class="n">wf</span><span class="o">.</span><span class="n">node</span><span class="p">(</span><span class="n">CatOp</span><span class="p">())([</span><span class="n">vowels</span><span class="p">,</span> <span class="n">consonants</span><span class="p">])</span>
+</span><span id="__span-6-34"><a id="__codelineno-6-34" name="__codelineno-6-34" href="#__codelineno-6-34"></a>
+</span><span id="__span-6-35"><a id="__codelineno-6-35" name="__codelineno-6-35" href="#__codelineno-6-35"></a><span class="c1"># (10) Write the dataset B</span>
+</span><span id="__span-6-36"><a id="__codelineno-6-36" name="__codelineno-6-36" href="#__codelineno-6-36"></a><span class="n">wf</span><span class="o">.</span><span class="n">node</span><span class="p">(</span><span class="n">UnderfolderSink</span><span class="p">(</span><span class="n">out_b</span><span class="p">,</span> <span class="n">grabber</span><span class="o">=</span><span class="n">grabber</span><span class="p">))(</span><span class="n">data</span><span class="p">)</span>
+</span><span id="__span-6-37"><a id="__codelineno-6-37" name="__codelineno-6-37" href="#__codelineno-6-37"></a>
+</span><span id="__span-6-38"><a id="__codelineno-6-38" name="__codelineno-6-38" href="#__codelineno-6-38"></a><span class="c1"># Run the workflow</span>
+</span><span id="__span-6-39"><a id="__codelineno-6-39" name="__codelineno-6-39" href="#__codelineno-6-39"></a><span class="n">run_workflow</span><span class="p">(</span><span class="n">wf</span><span class="p">)</span>
+</span></code></pre></div>
+<p>This code is very similar to the previous and it behaves the same way if executed. What changed is that instead of being executed as soon as operators are called, they are first converted into a DAG, then executed upon calling the <code>run_workflow</code> function. Nothing is done until the last line of code. </p>
+<h2 id="workflow-creation">Workflow Creation</h2>
+<p>Workflow objects can be created by simply calling the <code>Workflow()</code> constructor. However, you can customize some aspects of your workflow by customizing the workflow options.</p>
+<p>Workflow options are contained into the <code>WfOptions</code> class and currently include some settings to add a cache or a checkpoint after the operation, automatically collect garbage after an operation completes etc... You can find all details in the API reference. </p>
+<p>All of these options do not provide a default value, but instead default to an object <code>Default</code>, which is simply a marker that acts as a sentinel. The reason behind this is that you can use <code>WfOptions</code> at the moment in which the workflow is created, but also when adding individual nodes. In these cases, the options of a node always override the ones of the workflow. </p>
+<p>The true default values of the workflow options is instead specific of the <code>WorkflowExecutor</code>, a component (detailed later) that is responsible for scheduling and executing the pipeline. </p>
+<p>The order in which the option values are resolved is as follows:</p>
+<ol>
+<li>The value specified in the node options, if not <code>Default</code>.</li>
+<li>The value specified in the workflow options, if not <code>Default</code>.</li>
+<li>The default value for this <code>WorkflowExecutor</code>. </li>
+</ol>
+<iframe style="border:none" width="800" height="450" src="https://whimsical.com/embed/S8SpLwdz7iiZ9HZFsjjJYB@or4CdLRbgro97wiNZZSLVY4XdesK1DCVyCVG8y1gg"></iframe>
+
+<p>This is useful because if we want to always write a checkpoint after executing a node, except for a few places, we can write less code by setting <code>checkpoint=True</code> in the workflow options and then setting it to false for the one or two nodes that don't need it.</p>
+<h2 id="workflow-components">Workflow Components</h2>
+<p>As demonstrated in the previous example, nothing really happens until the <code>run_workflow</code> function is called, despite our code looking pretty much the same as the example without workflows, but how does that happen in practice?</p>
+<p>When calling the <code>node()</code> method, the action (source, sink or operation) that is passed as first argument is memorized in a data structure inside the <code>Workflow</code> object and a mocked version of it is returned. This mocked version retains exactly the same interface as the true version, but when called it will only record that the operation needs to be called with the given inputs, without actually executing it.</p>
+<p>Inputs and outputs accepted and returned by the mocked actions are not actual datasets, but only <code>Proxy</code> objects whose only purpose is to serve as a placeholder to create new connections when a new action is called. As actions can accept/return a dataset, a sequence, a tuple, a mapping or a bundle of datasets, mocked actions accept/return proxies for every type of data. </p>
+<div class="admonition failure">
+<p class="admonition-title">Failure</p>
+<p>With proxies you cannot do the things you would normally do with the actual outputs of an node. E.g. accessing a sample of a proxy dataset, or trying to get its length will raise an error.</p>
+<p>The dataset is not actually been computed yet, there is no way to know its length in advance!</p>
+</div>
+<p>Complete list of things that can or cannot be done with proxies:</p>
+<ul>
+<li>
+<p>Proxy <code>Dataset</code>:</p>
+<ul>
+<li>❌ Getting the length using <code>__len__</code>.</li>
+<li>❌ Accessing a sample or a slice using <code>__getitem__</code>.</li>
+<li>❌ Iterate through it using <code>__iter__</code>.</li>
+<li>✅ Pass it to another node of the workflow, either directly or through a list/tuple/mapping/bundle.</li>
+</ul>
+</li>
+<li>
+<p>Proxy <code>Sequence[Dataset]</code> or <code>tuple[Dataset, ...]</code> where the number of elements is not statically known:</p>
+<ul>
+<li>❌ Getting the length using <code>__len__</code>.</li>
+<li>✅ Accessing an element using <code>__getitem__</code>. In this case a proxy dataset will be returned.</li>
+<li>❌ Extracting a slice using <code>__getitem__</code>. </li>
+<li>❌ Iterate through it using <code>__iter__</code>.</li>
+<li>✅ Pass it to another node of the workflow.</li>
+</ul>
+</li>
+<li>
+<p>Proxy <code>tuple[Dataset]</code> where the number of elements is statically known: </p>
+<ul>
+<li>✅ Getting the length using <code>__len__</code>.</li>
+<li>✅ Accessing an element or a slice using <code>__getitem__</code>. In this case a proxy dataset or a tuple of proxy datasets will be returned.</li>
+<li>✅ Iterate through it using <code>__iter__</code>.</li>
+<li>✅ Pass it to another node of the workflow.</li>
+</ul>
+</li>
+<li>
+<p>Proxy <code>Mapping[str, Dataset]</code>:</p>
+<ul>
+<li>❌ getting the length using <code>__len__</code>.</li>
+<li>✅ Accessing an element using <code>__getitem__</code>. In this case a proxy dataset will be returned.</li>
+<li>❌ Iterate through keys, values or items using <code>keys()</code>, <code>values()</code>, <code>items()</code> or <code>__iter__</code>.</li>
+<li>❌ Determine whether the mapping contains a given key.</li>
+<li>✅ Pass it to another node of the workflow.</li>
+</ul>
+</li>
+<li>
+<p>Proxy <code>Bundle[Dataset]</code>:</p>
+<ul>
+<li>✅ Accessing an element using the <code>__getattr__</code> (dot notation). In this case a proxy dataset will be returned.</li>
+<li>✅ Convert it to a regular dictionary of proxy datasets with the <code>as_dict()</code> method.</li>
+<li>✅ Pass it to another node of the workflow.</li>
+</ul>
+</li>
+</ul>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>As you can see, there are many limitations to what can be done with these proxy objects and this may seem like a huge limitation. </p>
+<p>In reality, these limitations only apply during the workflow definition phase: nothing prevents you from accessing the real length of a list of datasets <strong>inside</strong> a node of the workflow. </p>
+<p>These limitations are only apparent. Think about it: you must execute the workflow to get its results, and to execute it you must first construct it. It would not make any sense if in order to construct the workflow we would first need to take decisions based on its results, that would be a circular definition!</p>
+</div>
+<p>Furthermore, while Pipewine makes these limitations apparent, they are not something new. In fact, even with the old Pipelime, you cannot take decision on the outputs of nodes before executing a DAG. A typical example of this is when splitting a dataset: you must know in advance the number of splits in order to use them in a DAG.</p>
+<p>Pipewine actually has less limitations in that regard, because lists (or mappings) of datasets can be passed as-is to other nodes of the workflow, even if their length and content is completely unknown, this was not possible using Pipelime DAGs.</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>If you ever need to know the result of a workflow in order to construct it, it may help to:</p>
+<ul>
+<li>Statically define certain aspects of the workflow using constants: e.g. if you know in advance the length of a list of datasets as a constant, it makes no sense to compute it using <code>__len__</code>, use the constant value instead.</li>
+<li>Restructure your code, maybe you are giving a responsibility to the workflow  that should be given to one or more <code>DatasetOperator</code>. </li>
+<li>As a last resort, avoid using a workflow and instead use a plain python function.</li>
+</ul>
+</div>
+<h2 id="workflow-execution">Workflow Execution</h2>
+<p>Workflows on their own do not do much: they only consist of the graph data structure that, plus some methods to conveniently add new nodes and edges or to inspect them.</p>
+<p>To execute a workflow you need a <code>WorkflowExecutor</code>, an object whose main responsibility is running the actions contained in the <code>Workflow</code> object on the correct data inputs and in the correct order. It also manages caches, checkpoints, cleanup and sends events to whoever is listening.</p>
+<p>The only implementation provided (so far) by Pipewine is a very naive executor that simply topologically sorts the workflow and runs each action sequentially, hence the name <code>SequentialWorkflowExecutor</code>. </p>
+<p>Using it is very simple: you just have to construct the executor and pass your workflow to the <code>execute</code> method: </p>
+<div class="language-py highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">wf</span><span class="p">:</span> <span class="n">Workflow</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="n">executor</span> <span class="o">=</span> <span class="n">SequentialWorkflowExecutor</span><span class="p">()</span>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="n">executor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">wf</span><span class="p">)</span>
+</span></code></pre></div>
+<p>More conveniently, you can simply call the <code>run_workflow</code> function that does something similar under the hood. If not specified, the workflow executor will default to a new instance of <code>SequentialWorkflowExecutor</code>, to spare you the need to construct it and call it explicitly.</p>
+<div class="language-py highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">wf</span><span class="p">:</span> <span class="n">Workflow</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="n">run_workflow</span><span class="p">(</span><span class="n">wf</span><span class="p">)</span>
+</span></code></pre></div>
+<h2 id="worfklow-progress-tracking">Worfklow Progress Tracking</h2>
+<p>Each node of the workflow, which corresponds to an action, can start zero or more tasks. By "task" we mean a finite, ordered collection of units of work that are executed in a single call to an action.</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<p>In the <code>GroupByOp</code>, an operator that splits the input dataset into many parts that have in common a specific key, we need to iterate over the input dataset and retrieve the value associated to the group-by key. This is a task: </p>
+<ul>
+<li>It starts after the <code>GroupByOp</code> is called.</li>
+<li>It has a number of units equal to the length of the input dataset. </li>
+<li>The i-th unit corresponds to the computation of the group-by key in the i-th sample.</li>
+<li>It finishes before the <code>GroupByOp</code> returns.</li>
+</ul>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Lazy operators do not typically create tasks when called.</p>
+</div>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>The <code>self.loop()</code> method of a Pipewine action will automatically invoke callbacks to start, update and finish a new task each time it is called. </p>
+<p>If a <code>Grabber</code> is used (to speed up computation through parallelism), all worker sub-processes will be configured to automatically emit events each time they complete a unit of work.</p>
+</div>
+<p>Workflow executors can be attached to an <code>EventQueue</code>, a FIFO queue that collects any progress update event from the executor and lets whoever is listening to it, typically a <code>Tracker</code>, receive these updates in the correct order. </p>
+<p><code>EventQueue</code> objects are designed so that the same queue can receive updates from many emitters, possibly located on different processes. This is crucial to enable progress tracking when using a <code>Grabber</code>. The only <code>EventQueue</code> implementation provided so far by Pipewine is the <code>ProcessSharedEventQueue</code>, built on top of a <code>multiprocessing.Pipe</code> object.</p>
+<p><code>Tracker</code> objects are instead consumers of progress update events. They constantly listen for new updates and display them somewhere. The only <code>Tracker</code> implementation provided by Pipewine is <code>CursesTracker</code>, that conveniently displays progress updates in a ncurses TUI (<em>Text-based User Interface</em>) for immediate reading. </p>
+<p>To connect all these things together, you need to do the following things:</p>
+<ol>
+<li>Construct and populate a <code>Workflow</code>.</li>
+<li>Construct a <code>WorkflowExecutor</code>.</li>
+<li>Construct a <code>EventQueue</code>.</li>
+<li>Construct a <code>Tracker</code>.</li>
+<li>Call the <code>start()</code> method of the <code>EventQueue</code>.</li>
+<li>Attach the executor to the running event queue.</li>
+<li>Attach the tracker to the running event queue.</li>
+<li>Execute the workflow.</li>
+<li>Detach the executor from the event queue.</li>
+<li>Detach the tracker from the event queue.</li>
+<li>Close the event queue.</li>
+</ol>
+<div class="language-py highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Workflows and other components</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="n">workflow</span><span class="p">:</span> <span class="n">Workflow</span>
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="n">executor</span> <span class="o">=</span> <span class="n">SequentialWorkflowExecutor</span><span class="p">()</span>
+</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="n">event_queue</span> <span class="o">=</span> <span class="n">ProcessSharedEventQueue</span><span class="p">()</span>
+</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="n">tracker</span> <span class="o">=</span> <span class="n">CursesTracker</span><span class="p">()</span>
+</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>
+</span><span id="__span-9-7"><a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="c1"># Setup</span>
+</span><span id="__span-9-8"><a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="n">event_queue</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+</span><span id="__span-9-9"><a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="n">executor</span><span class="o">.</span><span class="n">attach</span><span class="p">(</span><span class="n">event_queue</span><span class="p">)</span>
+</span><span id="__span-9-10"><a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="n">tracker</span><span class="o">.</span><span class="n">attach</span><span class="p">(</span><span class="n">event_queue</span><span class="p">)</span>
+</span><span id="__span-9-11"><a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>
+</span><span id="__span-9-12"><a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="c1"># Execution</span>
+</span><span id="__span-9-13"><a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="n">executor</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">workflow</span><span class="p">)</span>
+</span><span id="__span-9-14"><a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a>
+</span><span id="__span-9-15"><a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a><span class="c1"># Teardown</span>
+</span><span id="__span-9-16"><a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a><span class="n">executor</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+</span><span id="__span-9-17"><a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a><span class="n">tracker</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+</span><span id="__span-9-18"><a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a><span class="n">event_queue</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</span></code></pre></div>
+<p>This is kind of complicated right? To simplify things a bit on your side, the <code>run_workflow</code> function does all this complicated stuff for you. Equivalently to the code above:</p>
+<div class="language-py highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="n">workflow</span><span class="p">:</span> <span class="n">Workflow</span>
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="n">tracker</span> <span class="o">=</span> <span class="n">CursesTracker</span><span class="p">()</span>
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
+</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="n">run_workflow</span><span class="p">(</span><span class="n">workflow</span><span class="p">,</span> <span class="n">tracker</span><span class="o">=</span><span class="n">tracker</span><span class="p">)</span>
+</span></code></pre></div>
+<p><img alt="alt text" src="../../assets/tracker.png" /></p>
+<h2 id="workflow-drawing">Workflow Drawing</h2>
+<p>Workflows can be drawn using the <code>draw_workflow</code> function:</p>
+<div class="language-py highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="n">workflow</span><span class="p">:</span> <span class="n">Workflow</span>
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>
+</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="n">draw_workflow</span><span class="p">(</span><span class="n">workflow</span><span class="p">,</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;/tmp/workflow.svg&quot;</span><span class="p">))</span>
+</span></code></pre></div>
+<p>Under the hood, this function calls two different components:</p>
+<ul>
+<li><code>Layout</code>: responsible for determining the position and size of workflow nodes in a 2D image plane.</li>
+<li><code>Drawer</code>: responsible for taking an already laid out workflow and writing a file that can be visualized by external software such as a web browser or an image viewer.</li>
+</ul>
+<p>As for the layout part, Pipewine provides <code>OptimizedLayout</code>, a class that attempts to position the nodes on a 2D grid such that the overall flow can be read from left to right such that:</p>
+<ul>
+<li>Nodes are not too much spread out, nor too close to each other.</li>
+<li>Excessively long edges are penalized.</li>
+<li>Edge-edge intersections are minimized.</li>
+<li>Edge-node intersections are minimized.</li>
+<li>Edges are directed towards the right side of the image.</li>
+</ul>
+<p>This is achieved using a very simple evolutionary approach. The implementation is kind of difficult to follow due to heavy use of vectorization to eliminate all Python for loops and control flow, crucial to ensure acceptable performance (&lt;1000ms execution time). </p>
+<p><code>SVGDrawer</code> takes the laid-out graph and writes it into a SVG file that can be opened in any modern web browser and embedded pretty much everywhere.</p>
 
 
 

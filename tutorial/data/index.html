@@ -655,6 +655,27 @@
   
   
     <li class="md-nav__item">
+      <a href="../cache/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    💾 Cache
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../workflows/" class="md-nav__link">
         
   
@@ -903,7 +924,7 @@
 <h1 id="data-model">🗃️ Data Model</h1>
 <h2 id="overview">Overview</h2>
 <p>In this section your will learn what are the main data abstractions upon which Pipewine is built, how to interact with them and extend them according to your needs.</p>
-<p>Pipewine <strong>data model</strong> is composed of three main abstractions: </p>
+<p>Pipewine data model is composed of three main abstractions: </p>
 <ul>
 <li><strong>Dataset</strong> - A <strong>Sequence</strong> of <code>Sample</code> instances, where "sequence" means an ordered collection that supports indexing, slicing and iteration.</li>
 <li><strong>Sample</strong> - A <strong>Mapping</strong> of strings to <code>Item</code> instances, where "mapping" means a set of key-value pairs that supports indexing and iteration. </li>
@@ -1238,11 +1259,6 @@ This class is basically a wrapper around a dictionary of items of unknown type.<
 </div>
 <h3 id="cacheditem">CachedItem</h3>
 <p><code>CachedItem</code> objects are items that offer a caching mechanism to avoid calling expensive read operations multiple times when the underlying data is left unchanged. </p>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>Caching everything at the item level is an exceptionally bad idea that is guaranteed to fill up your system memory in no time. Instead of using <code>CachedItem</code> directly, use Pipewine <code>CacheOp</code> operations that provide a smarter mechanism that mixes sample-level and item-level caches. </p>
-<p>This is an important lesson learnt from the old Pipelime library, where caching was always done at the item level and was enabled by default. </p>
-</div>
 <p>To create a <code>CachedItem</code>, you just need to pass an <code>Item</code> of your choice to the <code>CachedItem</code> constructor.</p>
 <div class="admonition example">
 <p class="admonition-title">Example</p>
