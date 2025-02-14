@@ -11,7 +11,7 @@ from rich.text import Text
 from pipewine.cli.sinks import SinkCLIRegistry
 from pipewine.cli.sources import SourceCLIRegistry
 from pipewine.grabber import Grabber
-from pipewine.sample import Sample
+from pipewine.sample import Sample, TypelessSample
 from pipewine.sinks import DatasetSink
 from pipewine.sources import DatasetSource
 from pipewine.workflows import CursesTracker, Workflow, run_workflow
@@ -33,13 +33,21 @@ def deep_get(sample: Sample, key: str) -> Any:
 
 @overload
 def _parse_source_or_sink(
-    format_: str, text: str, reg: type[SourceCLIRegistry], grabber: Grabber
+    format_: str,
+    text: str,
+    reg: type[SourceCLIRegistry],
+    grabber: Grabber,
+    sample_type: type[Sample] = TypelessSample,
 ) -> DatasetSource: ...
 
 
 @overload
 def _parse_source_or_sink(
-    format_: str, text: str, reg: type[SinkCLIRegistry], grabber: Grabber
+    format_: str,
+    text: str,
+    reg: type[SinkCLIRegistry],
+    grabber: Grabber,
+    sample_type: type[Sample] = TypelessSample,
 ) -> DatasetSink: ...
 
 
@@ -48,6 +56,7 @@ def _parse_source_or_sink(
     text: str,
     reg: type[SourceCLIRegistry] | type[SinkCLIRegistry],
     grabber: Grabber,
+    sample_type: type[Sample] = TypelessSample,
 ) -> DatasetSource | DatasetSink:
     if format_ not in reg.registered:
         print(
@@ -56,7 +65,10 @@ def _parse_source_or_sink(
         )
         exit(1)
     try:
-        result = reg.registered[format_](text, grabber)
+        if issubclass(reg, SourceCLIRegistry):
+            result = reg.registered[format_](text, grabber, sample_type)
+        else:
+            result = reg.registered[format_](text, grabber)
     except:
         print(
             f"Failed to parse string '{text}' into a '{format_}' format, use "
@@ -67,8 +79,13 @@ def _parse_source_or_sink(
     return result
 
 
-def parse_source(format_: str, text: str, grabber: Grabber) -> DatasetSource:
-    return _parse_source_or_sink(format_, text, SourceCLIRegistry, grabber)
+def parse_source(
+    format_: str,
+    text: str,
+    grabber: Grabber,
+    sample_type: type[Sample],
+) -> DatasetSource:
+    return _parse_source_or_sink(format_, text, SourceCLIRegistry, grabber, sample_type)
 
 
 def parse_sink(format_: str, text: str, grabber: Grabber) -> DatasetSink:

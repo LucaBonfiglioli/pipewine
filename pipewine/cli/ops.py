@@ -15,7 +15,11 @@ from rich.panel import Panel
 from rich.table import Table
 from typer import Context, Option, Typer
 
-from pipewine._op_typing import origin_type
+from pipewine._op_typing import (
+    get_sample_type_from_dataset_annotation,
+    get_sample_type_from_sample_annotation,
+    origin_type,
+)
 from pipewine.bundle import Bundle
 from pipewine.cli.sinks import SinkCLIRegistry
 from pipewine.cli.sources import SourceCLIRegistry
@@ -29,9 +33,8 @@ from pipewine.cli.utils import (
 from pipewine.dataset import Dataset
 from pipewine.grabber import Grabber
 from pipewine.operators import *
-from pipewine.operators import DatasetOperator
 from pipewine.parsers import ParserRegistry
-from pipewine.sample import Sample
+from pipewine.sample import Sample, TypelessSample
 from pipewine.sinks import DatasetSink
 from pipewine.sources import DatasetSource
 from pipewine.workflows import Workflow
@@ -56,8 +59,8 @@ def _single_op_workflow(
     ctx: Context, operator: DatasetOperator, *args, **kwargs
 ) -> None:
     opinfo = cast(OpInfo, ctx.obj)
-    i_hint = operator.__call__.__annotations__["x"]
-    o_hint = operator.__call__.__annotations__["return"]
+    i_hint = inspect.get_annotations(operator.__call__, eval_str=True).get("x")
+    o_hint = inspect.get_annotations(operator.__call__, eval_str=True).get("return")
     i_orig, o_orig = origin_type(i_hint), origin_type(o_hint)
 
     i_name, o_name = "input", "output"
@@ -79,28 +82,62 @@ def _single_op_workflow(
             output_dict[maybe_out_seq[o_curr][1:]] = extra_queue.popleft()
             o_curr += 1
 
-    def _parse_source(text: str) -> DatasetSource:
-        return parse_source(opinfo.input_format, text, opinfo.grabber)
+    def _parse_source(text: str, sample_type: type[Sample]) -> DatasetSource:
+        return parse_source(opinfo.input_format, text, opinfo.grabber, sample_type)
 
     def _parse_sink(text: str) -> DatasetSink:
         return parse_sink(opinfo.output_format, text, opinfo.grabber)
 
     wf = Workflow()
     if issubclass(i_orig, Dataset):
-        input_ = wf.node(_parse_source(kwargs[i_name]))()
-    elif issubclass(i_orig, (list, tuple)):
-        input_ = [wf.node(_parse_source(x))() for x in kwargs[i_name]]
-    elif issubclass(i_orig, dict):
-        input_ = {k: wf.node(_parse_source(v))() for k, v in input_dict.items()}
+        if isinstance(operator, MapOp):
+            sample_hint = inspect.get_annotations(
+                operator._mapper.__call__, eval_str=True
+            ).get("x")
+            sample_type = get_sample_type_from_sample_annotation(sample_hint)
+        else:
+            sample_type = get_sample_type_from_dataset_annotation(i_hint)
+        input_ = wf.node(_parse_source(kwargs[i_name], sample_type))()
+    elif issubclass(i_orig, (Sequence, tuple)):
+        if (
+            issubclass(i_orig, tuple)
+            and isinstance(i_hint, GenericAlias)
+            and len(i_hint.__args__) == 2
+            and i_hint.__args__[1] is ...
+        ):
+            input_ = [
+                wf.node(
+                    _parse_source(x, get_sample_type_from_dataset_annotation(hint)),
+                )()
+                for x, hint in zip(kwargs[i_name], i_hint.__args__)
+            ]
+        elif isinstance(i_hint, GenericAlias) and len(i_hint.__args__) > 0:
+            sample_type = get_sample_type_from_dataset_annotation(i_hint.__args__[0])
+            input_ = [wf.node(_parse_source(x, sample_type))() for x in kwargs[i_name]]
+        else:
+            sample_type = TypelessSample
+            input_ = [wf.node(_parse_source(x, sample_type))() for x in kwargs[i_name]]
+    elif issubclass(i_orig, Mapping):
+        if isinstance(i_hint, GenericAlias) and len(i_hint.__args__) == 2:
+            sample_type = get_sample_type_from_dataset_annotation(i_hint.__args__[1])
+        else:
+            sample_type = TypelessSample
+        input_ = {
+            k: wf.node(_parse_source(v, sample_type))() for k, v in input_dict.items()
+        }
     elif issubclass(i_orig, Bundle):
         data = {
-            k: wf.node(_parse_source(kwargs[f"{i_name}_{k}"]))()
-            for k in i_orig.__annotations__
+            k: wf.node(
+                _parse_source(
+                    kwargs[f"{i_name}_{k}"], get_sample_type_from_dataset_annotation(v)
+                )
+            )()
+            for k, v in inspect.get_annotations(i_orig).items()
         }
         input_ = _DictBundle(**data)
     else:
         raise NotImplementedError(i_orig)
-    output = wf.node(operator)(input_)
+    output = wf.node(operator)(input_)  # type: ignore
     if issubclass(o_orig, Dataset):
         wf.node(_parse_sink(kwargs[o_name]))(output)
     elif issubclass(o_orig, (list, tuple)):

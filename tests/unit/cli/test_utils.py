@@ -60,7 +60,7 @@ def test_deep_get(sample: Sample, key: str, expected: Any) -> None:
 def test_parse_source(format_: str, text: str, grabber: Grabber, fail: bool) -> None:
     cm = pytest.raises(SystemExit) if fail else nullcontext()
     with cm:
-        source = parse_source(format_, text, grabber)
+        source = parse_source(format_, text, grabber, TypelessSample)
         assert isinstance(source, DatasetSource)
 
 
