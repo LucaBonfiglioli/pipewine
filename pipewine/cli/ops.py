@@ -102,8 +102,7 @@ def _single_op_workflow(
         if (
             issubclass(i_orig, tuple)
             and isinstance(i_hint, GenericAlias)
-            and len(i_hint.__args__) == 2
-            and i_hint.__args__[1] is ...
+            and not (len(i_hint.__args__) == 2 and i_hint.__args__[1] is ...)
         ):
             input_ = [
                 wf.node(
@@ -140,10 +139,10 @@ def _single_op_workflow(
     output = wf.node(operator)(input_)  # type: ignore
     if issubclass(o_orig, Dataset):
         wf.node(_parse_sink(kwargs[o_name]))(output)
-    elif issubclass(o_orig, (list, tuple)):
+    elif issubclass(o_orig, (Sequence, tuple)):
         for i, x in enumerate(kwargs[o_name]):
             wf.node(_parse_sink(x))(output[i])
-    elif issubclass(o_orig, dict):
+    elif issubclass(o_orig, Mapping):
         for k, v in output_dict.items():
             wf.node(_parse_sink(v))(output[k])
     elif issubclass(o_orig, Bundle):
@@ -233,22 +232,28 @@ def _generate_op_command[
         io: str, type_: Literal["str", "list", "dict"] | int, name: str = ""
     ) -> str:
         if type_ == "str":
-            help_str = f'The "{name}" {io} dataset.' if name else f"The {io} dataset."
+            help = f'The "{name}" {io} dataset.' if name else f"The {io} dataset."
             hint = "str"
         elif type_ == "list":
-            help_str = f"List of {io} datasets. Use multiple times: --{io} DATA1 --{io} DATA2 ..."
+            help = f"List of {io} datasets. Use multiple times: --{io} DATA1 --{io} DATA2 ..."
             hint = "list[str]"
         elif type_ == "dict":
-            help_str = f"Dict of {io} datasets. Use multiple times: --{io}.key_a DATA1 --{io}.key_b DATA2 ..."
+            help = f"Dict of {io} datasets. Use multiple times: --{io[0]}.key_a DATA1 --{io[0]}.key_b DATA2 ..."
             hint = "list[str]"
         else:
             hint = f"tuple[{', '.join(['str'] * type_)}]"
-            help_str = f"Tuple of {type_} {io} datasets."
+            help = f"Tuple of {type_} {io} datasets."
         param = io if not name else f"{io}_{name}"
-        decl = (
-            f"'-{io[0]}.{name}', '--{io}.{name}'" if name else f"'-{io[0]}', '--{io}'"
-        )
-        return f"{param}: Annotated[{hint}, Option(..., {decl}, help='{help_str}')]"
+        if type_ == "dict" and not name:
+            decl = f"'-{io[0]}'"
+        else:
+            decl = (
+                f"'-{io[0]}.{name}', '--{io}.{name}'"
+                if name
+                else f"'-{io[0]}', '--{io}'"
+            )
+        code = f"{param}: Annotated[{hint}, Option(..., {decl}, help='{help}')]"
+        return code
 
     added_args_code: list[str] = []
     for hint, orig, io in [[i_hint, i_orig, "input"], [o_hint, o_orig, "output"]]:
