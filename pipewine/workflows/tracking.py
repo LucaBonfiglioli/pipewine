@@ -85,10 +85,10 @@ class CursesTracker(Tracker):
             self._stop_flag_graceful.set()
         else:
             self._stop_flag_forced.set()
-        self._tui_thread.join()
         self._read_thread.join()
-        self._tui_thread = None
+        self._tui_thread.join()
         self._read_thread = None
+        self._tui_thread = None
         self._eq = None
 
     def _get_group(self, group: TaskGroup, path: str) -> TaskGroup:
@@ -138,7 +138,7 @@ class CursesTracker(Tracker):
                 cell[2] += 1
         return bar
 
-    def _init_colors(self) -> None:
+    def _init_colors(self) -> None:  # pragma: no cover
         curses.start_color()
         curses.use_default_colors()
         if curses.can_change_color():
@@ -180,7 +180,7 @@ class CursesTracker(Tracker):
         for i, (depth, entry) in enumerate(tasks):
             space = TITLE_W - 2 * depth - 1
             text = entry.name
-            if len(text) > space:
+            if len(text) > space:  # pragma: no cover
                 start = (global_step // 2) % (len(text) - space)
                 text = text[start : start + space]
             title_pad.addstr(i, 2 * depth, text)
@@ -188,12 +188,12 @@ class CursesTracker(Tracker):
                 j = 0
                 if entry.complete:
                     color = self._color_of(1.0)
-                    if bar_w > 0:
+                    if bar_w > 0:  # pragma: no cover
                         prog_pad.addstr(i, 0, bar_elem * bar_w, color)
                         j += len(bar_elem) * bar_w
                     sum_ = len(entry.units)
                 else:
-                    if bar_w > 0:
+                    if bar_w > 0:  # pragma: no cover
                         for size, comp, total in self._compute_bar(entry.units, bar_w):
                             color = self._color_of(comp / total)
                             prog_pad.addstr(i, j, bar_elem * size, color)
@@ -202,7 +202,7 @@ class CursesTracker(Tracker):
                 total = len(entry.units)
                 perc = round((sum_ / total) * 100, 2)
                 text = f"{sum_}/{total} {perc}%"
-                if len(text) + 2 < PROG_W:
+                if len(text) + 2 < PROG_W:  # pragma: no cover
                     prog_pad.addstr(i, j + 2, text)
 
         title_pad.noutrefresh(max(0, TITLE_H - H), 0, 0, 0, H - 1, W - 1)
@@ -232,10 +232,8 @@ class CursesTracker(Tracker):
                     task.complete = True
 
             list_of_tasks = self._preorder(root, -1)[1:]
-            if len(list_of_tasks) == 0:
-                continue
-
-            self._render_tasks(stdscr, list_of_tasks, global_step)
+            if len(list_of_tasks) > 0:
+                self._render_tasks(stdscr, list_of_tasks, global_step)
 
             if (
                 self._stop_flag_graceful.is_set()

@@ -55,3 +55,15 @@ class TestCursesTracker:
         event_queue.emit(MyEvent())  # should be ignored
 
         tracker.detach()
+
+    @pytest.mark.parametrize("graceful", [True, False])
+    def test_fail_attach_detach_twice(
+        self, event_queue: EventQueue, graceful: bool
+    ) -> None:
+        tracker = CursesTracker()
+        tracker.attach(event_queue)
+        with pytest.raises(RuntimeError):
+            tracker.attach(event_queue)
+        tracker.detach(graceful=graceful)
+        with pytest.raises(RuntimeError):
+            tracker.detach(graceful=graceful)
