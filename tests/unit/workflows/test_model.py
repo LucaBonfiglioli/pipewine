@@ -1,11 +1,67 @@
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
 
 import pytest
 
-from pipewine import Bundle, Dataset, DatasetOperator, DatasetSink, DatasetSource
-from pipewine.workflows import Edge, Node, Proxy, Workflow
-from pipewine.workflows.model import _ProxyMapping, _ProxySequence, All
+from pipewine import (
+    Bundle,
+    Dataset,
+    DatasetOperator,
+    DatasetSink,
+    DatasetSource,
+    Grabber,
+    TypelessSample,
+    UnderfolderSink,
+    UnderfolderSource,
+)
+from pipewine.workflows import (
+    Edge,
+    Node,
+    Proxy,
+    UnderfolderCheckpointFactory,
+    Workflow,
+    Default,
+    WfOptions,
+)
+from pipewine.workflows.model import All, _ProxyMapping, _ProxySequence
+
+
+class TestUnderfolderCheckpointFactory:
+    def test_create(self, tmp_path: Path) -> None:
+        ckpt_fact = UnderfolderCheckpointFactory(folder=tmp_path)
+        sink, source = ckpt_fact.create("test", "uf_0", TypelessSample, Grabber())
+        assert isinstance(sink, UnderfolderSink)
+        assert isinstance(source, UnderfolderSource)
+
+    def test_destroy(self, tmp_path: Path) -> None:
+        ckpt_fact = UnderfolderCheckpointFactory(folder=tmp_path)
+        ex_id = "test"
+        name = "uf_0"
+        expected_folder = tmp_path / ex_id / name
+        assert not expected_folder.exists()
+        ckpt_fact.destroy(ex_id, name)
+        assert not expected_folder.exists()
+        expected_folder.mkdir(parents=True)
+        ckpt_fact.destroy(ex_id, name)
+        assert not expected_folder.exists()
+
+
+class TestDefault:
+    @pytest.mark.parametrize(
+        ["optionals", "default", "expected"],
+        [
+            [[], 10, 10],
+            [[20], 10, 20],
+            [[Default(), 20], 10, 20],
+            [[20, Default()], 10, 20],
+            [[Default()], 10, 10],
+            [[Default(), Default()], 10, 10],
+        ],
+    )
+    def test_get(self, optionals: list[Any], default: Any, expected: Any) -> None:
+        assert Default.get(*optionals, default=default) == expected
 
 
 class TestProxyMapping:
@@ -19,6 +75,7 @@ class TestProxyMapping:
         pmap["d"]
         assert dict(pmap._data) == {"a": "A", "b": "B", "c": "C", "d": "D"}
         assert len(pmap._data) == 4
+        assert pmap["b"] == "B"
         with pytest.raises(RuntimeError):
             len(pmap)
         with pytest.raises(RuntimeError):
@@ -39,6 +96,8 @@ class TestProxySequence:
             len(pseq)
         with pytest.raises(RuntimeError):
             list(pseq)
+        with pytest.raises(RuntimeError):
+            pseq[:10]
 
 
 class MyBundle(Bundle[Dataset]):
@@ -409,6 +468,43 @@ def __workflow__7() -> WorkflowFixture:
     return WorkflowFixture(wf=wf, nodes=nodes, edges=edges)
 
 
+def __workflow__8() -> WorkflowFixture:
+    wf = Workflow()
+    source_0, source_1 = Source(), Source()
+    sink_0, sink_1 = Sink(), Sink()
+    op1 = Mapping2Mapping()
+    op2 = Mapping2Mapping()
+    data_0 = wf.node(source_0, name="source_0")()
+    data_1 = wf.node(source_1, name="source_1")()
+    data = wf.node(op1, name="op1")({"0": data_0, "1": data_1})
+    data = wf.node(op2, name="op2")(data)
+    wf.node(sink_0, name="sink_0")(data["0"])
+    wf.node(sink_1, name="sink_1")(data["1"])
+
+    source_0_node = Node("source_0", source_0)
+    source_1_node = Node("source_1", source_1)
+    op1_node = Node("op1", op1)
+    op2_node = Node("op2", op2)
+    sink_0_node = Node("sink_0", sink_0)
+    sink_1_node = Node("sink_1", sink_1)
+    nodes: set[Node] = {
+        source_0_node,
+        source_1_node,
+        op1_node,
+        op2_node,
+        sink_0_node,
+        sink_1_node,
+    }
+    edges: set[Edge] = {
+        Edge(Proxy(source_0_node, None), Proxy(op1_node, "0")),
+        Edge(Proxy(source_1_node, None), Proxy(op1_node, "1")),
+        Edge(Proxy(op1_node, All()), Proxy(op2_node, All())),
+        Edge(Proxy(op2_node, "0"), Proxy(sink_0_node, None)),
+        Edge(Proxy(op2_node, "1"), Proxy(sink_1_node, None)),
+    }
+    return WorkflowFixture(wf=wf, nodes=nodes, edges=edges)
+
+
 @pytest.fixture(params=[v for k, v in locals().items() if k.startswith("__workflow__")])
 def make_wf(request) -> Callable[[], WorkflowFixture]:
     return request.param
@@ -441,6 +537,10 @@ class TestWorkflow:
         wf.node(action)
         assert next(iter(wf.get_nodes())).action == action
 
+    def test_workflow_options(self) -> None:
+        wf = Workflow(options=WfOptions(cache=True))
+        assert wf.options.cache
+
     def test_workflow_fail_node_not_found(
         self, make_wf: Callable[[], WorkflowFixture]
     ) -> None:
@@ -449,3 +549,9 @@ class TestWorkflow:
             wf.get_inbound_edges(Node("__WRONG__", Source()))
         with pytest.raises(ValueError):
             wf.get_outbound_edges(Node("__WRONG__", Source()))
+
+    def test_workflow_fail_duplicate_node(self) -> None:
+        wf = Workflow()
+        wf.node(Source(), name="name")
+        with pytest.raises(ValueError):
+            wf.node(Source(), name="name")

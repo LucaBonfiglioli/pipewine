@@ -19,6 +19,7 @@ from pipewine.workflows.model import (
     CheckpointFactory,
     UnderfolderCheckpointFactory,
     WfOptions,
+    Default,
 )
 from pipewine.workflows.tracking import (
     CursesTracker,
