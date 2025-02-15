@@ -27,7 +27,8 @@ class TestProcessSharedEventQueue:
         InheritedData.data = data
 
     @pytest.mark.parametrize("nproc", [1, 2, 4, 8])
-    def test_queue(self, nproc: int) -> None:
+    @pytest.mark.parametrize("blocking", [True, False])
+    def test_queue(self, nproc: int, blocking: bool) -> None:
         n = 100
         queue = ProcessSharedEventQueue()
         queue.start()
@@ -38,16 +39,27 @@ class TestProcessSharedEventQueue:
         pool.close()
         pool.join()
         events: list[MyEvent] = []
-        while (event := queue.capture()) is not None:
+        while (
+            event := (
+                queue.capture_blocking(timeout=0.1) if blocking else queue.capture()
+            )
+        ) is not None:
             events.append(cast(MyEvent, event))
         assert len({x.pid for x in events}) == nproc
         assert {x.data for x in events} == set(range(n))
         queue.close()
 
-    def test_queue_wrong_state(self) -> None:
+        # Repeat close to assert nothing happens if called twice
+        queue.close()
+
+    @pytest.mark.parametrize("blocking", [True, False])
+    def test_queue_wrong_state(self, blocking: bool) -> None:
         queue = ProcessSharedEventQueue()
         with pytest.raises(RuntimeError):
             queue.emit(MyEvent(os.getpid(), 42))
 
         with pytest.raises(RuntimeError):
-            queue.capture()
+            if blocking:
+                queue.capture_blocking(timeout=0.5)
+            else:
+                queue.capture()
