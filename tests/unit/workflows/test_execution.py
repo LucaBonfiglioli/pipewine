@@ -225,6 +225,8 @@ class TestSequentialWorkflowExecutor:
             WfOptions(checkpoint=True),
             WfOptions(checkpoint=True, collect_after_checkpoint=True),
             WfOptions(checkpoint=True, collect_after_checkpoint=False),
+            WfOptions(checkpoint=True, destroy_checkpoints=False),
+            WfOptions(checkpoint=True, destroy_checkpoints=True),
             WfOptions(checkpoint=False),
         ],
     )

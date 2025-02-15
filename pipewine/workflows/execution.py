@@ -257,5 +257,5 @@ class SequentialWorkflowExecutor(WorkflowExecutor):
                 wf_opts.checkpoint_factory,
                 default=self._def_checkpoint_factory,
             )
-            if destroy and ckpt_fact is not None:  # pragma: no branch
+            if destroy and ckpt_fact is not None:
                 ckpt_fact.destroy(id_.hex, node.name)
