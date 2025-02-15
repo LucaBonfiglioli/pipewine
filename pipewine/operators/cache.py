@@ -247,7 +247,7 @@ class CacheOp(DatasetOperator[Dataset, Dataset]):
         return result
 
     def _finalize_cache(self, id_: str) -> None:
-        if id_ in InheritedData.data:
+        if id_ in InheritedData.data:  # pragma: no branch
             del InheritedData.data[id_]
 
     def __call__[T: Sample](self, x: Dataset[T]) -> LazyDataset[T]:
@@ -281,7 +281,7 @@ class MemorizeEverythingOp(DatasetOperator[Dataset, Dataset]):
         return result
 
     def _finalize_cache(self, id_: str) -> None:
-        if id_ in InheritedData.data:
+        if id_ in InheritedData.data:  # pragma: no branch
             del InheritedData.data[id_]
 
     def __call__(self, x: Dataset) -> Dataset:
