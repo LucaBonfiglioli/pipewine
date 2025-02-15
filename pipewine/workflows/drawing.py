@@ -255,12 +255,9 @@ class OptimizedLayout(Layout):
                     )
             fitness = (fitness - fitness.min()) / (fitness.max() - fitness.min() + 1e-5)
             fsum = fitness.sum()
-            if fsum > 0:
-                next_idx = np.random.choice(
-                    max_population, size=max_population - 1, p=fitness / fsum
-                )
-            else:
-                next_idx = np.arange(max_population - 1)
+            next_idx = np.random.choice(
+                max_population, size=max_population - 1, p=fitness / fsum.clip(min=1e-3)
+            )
             sigma = sigma_s * np.exp(
                 np.log(sigma_e / sigma_s) * global_step / max_steps
             )
@@ -578,8 +575,6 @@ class SVGDrawer(Drawer):
         for edge in vg.edges:
             src_node_idx, src_sock = edge.start
             dst_node_idx, dst_sock = edge.end
-            if (src_sock is None) or (dst_sock is None):
-                continue
             src_node, dst_node = vg.nodes[src_node_idx], vg.nodes[dst_node_idx]
             x1 = src_node.position[0] + src_node.size[0]
             y1 = src_node.position[1] + src_node.outputs[src_sock][1]

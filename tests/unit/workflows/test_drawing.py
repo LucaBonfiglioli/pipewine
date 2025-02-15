@@ -2,7 +2,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from tempfile import gettempdir
-
+from collections.abc import Mapping, Sequence
 import pytest
 
 from pipewine import (
@@ -13,6 +13,9 @@ from pipewine import (
     TypelessSample,
     UnderfolderSink,
     UnderfolderSource,
+    DatasetOperator,
+    DatasetSource,
+    DatasetSink,
 )
 from pipewine.workflows import (
     Drawer,
@@ -22,6 +25,26 @@ from pipewine.workflows import (
     SVGDrawer,
     Workflow,
 )
+
+
+class Source(DatasetSource[Dataset]):
+    def __call__(self) -> Dataset:
+        raise NotImplementedError()
+
+
+class Sink(DatasetSink[Dataset]):
+    def __call__(self, data: Dataset) -> None:
+        raise NotImplementedError()
+
+
+class Mapping2Mapping(DatasetOperator[Mapping[str, Dataset], Mapping[str, Dataset]]):
+    def __call__(self, x: Mapping[str, Dataset]) -> Mapping[str, Dataset]:
+        raise NotImplementedError()
+
+
+class List2List(DatasetOperator[Sequence[Dataset], Sequence[Dataset]]):
+    def __call__(self, x: Sequence[Dataset]) -> Sequence[Dataset]:
+        raise NotImplementedError()
 
 
 @dataclass
@@ -57,6 +80,36 @@ def __workflow__2() -> WorkflowFixture:
     return WorkflowFixture("00002", wf)
 
 
+def __workflow__7() -> WorkflowFixture:
+    wf = Workflow()
+    source_0, source_1 = Source(), Source()
+    sink_0, sink_1 = Sink(), Sink()
+    op1 = List2List()
+    op2 = List2List()
+    data_0 = wf.node(source_0, name="source_0")()
+    data_1 = wf.node(source_1, name="source_1")()
+    data = wf.node(op1, name="op1")((data_0, data_1))
+    data = wf.node(op2, name="op2")(data)
+    wf.node(sink_0, name="sink_0")(data[0])
+    wf.node(sink_1, name="sink_1")(data[1])
+    return WorkflowFixture("00003", wf=wf)
+
+
+def __workflow__8() -> WorkflowFixture:
+    wf = Workflow()
+    source_0, source_1 = Source(), Source()
+    sink_0, sink_1 = Sink(), Sink()
+    op1 = Mapping2Mapping()
+    op2 = Mapping2Mapping()
+    data_0 = wf.node(source_0, name="source_0")()
+    data_1 = wf.node(source_1, name="source_1")()
+    data = wf.node(op1, name="op1")({"0": data_0, "1": data_1})
+    data = wf.node(op2, name="op2")(data)
+    wf.node(sink_0, name="sink_0")(data["0"])
+    wf.node(sink_1, name="sink_1")(data["1"])
+    return WorkflowFixture("00004", wf=wf)
+
+
 @pytest.fixture(params=[v for k, v in locals().items() if k.startswith("__workflow__")])
 def make_wf(request) -> Callable[[], WorkflowFixture]:
     return request.param
@@ -74,7 +127,13 @@ class TestOptimizedLayout:
         assert len(vg.edges) == len(all_edges)
 
 
-@pytest.mark.parametrize("layout", [OptimizedLayout()])
+@pytest.mark.parametrize(
+    "layout",
+    [
+        OptimizedLayout(optimize_time_budget=0.5),
+        OptimizedLayout(optimize_time_budget=0.5, verbose=True),
+    ],
+)
 @pytest.mark.parametrize(["drawer", "ext"], [[SVGDrawer(), ".svg"]])
 def test_drawing_integration(
     make_wf: Callable[[], WorkflowFixture], layout: Layout, drawer: Drawer, ext: str
