@@ -176,11 +176,21 @@ def runner() -> CliRunner:
 
 
 def test_help(runner: CliRunner) -> None:
+    result = runner.invoke(pipewine_app, ["--help"])
+    assert result.exit_code == 0
+
+
+def test_version(runner: CliRunner) -> None:
+    result = runner.invoke(pipewine_app, ["--version"])
+    assert result.exit_code == 0
+
+
+def test_op_help(runner: CliRunner) -> None:
     result = runner.invoke(pipewine_app, ["op", "--help"])
     assert result.exit_code == 0
 
 
-def test_format_help(runner: CliRunner) -> None:
+def test_op_format_help(runner: CliRunner) -> None:
     result = runner.invoke(pipewine_app, ["op", "--format-help"])
     assert result.exit_code == 0
 
@@ -335,6 +345,80 @@ def test_clone(tmp_path, underfolder, runner: CliRunner) -> None:
     result = runner.invoke(
         pipewine_app,
         ["op", "clone", "--input", input_folder, "--output", output_folder],
+    )
+    assert Path(output_folder).is_dir()
+    assert result.exit_code == 0
+
+
+@pytest.mark.parametrize("compare", ["eq", "neq", "gt", "lt", "ge", "le"])
+def test_filter(tmp_path, underfolder, runner: CliRunner, compare: str) -> None:
+    input_folder = str(underfolder.folder)
+    output_folder = str(tmp_path / "output")
+    result = runner.invoke(
+        pipewine_app,
+        [
+            "op",
+            "filter",
+            "--input",
+            input_folder,
+            "--output",
+            output_folder,
+            "-k",
+            "metadata.letter",
+            "-c",
+            compare,
+            "-t",
+            "e",
+        ],
+    )
+    assert Path(output_folder).is_dir()
+    assert result.exit_code == 0
+
+
+def test_groupby(tmp_path, underfolder, runner: CliRunner) -> None:
+    input_folder = str(underfolder.folder)
+    output_folders = {
+        "orange": str(tmp_path / "output" / "orange"),
+        "cyan": str(tmp_path / "output" / "cyan"),
+        "green": str(tmp_path / "output" / "green"),
+    }
+    result = runner.invoke(
+        pipewine_app,
+        [
+            "op",
+            "groupby",
+            "--input",
+            input_folder,
+            "-o.orange",
+            output_folders["orange"],
+            "-o.cyan",
+            output_folders["cyan"],
+            "-o.green",
+            output_folders["green"],
+            "-k",
+            "metadata.color",
+        ],
+    )
+    for output_folder in output_folders.values():
+        assert Path(output_folder).is_dir()
+    assert result.exit_code == 0
+
+
+def test_sort(tmp_path, underfolder, runner: CliRunner) -> None:
+    input_folder = str(underfolder.folder)
+    output_folder = str(tmp_path / "output")
+    result = runner.invoke(
+        pipewine_app,
+        [
+            "op",
+            "sort",
+            "--input",
+            input_folder,
+            "--output",
+            output_folder,
+            "-k",
+            "metadata.color",
+        ],
     )
     assert Path(output_folder).is_dir()
     assert result.exit_code == 0

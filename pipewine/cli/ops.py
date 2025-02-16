@@ -427,10 +427,11 @@ def filter_(
 
     def _filter_fn(idx: int, sample: Sample) -> bool:
         value = deep_get(sample, key)
-        if type(value) != bool:
-            target_ = type(value)(target)
-        else:
-            target_ = str(target).lower() in ["yes", "true", "y", "ok", "t", "1"]
+        target_ = (
+            type(value)(target)
+            if type(value) != bool
+            else str(target).lower() in ["yes", "true", "y", "ok", "t", "1"]
+        )
         if compare == Compare.eq:
             result = value == target_
         elif compare == Compare.neq:
