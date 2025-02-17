@@ -16,7 +16,7 @@ _module_locks: Dict[str, "weakref.ReferenceType[threading.Lock]"] = {}
 # We follow the importlib implementation about module locking
 # to lock when importing modules from python code strings
 # NB: no need to check for deadlock, as it is used only for anonymous modules
-def _get_module_lock(name):
+def _get_module_lock(name):  # pragma: no cover
     """Get or create the module lock for a given module name."""
     # Acquire/release internally the global import lock to protect _module_locks.
     with _imp_lock:
@@ -127,7 +127,7 @@ def _import_module_from_code(module_code: str) -> ModuleType:
         # check if the module is already imported
         try:
             spec = importlib.util.find_spec(name)
-        except Exception:
+        except Exception:  # pragma: no cover
             spec = None
 
         if spec is not None:
@@ -135,7 +135,7 @@ def _import_module_from_code(module_code: str) -> ModuleType:
         else:
             # create a new module from code
             spec = importlib.util.spec_from_loader(name, loader=None)
-            if spec is None:
+            if spec is None:  # pragma: no cover
                 raise ImportError(f"Cannot create spec for module `{module_code}`")
             module = importlib.util.module_from_spec(spec)
 
