@@ -8,7 +8,8 @@ from typer import Option, Typer
 
 from pipewine.cli.ops import _param_to_str, _single_op_workflow, op_callback
 from pipewine.mappers import *
-from pipewine.parsers import ParserRegistry, Parser
+from pipewine.operators import MapOp
+from pipewine.parsers import Parser, ParserRegistry
 
 
 def _generate_command[

@@ -10,7 +10,18 @@ from pydantic import BaseModel
 from typer import Option, Typer
 from typer.testing import CliRunner
 
-from pipewine import Dataset, DatasetOperator, Item, TypedSample, Bundle, Grabber
+from pipewine import (
+    Dataset,
+    DatasetOperator,
+    Item,
+    TypedSample,
+    Bundle,
+    Grabber,
+    FormatKeysMapper,
+    UnderfolderSink,
+    UnderfolderSource,
+    MapOp,
+)
 from pipewine.cli import pipewine_app, op_cli
 
 
@@ -195,7 +206,7 @@ def test_op_format_help(runner: CliRunner) -> None:
     assert result.exit_code == 0
 
 
-def test_fail_multiple_grabbers() -> None:
+def test_op_fail_multiple_grabbers() -> None:
     with pytest.raises(ValueError):
 
         @op_cli()
@@ -203,7 +214,7 @@ def test_fail_multiple_grabbers() -> None:
             return Dataset2Dataset()
 
 
-def test_fail_grabber_default() -> None:
+def test_op_fail_grabber_default() -> None:
     with pytest.raises(ValueError):
 
         @op_cli()
@@ -211,7 +222,7 @@ def test_fail_grabber_default() -> None:
             return Dataset2Dataset()
 
 
-def test_dataset2dataset(tmp_path, underfolder, runner: CliRunner) -> None:
+def test_op_dataset2dataset(tmp_path, underfolder, runner: CliRunner) -> None:
     input_folder = str(underfolder.folder)
     output_folder = str(tmp_path / "output")
     result = runner.invoke(
@@ -232,7 +243,7 @@ def test_dataset2dataset(tmp_path, underfolder, runner: CliRunner) -> None:
 @pytest.mark.parametrize(
     "cmd", ["mock_list2list", "mock_tuple2tuple_ellipsis", "mock_list2list_unannotated"]
 )
-def test_list2list(tmp_path, underfolder, runner: CliRunner, cmd: str) -> None:
+def test_op_list2list(tmp_path, underfolder, runner: CliRunner, cmd: str) -> None:
     input_folder = str(underfolder.folder)
     output_folders = [str(tmp_path / f"output_{i}") for i in range(3)]
     result = runner.invoke(
@@ -259,7 +270,7 @@ def test_list2list(tmp_path, underfolder, runner: CliRunner, cmd: str) -> None:
     assert result.exit_code == 0
 
 
-def test_tuple2tuple(tmp_path, underfolder, runner: CliRunner) -> None:
+def test_op_tuple2tuple(tmp_path, underfolder, runner: CliRunner) -> None:
     input_folder = str(underfolder.folder)
     output_folders = [str(tmp_path / f"output_{i}") for i in range(3)]
     result = runner.invoke(
@@ -285,7 +296,7 @@ def test_tuple2tuple(tmp_path, underfolder, runner: CliRunner) -> None:
 @pytest.mark.parametrize(
     "cmd", ["mock_mapping2mapping", "mock_mapping2mapping_unannotated"]
 )
-def test_mapping2mapping(tmp_path, underfolder, runner: CliRunner, cmd: str) -> None:
+def test_op_mapping2mapping(tmp_path, underfolder, runner: CliRunner, cmd: str) -> None:
     input_folder = str(underfolder.folder)
     output_folders = [str(tmp_path / f"output_{i}") for i in range(3)]
     result = runner.invoke(
@@ -312,7 +323,7 @@ def test_mapping2mapping(tmp_path, underfolder, runner: CliRunner, cmd: str) -> 
     assert result.exit_code == 0
 
 
-def test_bundle2bundle(tmp_path, underfolder, runner: CliRunner) -> None:
+def test_op_bundle2bundle(tmp_path, underfolder, runner: CliRunner) -> None:
     input_folder = str(underfolder.folder)
     output_folders = [str(tmp_path / f"output_{i}") for i in range(3)]
     result = runner.invoke(
@@ -339,7 +350,7 @@ def test_bundle2bundle(tmp_path, underfolder, runner: CliRunner) -> None:
     assert result.exit_code == 0
 
 
-def test_clone(tmp_path, underfolder, runner: CliRunner) -> None:
+def test_op_clone(tmp_path, underfolder, runner: CliRunner) -> None:
     input_folder = str(underfolder.folder)
     output_folder = str(tmp_path / "output")
     result = runner.invoke(
@@ -351,7 +362,7 @@ def test_clone(tmp_path, underfolder, runner: CliRunner) -> None:
 
 
 @pytest.mark.parametrize("compare", ["eq", "neq", "gt", "lt", "ge", "le"])
-def test_filter(tmp_path, underfolder, runner: CliRunner, compare: str) -> None:
+def test_op_filter(tmp_path, underfolder, runner: CliRunner, compare: str) -> None:
     input_folder = str(underfolder.folder)
     output_folder = str(tmp_path / "output")
     result = runner.invoke(
@@ -375,7 +386,7 @@ def test_filter(tmp_path, underfolder, runner: CliRunner, compare: str) -> None:
     assert result.exit_code == 0
 
 
-def test_groupby(tmp_path, underfolder, runner: CliRunner) -> None:
+def test_op_groupby(tmp_path, underfolder, runner: CliRunner) -> None:
     input_folder = str(underfolder.folder)
     output_folders = {
         "orange": str(tmp_path / "output" / "orange"),
@@ -404,7 +415,7 @@ def test_groupby(tmp_path, underfolder, runner: CliRunner) -> None:
     assert result.exit_code == 0
 
 
-def test_sort(tmp_path, underfolder, runner: CliRunner) -> None:
+def test_op_sort(tmp_path, underfolder, runner: CliRunner) -> None:
     input_folder = str(underfolder.folder)
     output_folder = str(tmp_path / "output")
     result = runner.invoke(
@@ -419,6 +430,253 @@ def test_sort(tmp_path, underfolder, runner: CliRunner) -> None:
             "-k",
             "metadata.color",
         ],
+    )
+    assert Path(output_folder).is_dir()
+    assert result.exit_code == 0
+
+
+def test_op_slice(tmp_path, underfolder, runner: CliRunner) -> None:
+    input_folder = str(underfolder.folder)
+    output_folder = str(tmp_path / "output")
+    result = runner.invoke(
+        pipewine_app,
+        [
+            "op",
+            "slice",
+            "--input",
+            input_folder,
+            "--output",
+            output_folder,
+            "--start",
+            "10",
+            "--stop",
+            "20",
+        ],
+    )
+    assert Path(output_folder).is_dir()
+    assert result.exit_code == 0
+
+
+def test_op_repeat(tmp_path, underfolder, runner: CliRunner) -> None:
+    input_folder = str(underfolder.folder)
+    output_folder = str(tmp_path / "output")
+    result = runner.invoke(
+        pipewine_app,
+        ["op", "repeat", "--input", input_folder, "--output", output_folder, "-t", "3"],
+    )
+    assert Path(output_folder).is_dir()
+    assert result.exit_code == 0
+
+
+def test_op_cycle(tmp_path, underfolder, runner: CliRunner) -> None:
+    input_folder = str(underfolder.folder)
+    output_folder = str(tmp_path / "output")
+    result = runner.invoke(
+        pipewine_app,
+        ["op", "cycle", "--input", input_folder, "--output", output_folder, "-n", "50"],
+    )
+    assert Path(output_folder).is_dir()
+    assert result.exit_code == 0
+
+
+def test_op_reverse(tmp_path, underfolder, runner: CliRunner) -> None:
+    input_folder = str(underfolder.folder)
+    output_folder = str(tmp_path / "output")
+    result = runner.invoke(
+        pipewine_app,
+        ["op", "reverse", "--input", input_folder, "--output", output_folder],
+    )
+    assert Path(output_folder).is_dir()
+    assert result.exit_code == 0
+
+
+def test_op_pad(tmp_path, underfolder, runner: CliRunner) -> None:
+    input_folder = str(underfolder.folder)
+    output_folder = str(tmp_path / "output")
+    result = runner.invoke(
+        pipewine_app,
+        ["op", "pad", "--input", input_folder, "--output", output_folder, "-l", "50"],
+    )
+    assert Path(output_folder).is_dir()
+    assert result.exit_code == 0
+
+
+def test_op_cat(tmp_path, underfolder, runner: CliRunner) -> None:
+    input_folder = str(underfolder.folder)
+    output_folder = str(tmp_path / "output")
+    result = runner.invoke(
+        pipewine_app,
+        ["op", "cat", "-i", input_folder, "-i", input_folder, "-o", output_folder],
+    )
+    assert Path(output_folder).is_dir()
+    assert result.exit_code == 0
+
+
+def test_op_zip(tmp_path, underfolder, runner: CliRunner) -> None:
+    input_folder = str(underfolder.folder)
+    output_folder = str(tmp_path / "output")
+    op = MapOp(FormatKeysMapper("*_dup"))
+    input_folder_2 = str(tmp_path / "input_2")
+    UnderfolderSink(Path(input_folder_2))(op(UnderfolderSource(underfolder.folder)()))
+    result = runner.invoke(
+        pipewine_app,
+        ["op", "zip", "-i", input_folder, "-i", input_folder_2, "-o", output_folder],
+    )
+    assert Path(output_folder).is_dir()
+    assert result.exit_code == 0
+
+
+@pytest.mark.parametrize("seed", ["-1", "42"])
+def test_op_shuffle(tmp_path, underfolder, runner: CliRunner, seed: str) -> None:
+    input_folder = str(underfolder.folder)
+    output_folder = str(tmp_path / "output")
+    result = runner.invoke(
+        pipewine_app,
+        ["op", "shuffle", "-i", input_folder, "-o", output_folder, "-s", seed],
+    )
+    assert Path(output_folder).is_dir()
+    assert result.exit_code == 0
+
+
+def test_op_batch(tmp_path, underfolder, runner: CliRunner) -> None:
+    input_folder = str(underfolder.folder)
+    output_folder = str(tmp_path / "output")
+    result = runner.invoke(
+        pipewine_app,
+        ["op", "batch", "-i", input_folder, "-o", output_folder, "-b", "3"],
+    )
+    assert Path(output_folder).is_dir()
+    assert result.exit_code == 0
+
+
+def test_op_chunk(tmp_path, underfolder, runner: CliRunner) -> None:
+    input_folder = str(underfolder.folder)
+    output_folder = str(tmp_path / "output")
+    result = runner.invoke(
+        pipewine_app,
+        ["op", "chunk", "-i", input_folder, "-o", output_folder, "-c", "3"],
+    )
+    assert Path(output_folder).is_dir()
+    assert result.exit_code == 0
+
+
+@pytest.mark.parametrize("splits", [["10", "16"], ["0.2", "0.8"], ["10", "5", "null"]])
+def test_op_split(tmp_path, underfolder, runner: CliRunner, splits: list[str]) -> None:
+    input_folder = str(underfolder.folder)
+    output_folders = [str(tmp_path / ("output" + str(i))) for i in range(len(splits))]
+    args = ["op", "split", "-i", input_folder]
+    for out, split in zip(output_folders, splits):
+        args.extend(["-o", out, "-s", split])
+    result = runner.invoke(pipewine_app, args)
+    for output_folder in output_folders:
+        assert Path(output_folder).is_dir()
+    assert result.exit_code == 0
+
+
+def test_map_hash(tmp_path, underfolder, runner: CliRunner) -> None:
+    input_folder = str(underfolder.folder)
+    output_folder = str(tmp_path / "output")
+    result = runner.invoke(
+        pipewine_app, ["map", "hash", "-i", input_folder, "-o", output_folder]
+    )
+    assert Path(output_folder).is_dir()
+    assert result.exit_code == 0
+
+
+def test_map_convert(tmp_path, underfolder, runner: CliRunner) -> None:
+    input_folder = str(underfolder.folder)
+    output_folder = str(tmp_path / "output")
+    result = runner.invoke(
+        pipewine_app,
+        ["map", "convert", "-i", input_folder, "-o", output_folder, "-c", "image=bmp"],
+    )
+    assert Path(output_folder).is_dir()
+    assert result.exit_code == 0
+
+
+def test_map_share(tmp_path, underfolder, runner: CliRunner) -> None:
+    input_folder = str(underfolder.folder)
+    output_folder = str(tmp_path / "output")
+    result = runner.invoke(
+        pipewine_app,
+        ["map", "share", "-i", input_folder, "-o", output_folder, "-u", "shared"],
+    )
+    assert Path(output_folder).is_dir()
+    assert result.exit_code == 0
+
+
+def test_map_duplicate(tmp_path, underfolder, runner: CliRunner) -> None:
+    input_folder = str(underfolder.folder)
+    output_folder = str(tmp_path / "output")
+    result = runner.invoke(
+        pipewine_app,
+        [
+            "map",
+            "duplicate",
+            "-i",
+            input_folder,
+            "-o",
+            output_folder,
+            "-s",
+            "image",
+            "-d",
+            "image_2",
+        ],
+    )
+    assert Path(output_folder).is_dir()
+    assert result.exit_code == 0
+
+
+def test_map_format_keys(tmp_path, underfolder, runner: CliRunner) -> None:
+    input_folder = str(underfolder.folder)
+    output_folder = str(tmp_path / "output")
+    result = runner.invoke(
+        pipewine_app,
+        [
+            "map",
+            "format-keys",
+            "-i",
+            input_folder,
+            "-o",
+            output_folder,
+            "-k",
+            "image",
+            "-f",
+            "*_",
+        ],
+    )
+    assert Path(output_folder).is_dir()
+    assert result.exit_code == 0
+
+
+def test_map_rename(tmp_path, underfolder, runner: CliRunner) -> None:
+    input_folder = str(underfolder.folder)
+    output_folder = str(tmp_path / "output")
+    result = runner.invoke(
+        pipewine_app,
+        [
+            "map",
+            "rename",
+            "-i",
+            input_folder,
+            "-o",
+            output_folder,
+            "-r",
+            "image=img",
+            "-r",
+            "metadata=meta",
+        ],
+    )
+    assert Path(output_folder).is_dir()
+    assert result.exit_code == 0
+
+
+def test_map_filter_keys(tmp_path, underfolder, runner: CliRunner) -> None:
+    input_folder = str(underfolder.folder)
+    output_folder = str(tmp_path / "output")
+    result = runner.invoke(
+        pipewine_app,
+        ["map", "filter-keys", "-i", input_folder, "-o", output_folder, "-k", "image"],
     )
     assert Path(output_folder).is_dir()
     assert result.exit_code == 0
