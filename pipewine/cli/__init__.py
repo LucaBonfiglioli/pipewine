@@ -5,3 +5,4 @@ from pipewine.cli.ops import op_cli
 from pipewine.cli.sinks import sink_cli
 from pipewine.cli.sources import source_cli
 from pipewine.cli.utils import parse_grabber, parse_sink, parse_source, run_cli_workflow
+from pipewine.cli.workflows import wf_cli

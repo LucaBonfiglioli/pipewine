@@ -1,28 +1,28 @@
+import sys
 from collections.abc import Mapping, Sequence
 from pathlib import Path
-import sys
 from typing import IO, Annotated, Any
 
-from click.testing import Result
 import numpy as np
 import pytest
+from click.testing import Result
 from pydantic import BaseModel
 from typer import Option, Typer
 from typer.testing import CliRunner
 
 from pipewine import (
+    Bundle,
     Dataset,
     DatasetOperator,
-    Item,
-    TypedSample,
-    Bundle,
-    Grabber,
     FormatKeysMapper,
+    Grabber,
+    Item,
+    MapOp,
+    TypedSample,
     UnderfolderSink,
     UnderfolderSource,
-    MapOp,
 )
-from pipewine.cli import pipewine_app, op_cli
+from pipewine.cli import import_module, op_cli, pipewine_app
 
 
 class LetterMetadata(BaseModel):
@@ -679,6 +679,34 @@ def test_map_filter_keys(tmp_path, underfolder, runner: CliRunner) -> None:
         ["map", "filter-keys", "-i", input_folder, "-o", output_folder, "-k", "image"],
     )
     assert Path(output_folder).is_dir()
+    assert result.exit_code == 0
+
+
+def test_example_workflow(
+    sample_data, tmp_path, underfolder, runner: CliRunner
+) -> None:
+    import_module(sample_data / "extensions" / "cli_extension.py")
+    input_folder = str(underfolder.folder)
+    output_folder = str(tmp_path / "output")
+    result = runner.invoke(
+        pipewine_app, ["wf", "example", "-i", input_folder, "-o", output_folder]
+    )
+    assert Path(output_folder).is_dir()
+    assert result.exit_code == 0
+
+
+def test_example_workflow_draw(
+    sample_data, tmp_path, underfolder, runner: CliRunner
+) -> None:
+    import_module(sample_data / "extensions" / "cli_extension.py")
+    input_folder = str(underfolder.folder)
+    output_folder = str(tmp_path / "output")
+    draw_file = str(tmp_path / "wf.svg")
+    result = runner.invoke(
+        pipewine_app,
+        ["wf", "--draw", draw_file, "example", "-i", input_folder, "-o", output_folder],
+    )
+    assert Path(draw_file).is_file()
     assert result.exit_code == 0
 
 

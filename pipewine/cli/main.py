@@ -1,15 +1,17 @@
+import sys
 from typing import Annotated
 
 from typer import Option, Typer
 
+from pipewine.cli.extension import import_module
 from pipewine.cli.mappers import map_app
 from pipewine.cli.ops import op_app
 from pipewine.cli.workflows import wf_app
-from pipewine.cli.extension import import_module
 
 version_help = "Show the current Pipewine installation version."
 module_help = (
-    "Add an extension module: path to python script, module path, or plain python code."
+    "Add an extension module with custom CLI commands. Can be either a path to a "
+    "python script or a python classpath."
 )
 
 
@@ -22,9 +24,6 @@ def main_callback(
     if version:
         print(__version__)
         exit(0)
-
-    for m in module:
-        import_module(m)
 
 
 pipewine_app = Typer(
@@ -40,6 +39,12 @@ pipewine_app.add_typer(wf_app)
 
 
 def main() -> None:  # pragma: no cover
+    command_names = [x.name for x in pipewine_app.registered_commands]
+    for i, token in enumerate(sys.argv):
+        if token in command_names:
+            break
+        if token in ["-m" or "--module"]:
+            import_module(sys.argv[i + 1])
     pipewine_app()
 
 
