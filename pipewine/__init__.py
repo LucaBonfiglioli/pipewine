@@ -1,4 +1,8 @@
+"""Pipelime root package, provides access to all the core library functionality. 
+"""
+
 __version__ = "0.0.0"
+"""Pipewine version number."""
 
 from pipewine.mappers import *
 from pipewine.operators import *

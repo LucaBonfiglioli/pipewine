@@ -3,7 +3,8 @@
         color: var(--md-default-fg-color);
     }
 
-    --md-primary-fg-color: #d20150;
+    /* --md-primary-fg-color: #d20150; */
+    --md-primary-fg-color: #000000;
 }
 
 
@@ -12,6 +13,6 @@
         color: var(--md-default-fg-color);
     }
 
-    --md-primary-fg-color: #d20150;
-    --md-default-bg-color: #1e1c1e;
+    --md-primary-fg-color: #6b12c3;
+    --md-default-bg-color: #000000;
 }

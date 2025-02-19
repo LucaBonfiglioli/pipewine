@@ -1,3 +1,5 @@
+"""Multiprocessing utilities for iterating over a sequence with parallelism."""
+
 from collections.abc import Callable, Iterator, Sequence
 from multiprocessing.pool import Pool
 from multiprocessing import get_context
@@ -19,7 +21,20 @@ class _GrabWorker[T]:
 
 
 class InheritedData:
+    """Data that is inherited by all subprocesses at creation time. This is a
+    workaround to allow arbitrary data to be shared between the main and child process
+    using inheritance.
+
+    This is crucial to pass things like sockets, file descriptors, and other resources
+    that can only be shared between processes through inheritance.
+
+    Note: The data stored in this class is only shared at the time of the subprocess
+    creation, and it is not updated if the data changes in the main or child process, as
+    it is not shared memory nor managed by any synchronization mechanism.
+    """
+
     data: dict[str, Any] = {}
+    """Dict-like container for all the data that is inherited by the subprocesses."""
 
 
 class _GrabContext[T]:
@@ -75,9 +90,22 @@ class _GrabContext[T]:
 
 
 class Grabber:
+    """Grabber utility for iterating over a sequence using parallelism."""
+
     def __init__(
         self, num_workers: int = 0, prefetch: int = 2, keep_order: bool = True
     ) -> None:
+        """
+        Args:
+            num_workers (int, optional): Number of worker processes to use for
+                parallelism. If 0, no parallelism is used. Defaults to 0.
+            prefetch (int, optional): Number of elements to prefetch in each worker
+                process. Defaults to 2.
+            keep_order (bool, optional): Whether to keep the order of the elements in
+                the sequence. If `True`, the elements are yielded in the same order as they
+                appear in the sequence. If `False`, the elements are yielded in the
+                order they are processed. Defaults to `True`.
+        """
         super().__init__()
         self.num_workers = num_workers
         self.prefetch = prefetch
@@ -92,6 +120,36 @@ class Grabber:
         callback: Callable[[int], None] | None = None,
         worker_init_fn: tuple[Callable, Sequence] | None = None,
     ) -> _GrabContext[T]:
+        """Create a context manager for iterating over a sequence with parallelism.
+
+        Note: only the call to the `__getitem__` method is actually parallelized, the
+        rest of the iteration is done in the main process, making this useful when
+        iterating over `LazyDataset` instances, that may perform expensive operations
+        when fetching the samples.
+
+        Args:
+            seq (Sequence[T]): Sequence of elements to iterate over.
+            callback (Callable[[int], None] | None, optional): Optional callback
+                function to be called on each iteration. The callback function should
+                accept the index of the current element as its only argument. Defaults
+                to `None`.
+            worker_init_fn (tuple[Callable, Sequence] | None, optional): Optional tuple
+                containing a function and a sequence of arguments to be called in each
+                worker process before starting the iteration. Defaults to `None`.
+
+        Returns:
+            _GrabContext[T]: Context manager for iterating over the sequence with
+                parallelism.
+
+        Examples:
+            ```python
+            seq = list(range(10))
+            grabber = Grabber(num_workers=4, prefetch=4)
+            with grabber(seq) as it:
+                for idx, elem in it:
+                    print(idx, elem)
+            ```
+        """
         return _GrabContext(
             self.num_workers,
             self.prefetch,

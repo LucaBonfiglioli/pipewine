@@ -17,7 +17,7 @@ theme:
     - media: "(prefers-color-scheme: light)"
       scheme: default
       primary: custom
-      accent: pink
+      accent: deep purple
       toggle:
         icon: material/toggle-switch
         name: Switch to dark mode
@@ -26,7 +26,7 @@ theme:
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
       primary: custom
-      accent: pink
+      accent: deep purple
       toggle:
         icon: material/toggle-switch-off-outline
         name: Switch to light mode
@@ -39,8 +39,9 @@ extra_css:
   - css/extra.css
 
 nav: 
-  - index.md
-  - 📖 Tutorial: 
+  - Home:
+    - index.md
+  - Tutorial: 
     - tutorial/overview.md
     - tutorial/installation.md
     - tutorial/data.md
@@ -59,3 +60,18 @@ markdown_extensions:
   - pymdownx.superfences
   - admonition
   - pymdownx.details
+
+
+plugins:
+- search
+- mkdocstrings:
+    default_handler: python
+    handlers:
+      python:
+        paths: [.]
+        
+- mkdocs-autoapi:
+    autoapi_add_nav_entry: API Reference
+    autoapi_dir: pipewine
+    # autoapi_ignore: 
+    # - "_[a-z]*.py"

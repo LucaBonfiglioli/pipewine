@@ -1,3 +1,5 @@
+"""Private module for typing utilities used by the `pipewine` package."""
+
 from collections import defaultdict
 from collections.abc import Mapping, Sequence
 from inspect import getmro
@@ -15,6 +17,14 @@ AnyDataset = (
     | Mapping[str, Dataset]
     | Bundle[Dataset]
 )
+"""Type alias for any dataset type, which can be:
+
+- A single dataset.
+- A tuple of datasets.
+- A sequence of datasets.
+- A mapping of dataset names to datasets.
+- A bundle of datasets.
+"""
 
 
 def _mro_lca(*cls_list: type) -> type:  # pragma: no cover
