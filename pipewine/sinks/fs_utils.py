@@ -67,7 +67,7 @@ def write_item_to_file(
     item: Item, file: Path, copy_policy: CopyPolicy = CopyPolicy.HARD_LINK
 ) -> None:
     if isinstance(item, CachedItem):
-        item = item.source_recursive()
+        item = item.source_recursive
 
     errors: list[tuple] = []
     if (

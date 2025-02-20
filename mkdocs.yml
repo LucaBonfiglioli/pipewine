@@ -41,7 +41,7 @@ extra_css:
 nav: 
   - Home:
     - index.md
-  - Tutorial: 
+  - Usage: 
     - tutorial/overview.md
     - tutorial/installation.md
     - tutorial/data.md
@@ -73,5 +73,5 @@ plugins:
 - mkdocs-autoapi:
     autoapi_add_nav_entry: API Reference
     autoapi_dir: pipewine
-    # autoapi_ignore: 
-    # - "_[a-z]*.py"
+    autoapi_ignore: 
+    - "_[a-z]*.py"
