@@ -1,3 +1,5 @@
+"""Mappers for manipulating the format and sharedness of items in a sample."""
+
 from collections.abc import Iterable, Mapping
 
 from pipewine.item import Item
@@ -7,7 +9,17 @@ from pipewine.sample import Sample
 
 
 class ConvertMapper[T: Sample](Mapper[T, T]):
+    """Mapper that changes the parser of selected items in a sample, allowing for
+    conversion between different data formats, e.g., from JSON to YAML or from PNG to
+    JPEG.
+    """
+
     def __init__(self, parsers: Mapping[str, Parser]) -> None:
+        """
+        Args:
+            parsers (Mapping[str, Parser]): Mapping of item keys to parsers to use for
+                converting the items.
+        """
         super().__init__()
         self._parsers = parsers
 
@@ -20,7 +32,16 @@ class ConvertMapper[T: Sample](Mapper[T, T]):
 
 
 class ShareMapper[T: Sample](Mapper[T, T]):
+    """Mapper that changes the sharedness of selected items in a sample, allowing for
+    sharing or unsharing items between samples.
+    """
+
     def __init__(self, share: Iterable[str], unshare: Iterable[str]) -> None:
+        """
+        Args:
+            share (Iterable[str]): Keys of the items to share between samples.
+            unshare (Iterable[str]): Keys of the items to unshare between samples.
+        """
         super().__init__()
         if set(share) & set(unshare):
             raise ValueError("The keys in 'share' and 'unshare' must be disjoint.")

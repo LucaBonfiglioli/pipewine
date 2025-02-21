@@ -1,3 +1,5 @@
+"""Package for Pipewine CLI and all related components."""
+
 from pipewine.cli.extension import import_module
 from pipewine.cli.main import pipewine_app
 from pipewine.cli.mappers import map_cli

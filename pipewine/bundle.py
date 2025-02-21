@@ -60,9 +60,6 @@ class Bundle(Generic[T], metaclass=BundleMeta, _is_root=True):
         """Create a new `Bundle` instance from a dictionary. This method is supposed to
         be called on the concrete sub-classes, not on the `Bundle` base class for it has
         no fields.
-
-        Args:
-            **data: Dictionary mapping field names to their values.
         """
         return cls(**data)
 

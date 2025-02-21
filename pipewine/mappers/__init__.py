@@ -1,3 +1,5 @@
+"""Package for all Pipewine built-in mappers."""
+
 from pipewine.mappers.base import Mapper
 from pipewine.mappers.cache import CacheMapper
 from pipewine.mappers.compose import ComposeMapper

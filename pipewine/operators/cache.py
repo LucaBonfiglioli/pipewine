@@ -1,3 +1,5 @@
+"""Operators for caching the results of other operators to avoid recomputation."""
+
 import random
 import weakref
 from abc import ABC, abstractmethod
@@ -16,27 +18,74 @@ from pipewine.sample import Sample
 
 
 class Cache[K, V](ABC):
+    """Key-value cache abstraction with thread-safe operations on arbitrary keys and
+    values.
+
+    Subclasses must implement the `_clear`, `_get`, and `_put` methods to define the
+    cache behavior and eviction policy. These methods are automatically made thread-safe
+    by the `Cache` class, so there is no need to worry about acquiring and releasing
+    locks when implementing them.
+    """
+
     def __init__(self) -> None:
+        """Initialize the locks necessary for thread-safety, always make sure to call
+        this constructor when inheriting from this class.
+        """
         self._lock = RLock()
 
     @abstractmethod
-    def _clear(self) -> None: ...
+    def _clear(self) -> None:
+        """Clear the cache, removing all key-value pairs."""
+        pass
 
     @abstractmethod
-    def _get(self, key: K) -> V | None: ...
+    def _get(self, key: K) -> V | None:
+        """Get the value associated with the given key.
+
+        Args:
+            key (K): Key to look up in the cache.
+
+        Returns:
+            V | None: Value associated with the key, or `None` if the key is not present
+                in the cache.
+        """
+        pass
 
     @abstractmethod
-    def _put(self, key: K, value: V) -> None: ...
+    def _put(self, key: K, value: V) -> None:
+        """Put a key-value pair in the cache.
+
+        Args:
+            key (K): Key to associate with the value.
+            value (V): Value to store in the cache.
+        """
+        pass
 
     def clear(self) -> None:
+        """Clear the cache, removing all key-value pairs."""
         with self._lock:
             self._clear()
 
     def get(self, key: K) -> V | None:
+        """Get the value associated with the given key.
+
+        Args:
+            key (K): Key to look up in the cache.
+
+        Returns:
+            V | None: Value associated with the key, or `None` if the key is not present
+                in the cache.
+        """
         with self._lock:
             return self._get(key)
 
     def put(self, key: K, value: V) -> None:
+        """Put a key-value pair in the cache.
+
+        Args:
+            key (K): Key to associate with the value.
+            value (V): Value to store in the cache.
+        """
         with self._lock:
             self._put(key, value)
 
@@ -52,7 +101,16 @@ class Cache[K, V](ABC):
 
 
 class MemoCache[K, V](Cache[K, V]):
+    """Simple cache that stores key-value pairs in a dictionary, with no eviction policy
+    or size limit, useful for memoization of functions with a bounded number of
+    arguments.
+
+    Avoid using this cache for large datasets or unbounded keys, as it will consume
+    memory indefinitely.
+    """
+
     def __init__(self) -> None:
+        """Initialize the cache with an empty dictionary."""
         super().__init__()
         self._memo: dict[K, V] = {}
 
@@ -67,7 +125,19 @@ class MemoCache[K, V](Cache[K, V]):
 
 
 class RRCache[K, V](Cache[K, V]):
+    """Random Replacement (RR) cache that evicts a random key-value pair when the cache
+    is full and a new key-value pair is inserted. This cache is useful for scenarios
+    where the order of access to the keys is not known or when no suitable eviction
+    policy is particularly effective.
+    """
+
     def __init__(self, maxsize: int = 32) -> None:
+        """
+        Args:
+            maxsize (int, optional): Maximum number of key-value pairs to store in the
+                cache. Defaults to 32.
+        """
+
         super().__init__()
         self._mp: dict[K, V] = {}
         self._keys: list[K] = []
@@ -92,7 +162,18 @@ class RRCache[K, V](Cache[K, V]):
 
 
 class FIFOCache[K, V](Cache[K, V]):
+    """First-In-First-Out (FIFO) cache that evicts the least recently **inserted**
+    key-value pair when the cache is full and a new key-value pair is inserted. This
+    cache is useful for scenarios where the order of access to the keys is known and
+    the oldest keys are likely to be the least useful.
+    """
+
     def __init__(self, maxsize: int = 32) -> None:
+        """
+        Args:
+            maxsize (int, optional): Maximum number of key-value pairs to store in the
+                cache. Defaults to 32.
+        """
         super().__init__()
         self._mp: dict[K, V] = {}
         self._keys: deque[K] = deque()
@@ -116,7 +197,18 @@ class FIFOCache[K, V](Cache[K, V]):
 
 
 class LIFOCache[K, V](Cache[K, V]):
+    """Last-In-First-Out (LIFO) cache that evicts the most recently **inserted**
+    key-value pair when the cache is full and a new key-value pair is inserted. This
+    cache is useful for scenarios where the data is accessed in long repeated cycles,
+    where the most recently inserted keys are likely to not going to be used again soon.
+    """
+
     def __init__(self, maxsize: int = 32) -> None:
+        """
+        Args:
+            maxsize (int, optional): Maximum number of key-value pairs to store in the
+                cache. Defaults to 32.
+        """
         super().__init__()
         self._mp: dict[K, V] = {}
         self._keys: list[K] = []
@@ -140,9 +232,20 @@ class LIFOCache[K, V](Cache[K, V]):
 
 
 class LRUCache[K, V](Cache[K, V]):
+    """Least Recently Used (LRU) cache that evicts the least recently **accessed**
+    key-value pair when the cache is full and a new key-value pair is inserted. This
+    cache is useful for scenarios where the most recently accessed keys are likely to
+    be the most useful in the near future.
+    """
+
     _PREV, _NEXT, _KEY, _VALUE = 0, 1, 2, 3
 
     def __init__(self, maxsize: int = 32) -> None:
+        """
+        Args:
+            maxsize (int, optional): Maximum number of key-value pairs to store in the
+                cache. Defaults to 32.
+        """
         super().__init__()
         self._maxsize = maxsize
         self._dll: list = []
@@ -187,9 +290,21 @@ class LRUCache[K, V](Cache[K, V]):
 
 
 class MRUCache[K, V](Cache[K, V]):
+    """Most Recently Used (MRU) cache that evicts the most recently **accessed**
+    key-value pair when the cache is full and a new key-value pair is inserted. This
+    cache is useful for scenarios where the most recently accessed keys are likely not
+    going to be accessed again soon.
+    """
+
     _PREV, _NEXT, _KEY, _VALUE = 0, 1, 2, 3
 
     def __init__(self, maxsize: int = 32) -> None:
+        """
+        Args:
+            maxsize (int, optional): Maximum number of key-value pairs to store in the
+                cache. Defaults to 32.
+        """
+
         super().__init__()
         self._maxsize = maxsize
         self._dll: list = []
@@ -232,7 +347,17 @@ class MRUCache[K, V](Cache[K, V]):
 
 
 class CacheOp(DatasetOperator[Dataset, Dataset]):
+    """Operator that caches the results of another operator to avoid recomputation.
+    See the "Cache" section in the documentation for more information.
+    """
+
     def __init__(self, cache_type: type[Cache], **cache_params) -> None:
+        """
+        Args:
+            cache_type (type[Cache]): Type of cache to use, must be a subclass of
+                `Cache`.
+            cache_params (Any): Additional parameters to pass to the cache constructor.
+        """
         super().__init__()
         self._cache_mapper: CacheMapper = CacheMapper()
         self._cache_type = cache_type
@@ -260,7 +385,12 @@ class CacheOp(DatasetOperator[Dataset, Dataset]):
 
 
 class ItemCacheOp(DatasetOperator[Dataset, Dataset]):
+    """Operator that caches the items of the samples in a dataset to avoid
+    recomputation. Essentially the same as `MapOp(CacheMapper())`.
+    """
+
     def __init__(self) -> None:
+        """Initialize the operator with a `MapOp` that uses a `CacheMapper`."""
         super().__init__()
         self._map_op = MapOp(CacheMapper())
 
@@ -269,7 +399,21 @@ class ItemCacheOp(DatasetOperator[Dataset, Dataset]):
 
 
 class MemorizeEverythingOp(DatasetOperator[Dataset, Dataset]):
+    """Operator that caches all samples in a dataset to avoid recomputation eagerly.
+    This operator will block until all samples are computed and loaded in memory, so it
+    may not be suitable for large datasets, or when memory is a concern.
+
+    In these cases, consider using a *Checkpoint*, see the "Cache" section in the
+    documentation for more information.
+    """
+
     def __init__(self, grabber: Grabber | None = None) -> None:
+        """
+        Args:
+            grabber (Grabber | None, optional): Grabber to use for loading the samples
+                from the dataset. Defaults to None, in which case a new `Grabber` is
+                created.
+        """
         super().__init__()
         self._grabber = grabber or Grabber()
         self._cache_mapper: CacheMapper = CacheMapper()

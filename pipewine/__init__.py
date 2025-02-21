@@ -72,5 +72,5 @@ from pipewine.sample import Sample, TypedSample, TypelessSample
 from pipewine.sinks.base import DatasetSink
 from pipewine.sinks.fs_utils import CopyPolicy, write_item_to_file
 from pipewine.sinks.underfolder import CopyPolicy, OverwritePolicy, UnderfolderSink
-from pipewine.sources.base import DatasetSource, LazyDatasetSource
+from pipewine.sources.base import DatasetSource
 from pipewine.sources.underfolder import UnderfolderSource

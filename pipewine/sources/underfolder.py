@@ -1,3 +1,5 @@
+"""Source that reads the dataset from file system using Pipewine "Underfolder" format."""
+
 import os
 import warnings
 from inspect import get_annotations
@@ -5,15 +7,24 @@ from itertools import chain
 from pathlib import Path
 
 from pipewine._op_typing import origin_type
+from pipewine.dataset import Dataset, LazyDataset
 from pipewine.item import StoredItem
 from pipewine.parsers import ParserRegistry
 from pipewine.reader import LocalFileReader
 from pipewine.sample import Sample, TypedSample, TypelessSample
-from pipewine.sources.base import LazyDatasetSource
+from pipewine.sources.base import DatasetSource
 
 
-class UnderfolderSource[T: Sample](LazyDatasetSource[T]):
+class UnderfolderSource[T: Sample](DatasetSource[Dataset[T]]):
+    """Source that reads the dataset from file system using Pipewine "Underfolder" format."""
+
     def __init__(self, folder: Path, sample_type: type[T] | None = None) -> None:
+        """
+        Args:
+            folder (Path): Path to the folder where the dataset is stored.
+            sample_type (type[T] | None, optional): Type of the samples to produce.
+                Defaults to None (TypelessSample).
+        """
         super().__init__()
         self._folder = folder
         self._root_files: dict[str, Path] = {}
@@ -23,18 +34,22 @@ class UnderfolderSource[T: Sample](LazyDatasetSource[T]):
 
     @classmethod
     def data_path(cls, root_folder: Path) -> Path:
+        """The path to the data folder inside the root folder."""
         return root_folder / "data"
 
     @property
     def sample_type(self) -> type[T] | type[TypelessSample]:
+        """Type of the samples produced by this source."""
         return self._sample_type
 
     @property
     def folder(self) -> Path:
+        """Path to the folder where the dataset is stored."""
         return self._folder
 
     @property
     def data_folder(self) -> Path:
+        """Path to the data folder inside the root folder."""
         return self.data_path(self.folder)
 
     def _extract_key(self, name: str) -> str:
@@ -129,3 +144,7 @@ class UnderfolderSource[T: Sample](LazyDatasetSource[T]):
             if item is not None:
                 data[k] = item
         return self.sample_type(**data)  # type: ignore
+
+    def __call__(self) -> Dataset[T]:
+        self._prepare()
+        return LazyDataset(self._size(), self._get_sample)

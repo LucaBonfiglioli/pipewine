@@ -1,3 +1,5 @@
+"""Package for Pipewine Workflows and all related components."""
+
 from pathlib import Path
 from pipewine.workflows.drawing import (
     Drawer,

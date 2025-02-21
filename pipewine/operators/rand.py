@@ -1,3 +1,5 @@
+"""Operators with random behavior."""
+
 from functools import partial
 from random import shuffle
 
@@ -7,6 +9,8 @@ from pipewine.sample import Sample
 
 
 class ShuffleOp(DatasetOperator[Dataset, Dataset]):
+    """Operator that shuffles the samples in a dataset in a random order."""
+
     def _index_fn(self, index: list[int], x: int) -> int:
         return index[x]
 

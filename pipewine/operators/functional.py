@@ -1,3 +1,5 @@
+"""Operators that change behavior based on user-defined functions."""
+
 from collections import defaultdict
 from collections.abc import Callable
 from functools import partial
@@ -11,12 +13,25 @@ from pipewine.sample import Sample
 
 
 class FilterOp[T: Sample](DatasetOperator[Dataset[T], Dataset[T]]):
+    """Operator that keeps only or removes samples from a dataset based on a
+    user-defined filter function.
+    """
+
     def __init__(
         self,
         fn: Callable[[int, T], bool],
         negate: bool = False,
         grabber: Grabber | None = None,
     ) -> None:
+        """
+        Args:
+            fn (Callable[[int, T], bool]): Function that takes the index and the sample
+                and returns whether the sample should be kept or removed.
+            negate (bool, optional): Whether to negate the filter function. Defaults to
+                False.
+            grabber (Grabber, optional): Grabber to use for grabbing samples. Defaults
+                to None.
+        """
         super().__init__()
         self._fn = fn
         self._grabber = grabber or Grabber()
@@ -31,9 +46,21 @@ class FilterOp[T: Sample](DatasetOperator[Dataset[T], Dataset[T]]):
 
 
 class GroupByOp[T: Sample](DatasetOperator[Dataset[T], dict[str, Dataset[T]]]):
+    """Operator that groups samples in a dataset based on a user-defined grouping
+    function, returning a mapping of datasets with a key for each unique value
+    returned by the grouping function.
+    """
+
     def __init__(
         self, fn: Callable[[int, T], str], grabber: Grabber | None = None
     ) -> None:
+        """
+        Args:
+            fn (Callable[[int, T], str]): Function that takes the index and the sample
+                and returns a string representing the group to which the sample belongs.
+            grabber (Grabber, optional): Grabber to use for grabbing samples. Defaults
+                to None.
+        """
         super().__init__()
         self._fn = fn
         self._grabber = grabber or Grabber()
@@ -53,23 +80,40 @@ _T_contravariant = TypeVar("_T_contravariant", contravariant=True)
 
 
 class SupportsDunderLT(Protocol[_T_contravariant]):
+    """Protocol for types that support the less-than dunder method."""
+
     def __lt__(self, other: _T_contravariant, /) -> bool: ...
 
 
 class SupportsDunderGT(Protocol[_T_contravariant]):
+    """Protocol for types that support the greater-than dunder method."""
+
     def __gt__(self, other: _T_contravariant, /) -> bool: ...
 
 
 ComparableT = SupportsDunderLT[Any] | SupportsDunderGT[Any]
+"""Type alias for types that support the less-than and greater-than dunder methods."""
 
 
 class SortOp[T: Sample](DatasetOperator[Dataset[T], Dataset[T]]):
+    """Operator that sorts samples in a dataset based on a user-defined sorting
+    function.
+    """
+
     def __init__(
         self,
         fn: Callable[[int, T], ComparableT],
         reverse: bool = False,
         grabber: Grabber | None = None,
     ) -> None:
+        """
+        Args:
+            fn (Callable[[int, T], ComparableT]): Function that takes the index and the
+                sample and returns a comparable value to use for sorting.
+            reverse (bool, optional): Whether to sort in reverse order. Defaults to False.
+            grabber (Grabber, optional): Grabber to use for grabbing samples. Defaults
+                to None.
+        """
         super().__init__()
         self._fn = fn
         self._grabber = grabber or Grabber()
@@ -87,7 +131,13 @@ class SortOp[T: Sample](DatasetOperator[Dataset[T], Dataset[T]]):
 class MapOp[T_IN: Sample, T_OUT: Sample](
     DatasetOperator[Dataset[T_IN], Dataset[T_OUT]]
 ):
+    """Operator that applies a `Mapper` to each sample in a dataset."""
+
     def __init__(self, mapper: Mapper[T_IN, T_OUT]) -> None:
+        """
+        Args:
+            mapper (Mapper[T_IN, T_OUT]): Mapper to apply to each sample.
+        """
         super().__init__()
         self._mapper = mapper
 

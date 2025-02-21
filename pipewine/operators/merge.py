@@ -1,3 +1,5 @@
+"""Operators for merging datasets."""
+
 from bisect import bisect
 from collections.abc import Sequence
 from functools import partial
@@ -9,6 +11,8 @@ from pipewine.sample import Sample, TypelessSample
 
 
 class CatOp(DatasetOperator[Sequence[Dataset], Dataset]):
+    """Operator that concatenates multiple datasets into a single dataset."""
+
     def _get_sample[
         T: Sample
     ](self, datasets: Sequence[Dataset[T]], index: list[int], i: int) -> T:
@@ -24,7 +28,18 @@ class CatOp(DatasetOperator[Sequence[Dataset], Dataset]):
 
 
 class ZipOp[T: Sample](DatasetOperator[Sequence[Dataset], Dataset[T]]):
+    """Operator that zips multiple datasets into a single dataset by merging the items
+    of individual samples.
+
+    Input datasets must have the same length and the samples must have disjoint items.
+    """
+
     def __init__(self, out_type: type[T] | None = None) -> None:
+        """
+        Args:
+            out_type (type[T] | None, optional): Type of the output samples. Defaults
+                to None (TypelessSample).
+        """
         super().__init__()
         self._out_type = out_type or TypelessSample
 
