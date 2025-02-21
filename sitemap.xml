@@ -2,34 +2,238 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://github.com/lucabonfiglioli/</loc>
-         <lastmod>2025-02-12</lastmod>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/summary/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/bundle/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/dataset/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/grabber/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/item/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/reader/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/sample/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/cli/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/cli/extension/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/cli/main/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/cli/mappers/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/cli/ops/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/cli/sinks/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/cli/sources/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/cli/utils/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/cli/workflows/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/mappers/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/mappers/base/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/mappers/cache/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/mappers/compose/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/mappers/crypto/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/mappers/item_transform/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/mappers/key_transform/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/operators/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/operators/base/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/operators/cache/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/operators/functional/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/operators/iter/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/operators/merge/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/operators/rand/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/operators/split/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/parsers/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/parsers/base/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/parsers/image_parser/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/parsers/metadata_parser/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/parsers/numpy_parser/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/parsers/pickle_parser/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/sinks/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/sinks/base/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/sinks/fs_utils/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/sinks/underfolder/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/sources/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/sources/base/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/sources/underfolder/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/workflows/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/workflows/drawing/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/workflows/events/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/workflows/execution/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/workflows/model/</loc>
+         <lastmod>2025-02-21</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/lucabonfiglioli/autoapi/pipewine/workflows/tracking/</loc>
+         <lastmod>2025-02-21</lastmod>
     </url>
     <url>
          <loc>https://github.com/lucabonfiglioli/tutorial/actions/</loc>
-         <lastmod>2025-02-12</lastmod>
+         <lastmod>2025-02-21</lastmod>
     </url>
     <url>
          <loc>https://github.com/lucabonfiglioli/tutorial/cache/</loc>
-         <lastmod>2025-02-12</lastmod>
+         <lastmod>2025-02-21</lastmod>
     </url>
     <url>
          <loc>https://github.com/lucabonfiglioli/tutorial/cli/</loc>
-         <lastmod>2025-02-12</lastmod>
+         <lastmod>2025-02-21</lastmod>
     </url>
     <url>
          <loc>https://github.com/lucabonfiglioli/tutorial/data/</loc>
-         <lastmod>2025-02-12</lastmod>
+         <lastmod>2025-02-21</lastmod>
     </url>
     <url>
          <loc>https://github.com/lucabonfiglioli/tutorial/installation/</loc>
-         <lastmod>2025-02-12</lastmod>
+         <lastmod>2025-02-21</lastmod>
     </url>
     <url>
          <loc>https://github.com/lucabonfiglioli/tutorial/overview/</loc>
-         <lastmod>2025-02-12</lastmod>
+         <lastmod>2025-02-21</lastmod>
     </url>
     <url>
          <loc>https://github.com/lucabonfiglioli/tutorial/workflows/</loc>
-         <lastmod>2025-02-12</lastmod>
+         <lastmod>2025-02-21</lastmod>
     </url>
 </urlset>
