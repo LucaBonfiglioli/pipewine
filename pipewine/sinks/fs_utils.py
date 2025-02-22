@@ -15,7 +15,7 @@ class CopyPolicy(str, Enum):
     cases, some operations may be avoided, trading off data consistency for speed.
     """
 
-    REWRITE = "SERIALIZE_AND_WRITE"
+    REWRITE = "REWRITE"
     """Do not copy anything, ever, even if the data is untouched. Treat every write
     alike: serialize the object, encode it and write to a new file. This is the slowest
     option but also the safest."""

@@ -49,12 +49,15 @@ def sort_fn(idx: int, sample: LetterSample) -> float:
 def example(
     input: Annotated[Path, Option(..., "-i", "--input", help="Input folder.")],
     output: Annotated[Path, Option(..., "-o", "--output", help="Output folder.")],
+    repeat_n: Annotated[
+        int, Option(..., "-r", "--repeat", help="Repeat n times.")
+    ] = 100,
     workers: Annotated[int, Option(..., "-w", "--workers", help="Num workers.")] = 0,
 ) -> Workflow:
     grabber = Grabber(workers, 50)
     wf = Workflow(WfOptions(checkpoint_grabber=grabber))
     data = wf.node(UnderfolderSource(input, sample_type=LetterSample))()
-    data = wf.node(RepeatOp(100))(data)
+    data = wf.node(RepeatOp(repeat_n))(data)
     data = wf.node(MapOp(ColorJitter()), options=WfOptions(checkpoint=True))(data)
     groups = wf.node(GroupByOp(group_fn, grabber=None))(data)
     vowels = groups["vowel"]

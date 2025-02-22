@@ -38,6 +38,22 @@ def sink_cli[
     return inner
 
 
+def _split_and_parse_underfolder_text(
+    text: str,
+) -> tuple[Path, OverwritePolicy, CopyPolicy]:
+    splits = deque(text.split(","))
+    path = splits.popleft()
+    if len(splits) > 0:
+        ow_policy = OverwritePolicy(splits.popleft().upper())
+    else:
+        ow_policy = OverwritePolicy.FORBID
+    if len(splits) > 0:
+        copy_policy = CopyPolicy(splits.popleft().upper())
+    else:
+        copy_policy = CopyPolicy.HARD_LINK
+    return Path(path), ow_policy, copy_policy
+
+
 @sink_cli()
 def underfolder(text: str, grabber: Grabber) -> UnderfolderSink:
     """PATH[,OVERWRITE=forbid[,COPY_POLICY=hard_link]]
@@ -55,17 +71,7 @@ def underfolder(text: str, grabber: Grabber) -> UnderfolderSink:
         - "symbolic_link" - Create a symlink to the original file.
         - "hard_link" - Create a link to the same inode of the original file.
     """
-    splits = deque(text.split(","))
-    path = splits.popleft()
-    if len(splits) > 0:
-        ow_policy = OverwritePolicy(splits.popleft().upper())
-    else:
-        ow_policy = OverwritePolicy.FORBID
-    if len(splits) > 0:
-        copy_policy = CopyPolicy(splits.popleft().upper())
-    else:
-        copy_policy = CopyPolicy.HARD_LINK
-
+    path, ow_policy, copy_policy = _split_and_parse_underfolder_text(text)
     return UnderfolderSink(
         Path(path), grabber=grabber, overwrite_policy=ow_policy, copy_policy=copy_policy
     )
