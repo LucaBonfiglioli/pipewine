@@ -35,7 +35,6 @@ class TestGrabber:
     def test_call(
         self, sequence: Sequence, workers: int, prefetch: int, keep_order: bool
     ) -> None:
-        time.sleep(0.5)
         grabber: Grabber = Grabber(
             num_workers=workers, prefetch=prefetch, keep_order=keep_order
         )
