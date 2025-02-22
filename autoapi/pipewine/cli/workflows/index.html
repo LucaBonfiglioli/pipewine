@@ -931,6 +931,24 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#pipewine.cli.workflows.wf_app" class="md-nav__link">
+    <span class="md-ellipsis">
+      wf_app
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pipewine.cli.workflows.wf_cli" class="md-nav__link">
+    <span class="md-ellipsis">
+      wf_cli
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2013,6 +2031,24 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#pipewine.cli.workflows.wf_app" class="md-nav__link">
+    <span class="md-ellipsis">
+      wf_app
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pipewine.cli.workflows.wf_cli" class="md-nav__link">
+    <span class="md-ellipsis">
+      wf_cli
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2040,6 +2076,8 @@
 <a id="pipewine.cli.workflows"></a>
     <div class="doc doc-contents first">
 
+        <p>CLI for running workflows.</p>
+
 
 
 
@@ -2055,7 +2093,104 @@
 
 
 
+<div class="doc doc-object doc-attribute">
 
+
+
+<h2 id="pipewine.cli.workflows.wf_app" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">wf_app</span> <span class="o">=</span> <span class="n">Typer</span><span class="p">(</span><span class="n">callback</span><span class="o">=</span><span class="n">_wf_callback</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;wf&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Run a pipewine workflow.&#39;</span><span class="p">,</span> <span class="n">invoke_without_command</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">no_args_is_help</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
+  </span>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>The main CLI application for workflows.</p>
+    </div>
+
+</div>
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="pipewine.cli.workflows.wf_cli" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">wf_cli</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Decorator to generate a CLI command for a dataset workflow.</p>
+<p>Decorated functions must follwo the rules of Typer CLI commands, returning a
+<code>Workflow</code> object to be run.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>name</code>
+            </td>
+            <td>
+                  <code>str</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The name of the command. Defaults to None, in which case
+the function name is used.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+            <details class="quote">
+              <summary>Source code in <code>pipewine/cli/workflows.py</code></summary>
+              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-68">68</a></span>
+<span class="normal"><a href="#__codelineno-0-69">69</a></span>
+<span class="normal"><a href="#__codelineno-0-70">70</a></span>
+<span class="normal"><a href="#__codelineno-0-71">71</a></span>
+<span class="normal"><a href="#__codelineno-0-72">72</a></span>
+<span class="normal"><a href="#__codelineno-0-73">73</a></span>
+<span class="normal"><a href="#__codelineno-0-74">74</a></span>
+<span class="normal"><a href="#__codelineno-0-75">75</a></span>
+<span class="normal"><a href="#__codelineno-0-76">76</a></span>
+<span class="normal"><a href="#__codelineno-0-77">77</a></span>
+<span class="normal"><a href="#__codelineno-0-78">78</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-68"><a id="__codelineno-0-68" name="__codelineno-0-68"></a><span class="k">def</span> <span class="nf">wf_cli</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="n">T</span><span class="p">]:</span>
+</span><span id="__span-0-69"><a id="__codelineno-0-69" name="__codelineno-0-69"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Decorator to generate a CLI command for a dataset workflow.</span>
+</span><span id="__span-0-70"><a id="__codelineno-0-70" name="__codelineno-0-70"></a>
+</span><span id="__span-0-71"><a id="__codelineno-0-71" name="__codelineno-0-71"></a><span class="sd">    Decorated functions must follwo the rules of Typer CLI commands, returning a</span>
+</span><span id="__span-0-72"><a id="__codelineno-0-72" name="__codelineno-0-72"></a><span class="sd">    `Workflow` object to be run.</span>
+</span><span id="__span-0-73"><a id="__codelineno-0-73" name="__codelineno-0-73"></a>
+</span><span id="__span-0-74"><a id="__codelineno-0-74" name="__codelineno-0-74"></a><span class="sd">    Args:</span>
+</span><span id="__span-0-75"><a id="__codelineno-0-75" name="__codelineno-0-75"></a><span class="sd">        name (str, optional): The name of the command. Defaults to None, in which case</span>
+</span><span id="__span-0-76"><a id="__codelineno-0-76" name="__codelineno-0-76"></a><span class="sd">            the function name is used.</span>
+</span><span id="__span-0-77"><a id="__codelineno-0-77" name="__codelineno-0-77"></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="__span-0-78"><a id="__codelineno-0-78" name="__codelineno-0-78"></a>    <span class="k">return</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">_generate_wf_command</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+</span></code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
 
 
 
