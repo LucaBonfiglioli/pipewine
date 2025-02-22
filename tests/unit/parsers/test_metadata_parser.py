@@ -77,6 +77,26 @@ class TestJSONParser:
         assert isinstance(re_data, MyData)
         assert re_data == data
 
+    @pytest.mark.parametrize(
+        "data",
+        [
+            10,
+            5.0,
+            "hello",
+            [1, 2, 3, 4, 5],
+            {
+                "alice": 10,
+                "bob": 15,
+                "charlie": 20,
+            },
+        ],
+    )
+    def test_parse_builtin(self, data: Any) -> None:
+        parser = JSONParser(type(data))
+        re_data = parser.parse(parser.dump(data))
+        assert isinstance(re_data, type(data))
+        assert re_data == data
+
 
 class TestYAMLParser:
     @pytest.mark.parametrize(

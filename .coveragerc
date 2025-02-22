@@ -1,6 +1,6 @@
 [run]
 branch = True
-concurrency = multiprocessing,thread
+concurrency = thread
 parallel = true
 sigterm = true
 

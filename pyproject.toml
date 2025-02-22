@@ -24,7 +24,7 @@ classifiers = [
     "Topic :: Scientific/Engineering",
     "Topic :: Software Development",
 ]
-dependencies = ["numpy", "PyYAML", "imageio", "tifffile"]
+dependencies = ["numpy", "PyYAML", "imageio", "tifffile", "typer"]
 dynamic = ["version"]
 
 [project.optional-dependencies]
@@ -38,7 +38,7 @@ dev = [
     "hatch",
     "pydantic",
 ]
-docs = ["mkdocs", "mkdocs-material"]
+docs = ["mkdocs", "mkdocs-material", "mkdocstrings-python", "mkdocs-autoapi"]
 
 [project.scripts]
 pipewine = "pipewine.cli.main:main"

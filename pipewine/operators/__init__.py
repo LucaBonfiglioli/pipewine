@@ -1,3 +1,5 @@
+"""Package for all Pipewine built-in dataset operators."""
+
 from pipewine.operators.base import DatasetOperator, IdentityOp
 from pipewine.operators.cache import (
     Cache,

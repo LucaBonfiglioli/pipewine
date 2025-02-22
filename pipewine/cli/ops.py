@@ -1,3 +1,5 @@
+"""CLI commands for dataset operators."""
+
 import inspect
 import random
 import sys
@@ -15,7 +17,11 @@ from rich.panel import Panel
 from rich.table import Table
 from typer import Context, Option, Typer
 
-from pipewine._op_typing import origin_type
+from pipewine._op_typing import (
+    get_sample_type_from_dataset_annotation,
+    get_sample_type_from_sample_annotation,
+    origin_type,
+)
 from pipewine.bundle import Bundle
 from pipewine.cli.sinks import SinkCLIRegistry
 from pipewine.cli.sources import SourceCLIRegistry
@@ -29,9 +35,8 @@ from pipewine.cli.utils import (
 from pipewine.dataset import Dataset
 from pipewine.grabber import Grabber
 from pipewine.operators import *
-from pipewine.operators import DatasetOperator
 from pipewine.parsers import ParserRegistry
-from pipewine.sample import Sample
+from pipewine.sample import Sample, TypelessSample
 from pipewine.sinks import DatasetSink
 from pipewine.sources import DatasetSource
 from pipewine.workflows import Workflow
@@ -44,7 +49,7 @@ class _DictBundle[T](Bundle[T]):
 
 
 @dataclass
-class OpInfo:
+class _OpInfo:
     input_format: str
     output_format: str
     grabber: Grabber
@@ -55,9 +60,9 @@ class OpInfo:
 def _single_op_workflow(
     ctx: Context, operator: DatasetOperator, *args, **kwargs
 ) -> None:
-    opinfo = cast(OpInfo, ctx.obj)
-    i_hint = operator.__call__.__annotations__["x"]
-    o_hint = operator.__call__.__annotations__["return"]
+    opinfo = cast(_OpInfo, ctx.obj)
+    i_hint = inspect.get_annotations(operator.__call__, eval_str=True).get("x")
+    o_hint = inspect.get_annotations(operator.__call__, eval_str=True).get("return")
     i_orig, o_orig = origin_type(i_hint), origin_type(o_hint)
 
     i_name, o_name = "input", "output"
@@ -79,34 +84,67 @@ def _single_op_workflow(
             output_dict[maybe_out_seq[o_curr][1:]] = extra_queue.popleft()
             o_curr += 1
 
-    def _parse_source(text: str) -> DatasetSource:
-        return parse_source(opinfo.input_format, text, opinfo.grabber)
+    def _parse_source(text: str, sample_type: type[Sample]) -> DatasetSource:
+        return parse_source(opinfo.input_format, text, opinfo.grabber, sample_type)
 
     def _parse_sink(text: str) -> DatasetSink:
         return parse_sink(opinfo.output_format, text, opinfo.grabber)
 
     wf = Workflow()
     if issubclass(i_orig, Dataset):
-        input_ = wf.node(_parse_source(kwargs[i_name]))()
-    elif issubclass(i_orig, (list, tuple)):
-        input_ = [wf.node(_parse_source(x))() for x in kwargs[i_name]]
-    elif issubclass(i_orig, dict):
-        input_ = {k: wf.node(_parse_source(v))() for k, v in input_dict.items()}
+        if isinstance(operator, MapOp):
+            sample_hint = inspect.get_annotations(
+                operator._mapper.__call__, eval_str=True
+            ).get("x")
+            sample_type = get_sample_type_from_sample_annotation(sample_hint)
+        else:
+            sample_type = get_sample_type_from_dataset_annotation(i_hint)
+        input_ = wf.node(_parse_source(kwargs[i_name], sample_type))()
+    elif issubclass(i_orig, (Sequence, tuple)):
+        if (
+            issubclass(i_orig, tuple)
+            and isinstance(i_hint, GenericAlias)
+            and not (len(i_hint.__args__) == 2 and i_hint.__args__[1] is ...)
+        ):
+            input_ = [
+                wf.node(
+                    _parse_source(x, get_sample_type_from_dataset_annotation(hint)),
+                )()
+                for x, hint in zip(kwargs[i_name], i_hint.__args__)
+            ]
+        elif isinstance(i_hint, GenericAlias) and len(i_hint.__args__) > 0:
+            sample_type = get_sample_type_from_dataset_annotation(i_hint.__args__[0])
+            input_ = [wf.node(_parse_source(x, sample_type))() for x in kwargs[i_name]]
+        else:
+            sample_type = TypelessSample
+            input_ = [wf.node(_parse_source(x, sample_type))() for x in kwargs[i_name]]
+    elif issubclass(i_orig, Mapping):
+        if isinstance(i_hint, GenericAlias) and len(i_hint.__args__) == 2:
+            sample_type = get_sample_type_from_dataset_annotation(i_hint.__args__[1])
+        else:
+            sample_type = TypelessSample
+        input_ = {
+            k: wf.node(_parse_source(v, sample_type))() for k, v in input_dict.items()
+        }
     elif issubclass(i_orig, Bundle):
         data = {
-            k: wf.node(_parse_source(kwargs[f"{i_name}_{k}"]))()
-            for k in i_orig.__annotations__
+            k: wf.node(
+                _parse_source(
+                    kwargs[f"{i_name}_{k}"], get_sample_type_from_dataset_annotation(v)
+                )
+            )()
+            for k, v in inspect.get_annotations(i_orig).items()
         }
         input_ = _DictBundle(**data)
     else:
         raise NotImplementedError(i_orig)
-    output = wf.node(operator)(input_)
+    output = wf.node(operator)(input_)  # type: ignore
     if issubclass(o_orig, Dataset):
         wf.node(_parse_sink(kwargs[o_name]))(output)
-    elif issubclass(o_orig, (list, tuple)):
+    elif issubclass(o_orig, (Sequence, tuple)):
         for i, x in enumerate(kwargs[o_name]):
             wf.node(_parse_sink(x))(output[i])
-    elif issubclass(o_orig, dict):
+    elif issubclass(o_orig, Mapping):
         for k, v in output_dict.items():
             wf.node(_parse_sink(v))(output[k])
     elif issubclass(o_orig, Bundle):
@@ -196,22 +234,28 @@ def _generate_op_command[
         io: str, type_: Literal["str", "list", "dict"] | int, name: str = ""
     ) -> str:
         if type_ == "str":
-            help_str = f'The "{name}" {io} dataset.' if name else f"The {io} dataset."
+            help = f'The "{name}" {io} dataset.' if name else f"The {io} dataset."
             hint = "str"
         elif type_ == "list":
-            help_str = f"List of {io} datasets. Use multiple times: --{io} DATA1 --{io} DATA2 ..."
+            help = f"List of {io} datasets. Use multiple times: --{io} DATA1 --{io} DATA2 ..."
             hint = "list[str]"
         elif type_ == "dict":
-            help_str = f"Dict of {io} datasets. Use multiple times: --{io}.key_a DATA1 --{io}.key_b DATA2 ..."
+            help = f"Dict of {io} datasets. Use multiple times: --{io[0]}.key_a DATA1 --{io[0]}.key_b DATA2 ..."
             hint = "list[str]"
         else:
             hint = f"tuple[{', '.join(['str'] * type_)}]"
-            help_str = f"Tuple of {type_} {io} datasets."
+            help = f"Tuple of {type_} {io} datasets."
         param = io if not name else f"{io}_{name}"
-        decl = (
-            f"'-{io[0]}.{name}', '--{io}.{name}'" if name else f"'-{io[0]}', '--{io}'"
-        )
-        return f"{param}: Annotated[{hint}, Option(..., {decl}, help='{help_str}')]"
+        if type_ == "dict" and not name:
+            decl = f"'-{io[0]}'"
+        else:
+            decl = (
+                f"'-{io[0]}.{name}', '--{io}.{name}'"
+                if name
+                else f"'-{io[0]}', '--{io}'"
+            )
+        code = f"{param}: Annotated[{hint}, Option(..., {decl}, help='{help}')]"
+        return code
 
     added_args_code: list[str] = []
     for hint, orig, io in [[i_hint, i_orig, "input"], [o_hint, o_orig, "output"]]:
@@ -270,6 +314,19 @@ def {gen_fn_name}(
 
 
 def op_cli[T](name: str | None = None) -> Callable[[T], T]:
+    """Decorator to generate a CLI command for a dataset operator.
+
+    Decorated functions must follow the rules of Typer CLI commands, returning a
+    `DatasetOperator` object.
+
+    The decorated function must be correctly annotated with the type of operator it
+    returns.
+
+    Args:
+        name (str, optional): The name of the command. Defaults to None, in which case
+            the function name is used.
+    """
+
     return partial(_generate_op_command, name=name)  # type: ignore
 
 
@@ -317,7 +374,7 @@ tui_help = "Show workflow progress in a TUI while executing the command."
 format_help_help = "Show a help message on data input/output formats and exit."
 
 
-def op_callback(
+def _op_callback(
     ctx: Context,
     input_format: Annotated[
         str, Option(..., "-I", "--input-format", help=input_format_help)
@@ -335,7 +392,7 @@ def op_callback(
     if format_help:
         _print_format_help_panel()
         exit()
-    ctx.obj = OpInfo(
+    ctx.obj = _OpInfo(
         input_format,
         output_format,
         grabber or Grabber(),
@@ -344,12 +401,13 @@ def op_callback(
 
 
 op_app = Typer(
-    callback=op_callback,
+    callback=_op_callback,
     name="op",
     help="Run a pipewine dataset operator.",
     invoke_without_command=True,
     no_args_is_help=True,
 )
+"""Typer app for the Pipewine op CLI."""
 
 
 key_help = "Filter by the value of key (e.g. metadata.mylist.12.foo)."
@@ -385,10 +443,11 @@ def filter_(
 
     def _filter_fn(idx: int, sample: Sample) -> bool:
         value = deep_get(sample, key)
-        if type(value) != bool:
-            target_ = type(value)(target)
-        else:
-            target_ = str(target).lower() in ["yes", "true", "y", "ok", "t", "1"]
+        target_ = (
+            type(value)(target)
+            if type(value) != bool
+            else str(target).lower() in ["yes", "true", "y", "ok", "t", "1"]
+        )
         if compare == Compare.eq:
             result = value == target_
         elif compare == Compare.neq:

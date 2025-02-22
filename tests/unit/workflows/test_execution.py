@@ -16,7 +16,13 @@ from pipewine import (
     PickleParser,
     TypelessSample,
 )
-from pipewine.workflows import Event, EventQueue, SequentialWorkflowExecutor, Workflow
+from pipewine.workflows import (
+    Event,
+    EventQueue,
+    SequentialWorkflowExecutor,
+    Workflow,
+    WfOptions,
+)
 
 
 class MockQueue(EventQueue):
@@ -125,29 +131,29 @@ class WorkflowFixture:
     wf: Workflow
 
 
-def __workflow__0() -> WorkflowFixture:
-    wf = Workflow()
+def __workflow__0(options: WfOptions) -> WorkflowFixture:
+    wf = Workflow(options=options)
     wf.node(Source())()
     return WorkflowFixture(wf)
 
 
-def __workflow__1() -> WorkflowFixture:
-    wf = Workflow()
+def __workflow__1(options: WfOptions) -> WorkflowFixture:
+    wf = Workflow(options=options)
     data = wf.node(Source())()
     wf.node(Sink())(data)
     return WorkflowFixture(wf)
 
 
-def __workflow__2() -> WorkflowFixture:
-    wf = Workflow()
+def __workflow__2(options: WfOptions) -> WorkflowFixture:
+    wf = Workflow(options=options)
     data = wf.node(Source())()
     data = wf.node(Dataset2Dataset())(data)
     wf.node(Sink())(data)
     return WorkflowFixture(wf)
 
 
-def __workflow__3() -> WorkflowFixture:
-    wf = Workflow()
+def __workflow__3(options: WfOptions) -> WorkflowFixture:
+    wf = Workflow(options=options)
     data1 = wf.node(Source())()
     data2 = wf.node(Source())()
     data3 = wf.node(Source())()
@@ -158,8 +164,8 @@ def __workflow__3() -> WorkflowFixture:
     return WorkflowFixture(wf)
 
 
-def __workflow__4() -> WorkflowFixture:
-    wf = Workflow()
+def __workflow__4(options: WfOptions) -> WorkflowFixture:
+    wf = Workflow(options=options)
     data1 = wf.node(Source())()
     data2 = wf.node(Source())()
     data3 = wf.node(Source())()
@@ -170,8 +176,8 @@ def __workflow__4() -> WorkflowFixture:
     return WorkflowFixture(wf)
 
 
-def __workflow__5() -> WorkflowFixture:
-    wf = Workflow()
+def __workflow__5(options: WfOptions) -> WorkflowFixture:
+    wf = Workflow(options=options)
     data1 = wf.node(Source())()
     data2 = wf.node(Source())()
     data3 = wf.node(Source())()
@@ -182,8 +188,8 @@ def __workflow__5() -> WorkflowFixture:
     return WorkflowFixture(wf)
 
 
-def __workflow__6() -> WorkflowFixture:
-    wf = Workflow()
+def __workflow__6(options: WfOptions) -> WorkflowFixture:
+    wf = Workflow(options=options)
     data1 = wf.node(Source())()
     data2 = wf.node(Source())()
     data3 = wf.node(Source())()
@@ -195,7 +201,7 @@ def __workflow__6() -> WorkflowFixture:
 
 
 @pytest.fixture(params=[v for k, v in locals().items() if k.startswith("__workflow__")])
-def make_wf(request) -> Callable[[], WorkflowFixture]:
+def make_wf(request) -> Callable[[WfOptions], WorkflowFixture]:
     return request.param
 
 
@@ -210,10 +216,27 @@ class TestSequentialWorkflowExecutor:
         executor.detach()
 
     @pytest.mark.parametrize("queue", [MockQueue(), None])
+    @pytest.mark.parametrize(
+        "options",
+        [
+            WfOptions(),
+            WfOptions(cache=True),
+            WfOptions(cache=False),
+            WfOptions(checkpoint=True),
+            WfOptions(checkpoint=True, collect_after_checkpoint=True),
+            WfOptions(checkpoint=True, collect_after_checkpoint=False),
+            WfOptions(checkpoint=True, destroy_checkpoints=False),
+            WfOptions(checkpoint=True, destroy_checkpoints=True),
+            WfOptions(checkpoint=False),
+        ],
+    )
     def test_execute(
-        self, make_wf: Callable[[], WorkflowFixture], queue: EventQueue | None
+        self,
+        make_wf: Callable[[WfOptions], WorkflowFixture],
+        queue: EventQueue | None,
+        options: WfOptions,
     ) -> None:
-        wf = make_wf().wf
+        wf = make_wf(options).wf
         for node in wf.get_nodes():
             assert isinstance(node.action, MockAction)
             assert len(node.action.called) == 0

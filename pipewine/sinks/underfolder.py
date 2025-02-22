@@ -1,3 +1,5 @@
+"""Sink that writes the dataset to file system using Pipelime "Underfolder" format."""
+
 import os
 import shutil
 from enum import Enum
@@ -92,6 +94,8 @@ class _WriterMapper[T: Sample](Mapper[T, T]):
 
 
 class UnderfolderSink(DatasetSink[Dataset]):
+    """Sink that writes the dataset to file system using Pipewine "Underfolder" format."""
+
     def __init__(
         self,
         folder: Path,
@@ -99,6 +103,18 @@ class UnderfolderSink(DatasetSink[Dataset]):
         overwrite_policy: OverwritePolicy = OverwritePolicy.FORBID,
         copy_policy: CopyPolicy = CopyPolicy.HARD_LINK,
     ) -> None:
+        """
+        Args:
+            folder (Path): Path to the folder where the dataset will be saved.
+            grabber (Grabber, optional): The grabber to use when writing the dataset.
+                Defaults to None, in which case a new grabber is created.
+            overwrite_policy (OverwritePolicy, optional): How to handle cases where
+                pipewine needs to overwrite existing data. Defaults to
+                OverwritePolicy.FORBID.
+            copy_policy (CopyPolicy, optional): The copy policy to use when Pipewine
+                infers that the item is a copy of an existing file. Defaults to
+                CopyPolicy.HARD_LINK.
+        """
         super().__init__()
         self._folder = folder
         self._grabber = grabber or Grabber()

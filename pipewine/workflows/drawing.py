@@ -1,3 +1,5 @@
+"""Workflow visualization utilities."""
+
 import time
 import xml.etree.ElementTree as ET
 from abc import ABC, abstractmethod
@@ -16,7 +18,7 @@ def _ccw(p: np.ndarray, q: np.ndarray, r: np.ndarray) -> np.ndarray:
     ) * (r[..., 0] - p[..., 0])
 
 
-def lines_intersect(
+def _lines_intersect(
     p1: np.ndarray, p2: np.ndarray, q1: np.ndarray, q2: np.ndarray
 ) -> np.ndarray:
     o1 = _ccw(p1, p2, q1)
@@ -26,15 +28,15 @@ def lines_intersect(
     return (o1 * o2 < 0) & (o3 * o4 < 0)
 
 
-def lines_intersect_matrix(p1: np.ndarray, p2: np.ndarray) -> np.ndarray:
+def _lines_intersect_matrix(p1: np.ndarray, p2: np.ndarray) -> np.ndarray:
     p1_ = p1[:, :, None, :]
     p2_ = p2[:, :, None, :]
     q1 = p1[:, None, :, :]
     q2 = p2[:, None, :, :]
-    return lines_intersect(p1_, p2_, q1, q2)
+    return _lines_intersect(p1_, p2_, q1, q2)
 
 
-def lines_rects_intersect_matrix(
+def _lines_rects_intersect_matrix(
     p1: np.ndarray, p2: np.ndarray, xy: np.ndarray, wh: np.ndarray
 ) -> np.ndarray:
     p1 = p1[:, :, None, :]
@@ -46,45 +48,99 @@ def lines_rects_intersect_matrix(
     q2 = np.concatenate([xy + w_, xy + h_] * 2, 1)
     q1 = q1[:, None, :, :]
     q2 = q2[:, None, :, :]
-    return lines_intersect(p1, p2, q1, q2)
+    return _lines_intersect(p1, p2, q1, q2)
 
 
 @dataclass
 class ViewNode:
+    """The representation of a node in the view graph."""
+
     title: str
+    """The title of the node."""
     fontsize: int
+    """The font size of the title."""
     position: tuple[float, float]
+    """The position of the node in the view graph."""
     size: tuple[float, float]
+    """The size of the node."""
     color: tuple[int, int, int]
+    """The color of the node."""
     inputs: list[tuple[str, float]]
+    """A list of (name, delta_y) tuples representing the input sockets."""
     outputs: list[tuple[str, float]]
+    """A list of (name, delta_y) tuples representing the output sockets."""
     has_collection_input: bool
+    """Whether the node has a collection input."""
     has_collection_output: bool
+    """Whether the node has a collection output."""
 
 
 @dataclass
 class ViewEdge:
+    """The representation of an edge in the view graph."""
+
     start: tuple[int, int]
+    """The index of the source node and the source socket."""
     end: tuple[int, int]
+    """The index of the destination node and the destination socket."""
 
 
 @dataclass
 class ViewGraph:
+    """The representation of a view graph."""
+
     nodes: list[ViewNode]
+    """The list of nodes in the view graph."""
     edges: list[ViewEdge]
+    """The list of edges in the view graph."""
 
 
 class Layout(ABC):
+    """Base class for layout algorithms, which are responsible for arranging the nodes
+    of a workflow in a 2D space in  an aesthetically pleasing way.
+
+    Subclasses must implement the layout method, which receives a workflow and returns
+    a view graph.
+    """
+
     @abstractmethod
-    def layout(self, wf: Workflow) -> ViewGraph: ...
+    def layout(self, wf: Workflow) -> ViewGraph:
+        """Arranges the nodes of a workflow in a 2D space in an aesthetically pleasing
+        way.
+
+        Args:
+            wf (Workflow): The workflow to layout.
+
+        Returns:
+            ViewGraph: The view graph representing the layout of the workflow.
+        """
+        pass
 
 
 class Drawer(ABC):
+    """Base class for drawing algorithms, which are responsible for rendering a view
+    graph to a file.
+
+    Subclasses must implement the draw method, which receives a view graph and a binary
+    buffer and writes the drawing to the buffer.
+    """
+
     @abstractmethod
-    def draw(self, vg: ViewGraph, buffer: BinaryIO) -> None: ...
+    def draw(self, vg: ViewGraph, buffer: BinaryIO) -> None:
+        """Renders a view graph to a file.
+
+        Args:
+            vg (ViewGraph): The view graph to draw.
+            buffer (BinaryIO): The binary buffer to write the drawing to.
+        """
+        pass
 
 
 class OptimizedLayout(Layout):
+    """A layout algorithm based on a genetic algorithm that optimizes the layout of a
+    workflow in a 2D space.
+    """
+
     RGB_SOURCE = (10, 160, 40)
     RGB_OP = (0, 80, 210)
     RGB_SINK = (220, 30, 10)
@@ -97,6 +153,19 @@ class OptimizedLayout(Layout):
         optimize_noise_start: float = 10.0,
         verbose: bool = False,
     ) -> None:
+        """
+        Args:
+            optimize_steps (int, optional): The number of optimization steps. Defaults
+                to 5000.
+            optimize_population (int, optional): The size of the population. Defaults to
+                32.
+            optimize_time_budget (float, optional): The maximum time budget for the
+                optimization. Defaults to 3.0.
+            optimize_noise_start (float, optional): The initial noise level. Defaults to
+                10.0.
+            verbose (bool, optional): Whether to print verbose information. Defaults to
+                False.
+        """
         super().__init__()
         self._optimize_steps = optimize_steps
         self._optimize_population = optimize_population
@@ -184,11 +253,11 @@ class OptimizedLayout(Layout):
             edge_straightness_term = edge_straightness.mean(-1)
 
             # Penalty on edge/edge crossings
-            mat = lines_intersect_matrix(edge_start - xoffset, edge_end + xoffset)
+            mat = _lines_intersect_matrix(edge_start - xoffset, edge_end + xoffset)
             edge_edge_cross_term = (e - mat.any(-1).sum(-1) / 2) / e
 
             # Penalty on edge/node crossings
-            mat = lines_rects_intersect_matrix(
+            mat = _lines_rects_intersect_matrix(
                 edge_start + xoffset, edge_end - xoffset, layout, sizes[None]
             )
             edge_node_cross_term = (e - mat.any(-1).sum(-1)) / e
@@ -255,12 +324,9 @@ class OptimizedLayout(Layout):
                     )
             fitness = (fitness - fitness.min()) / (fitness.max() - fitness.min() + 1e-5)
             fsum = fitness.sum()
-            if fsum > 0:
-                next_idx = np.random.choice(
-                    max_population, size=max_population - 1, p=fitness / fsum
-                )
-            else:
-                next_idx = np.arange(max_population - 1)
+            next_idx = np.random.choice(
+                max_population, size=max_population - 1, p=fitness / fsum.clip(min=1e-3)
+            )
             sigma = sigma_s * np.exp(
                 np.log(sigma_e / sigma_s) * global_step / max_steps
             )
@@ -309,7 +375,7 @@ class OptimizedLayout(Layout):
                 else:
                     col = self.RGB_OP
 
-                title_w, title_h = get_text_size(node.name, fontsize)
+                title_w, title_h = _get_text_size(node.name, fontsize)
                 in_sockets_w = in_sockets_h = out_sockets_w = out_sockets_h = 0.0
                 in_sockets: list[tuple[str, float]] = []
                 out_sockets: list[tuple[str, float]] = []
@@ -317,13 +383,13 @@ class OptimizedLayout(Layout):
                 m2 = margin / 2
                 if has_collection_input:
                     socket = "inputs"
-                    sw, sh = get_text_size(socket, fontsize)
+                    sw, sh = _get_text_size(socket, fontsize)
                     in_sockets_w = max(in_sockets_w, sw)
                     in_sockets_h += m2 + sh
                     current += m2 + sh
                     in_sockets.append((socket, current))
                 for socket in sorted(inputs):
-                    sw, sh = get_text_size(socket, fontsize)
+                    sw, sh = _get_text_size(socket, fontsize)
                     in_sockets_w = max(in_sockets_w, sw)
                     in_sockets_h += m2 + sh
                     current += m2 + sh
@@ -331,13 +397,13 @@ class OptimizedLayout(Layout):
                 current = title_h
                 if has_collection_output:
                     socket = "outputs"
-                    sw, sh = get_text_size(socket, fontsize)
+                    sw, sh = _get_text_size(socket, fontsize)
                     out_sockets_w = max(out_sockets_w, sw)
                     out_sockets_h += m2 + sh
                     current += m2 + sh
                     out_sockets.append((socket, current))
                 for socket in sorted(outputs):
-                    sw, sh = get_text_size(socket, fontsize)
+                    sw, sh = _get_text_size(socket, fontsize)
                     out_sockets_w = max(out_sockets_w, sw)
                     out_sockets_h += m2 + sh
                     current += m2 + sh
@@ -385,7 +451,7 @@ class OptimizedLayout(Layout):
         return vg
 
 
-def get_text_size(text: str, font_size: int) -> tuple[float, float]:
+def _get_text_size(text: str, font_size: int) -> tuple[float, float]:
     text_height = font_size
     average_char_width = 0.6 * font_size
     text_width = len(text) * average_char_width
@@ -393,6 +459,8 @@ def get_text_size(text: str, font_size: int) -> tuple[float, float]:
 
 
 class SVGDrawer(Drawer):
+    """A drawing algorithm that renders a view graph to an SVG file."""
+
     RGB_TEXT = "white"
 
     def _draw_node(self, parent: ET.Element, node: ViewNode) -> None:
@@ -578,8 +646,6 @@ class SVGDrawer(Drawer):
         for edge in vg.edges:
             src_node_idx, src_sock = edge.start
             dst_node_idx, dst_sock = edge.end
-            if (src_sock is None) or (dst_sock is None):
-                continue
             src_node, dst_node = vg.nodes[src_node_idx], vg.nodes[dst_node_idx]
             x1 = src_node.position[0] + src_node.size[0]
             y1 = src_node.position[1] + src_node.outputs[src_sock][1]

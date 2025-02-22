@@ -151,7 +151,7 @@ class TestCachedItem:
         for _ in range(n - 1):
             item = CachedItem(item)
 
-        assert item.source_recursive() == source_item
+        assert item.source_recursive == source_item
 
     @pytest.mark.parametrize("sharedness", [True, False])
     def test_with_sharedness(self, sharedness: bool) -> None:

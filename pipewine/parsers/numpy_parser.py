@@ -1,3 +1,5 @@
+"""Parser for arbitrary NumPy arrays."""
+
 import io
 from collections.abc import Iterable
 
@@ -7,6 +9,8 @@ from pipewine.parsers.base import Parser
 
 
 class NumpyNpyParser(Parser[np.ndarray]):
+    """Parser for NumPy arrays saved in the `.npy` format."""
+
     def parse(self, data: bytes) -> np.ndarray:
         buffer = io.BytesIO(data)
         return np.load(buffer)

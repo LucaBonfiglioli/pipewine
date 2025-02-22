@@ -203,7 +203,7 @@ def test_write_item_to_file(
     if actual_policy == CopyPolicy.HARD_LINK:
         source_item = item
         if isinstance(source_item, CachedItem):
-            source_item = source_item.source_recursive()
+            source_item = source_item.source_recursive
         assert isinstance(source_item, StoredItem)
         assert isinstance(source_item.reader, LocalFileReader)
         a_string = "A very peculiar string that only I can think of"

@@ -1,3 +1,5 @@
+"""Progress tracking utilities for workflows."""
+
 import curses
 import time
 from abc import ABC, abstractmethod
@@ -11,50 +13,96 @@ from pipewine.workflows.events import Event, EventQueue
 
 @dataclass
 class TrackingEvent(Event):
+    """Base class for tracking events."""
+
     task_id: str
+    """The unique identifier of the task."""
 
 
 @dataclass
 class TaskStartEvent(TrackingEvent):
+    """Event that signals the start of a task."""
+
     total: int
+    """The total number of units in the task."""
 
 
 @dataclass
 class TaskUpdateEvent(TrackingEvent):
+    """Event that signals the update of a task."""
+
     unit: int
+    """The index of the unit that was updated."""
 
 
 @dataclass
 class TaskCompleteEvent(TrackingEvent):
+    """Event that signals the completion of a task."""
+
     pass
 
 
 class Tracker(ABC):
-    @abstractmethod
-    def attach(self, event_queue: EventQueue) -> None: ...
+    """Base class for tracking the progress of a workflow.
+
+    Subclasses should implement the `attach` and `detach` methods.
+    """
 
     @abstractmethod
-    def detach(self, graceful: bool = True) -> None: ...
+    def attach(self, event_queue: EventQueue) -> None:
+        """Attach the tracker to an event queue.
+
+        Args:
+            event_queue (EventQueue): The event queue to attach to.
+        """
+        pass
+
+    @abstractmethod
+    def detach(self, graceful: bool = True) -> None:
+        """Detach the tracker from the event queue.
+
+        Args:
+            graceful (bool, optional): Whether to wait for the event queue to be empty
+                before detaching. Defaults to True.
+        """
+        pass
 
 
 @dataclass
 class Task:
+    """Data container that represents the state of a task."""
+
     name: str
+    """The name of the task."""
     units: list[bool]
+    """A list of booleans that represent the completion state of each unit."""
     complete: bool = False
+    """Whether the task is complete."""
 
 
 @dataclass
 class TaskGroup:
+    """Data container that represents a group of tasks."""
+
     name: str
+    """The name of the group."""
     groups: OrderedDict[str, "TaskGroup"] = field(default_factory=OrderedDict)
+    """A dictionary of subgroups."""
     tasks: OrderedDict[str, Task] = field(default_factory=OrderedDict)
+    """A dictionary of tasks."""
 
 
 class CursesTracker(Tracker):
+    """A tracker that uses curses to display the progress of a workflow in a terminal."""
+
     MAX_COLOR = 1000
 
     def __init__(self, refresh_rate: float = 0.1) -> None:
+        """
+        Args:
+            refresh_rate (float, optional): The refresh rate of the display in seconds.
+                Defaults to 0.1.
+        """
         super().__init__()
         self._refresh_rate = refresh_rate
         self._n_shades = 10
@@ -85,10 +133,10 @@ class CursesTracker(Tracker):
             self._stop_flag_graceful.set()
         else:
             self._stop_flag_forced.set()
-        self._tui_thread.join()
         self._read_thread.join()
-        self._tui_thread = None
+        self._tui_thread.join()
         self._read_thread = None
+        self._tui_thread = None
         self._eq = None
 
     def _get_group(self, group: TaskGroup, path: str) -> TaskGroup:
@@ -138,7 +186,7 @@ class CursesTracker(Tracker):
                 cell[2] += 1
         return bar
 
-    def _init_colors(self) -> None:
+    def _init_colors(self) -> None:  # pragma: no cover
         curses.start_color()
         curses.use_default_colors()
         if curses.can_change_color():
@@ -180,7 +228,7 @@ class CursesTracker(Tracker):
         for i, (depth, entry) in enumerate(tasks):
             space = TITLE_W - 2 * depth - 1
             text = entry.name
-            if len(text) > space:
+            if len(text) > space:  # pragma: no cover
                 start = (global_step // 2) % (len(text) - space)
                 text = text[start : start + space]
             title_pad.addstr(i, 2 * depth, text)
@@ -188,12 +236,12 @@ class CursesTracker(Tracker):
                 j = 0
                 if entry.complete:
                     color = self._color_of(1.0)
-                    if bar_w > 0:
+                    if bar_w > 0:  # pragma: no cover
                         prog_pad.addstr(i, 0, bar_elem * bar_w, color)
                         j += len(bar_elem) * bar_w
                     sum_ = len(entry.units)
                 else:
-                    if bar_w > 0:
+                    if bar_w > 0:  # pragma: no cover
                         for size, comp, total in self._compute_bar(entry.units, bar_w):
                             color = self._color_of(comp / total)
                             prog_pad.addstr(i, j, bar_elem * size, color)
@@ -202,7 +250,7 @@ class CursesTracker(Tracker):
                 total = len(entry.units)
                 perc = round((sum_ / total) * 100, 2)
                 text = f"{sum_}/{total} {perc}%"
-                if len(text) + 2 < PROG_W:
+                if len(text) + 2 < PROG_W:  # pragma: no cover
                     prog_pad.addstr(i, j + 2, text)
 
         title_pad.noutrefresh(max(0, TITLE_H - H), 0, 0, 0, H - 1, W - 1)
@@ -232,10 +280,8 @@ class CursesTracker(Tracker):
                     task.complete = True
 
             list_of_tasks = self._preorder(root, -1)[1:]
-            if len(list_of_tasks) == 0:
-                continue
-
-            self._render_tasks(stdscr, list_of_tasks, global_step)
+            if len(list_of_tasks) > 0:
+                self._render_tasks(stdscr, list_of_tasks, global_step)
 
             if (
                 self._stop_flag_graceful.is_set()

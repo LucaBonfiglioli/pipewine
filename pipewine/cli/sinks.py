@@ -1,3 +1,5 @@
+"""CLI for dataset sinks."""
+
 from collections import deque
 from collections.abc import Callable
 from pathlib import Path
@@ -7,18 +9,49 @@ from pipewine.sinks import CopyPolicy, DatasetSink, OverwritePolicy, Underfolder
 
 
 class SinkCLIRegistry:
+    """Registry for known types of dataset sinks."""
+
     registered: dict[str, Callable[[str, Grabber], DatasetSink]] = {}
 
 
 def sink_cli[
     T: Callable[[str, Grabber], DatasetSink]
 ](name: str | None = None) -> Callable[[T], T]:
+    """Decorator to register a type of dataset sink to the CLI.
+
+    The decorated function must take a string and a grabber and return a dataset sink
+    that can be called with a single dataset.
+
+    The decorated function must be correctly annotated with the type of dataset sink it
+    returns.
+
+    Args:
+        name (str, optional): The name of the sink. Defaults to None, in which case
+            the function name is used.
+    """
+
     def inner(fn: T) -> T:
         fn_name = name or fn.__name__
         SinkCLIRegistry.registered[fn_name] = fn
         return fn
 
     return inner
+
+
+def _split_and_parse_underfolder_text(
+    text: str,
+) -> tuple[Path, OverwritePolicy, CopyPolicy]:
+    splits = deque(text.split(","))
+    path = splits.popleft()
+    if len(splits) > 0:
+        ow_policy = OverwritePolicy(splits.popleft().upper())
+    else:
+        ow_policy = OverwritePolicy.FORBID
+    if len(splits) > 0:
+        copy_policy = CopyPolicy(splits.popleft().upper())
+    else:
+        copy_policy = CopyPolicy.HARD_LINK
+    return Path(path), ow_policy, copy_policy
 
 
 @sink_cli()
@@ -38,17 +71,7 @@ def underfolder(text: str, grabber: Grabber) -> UnderfolderSink:
         - "symbolic_link" - Create a symlink to the original file.
         - "hard_link" - Create a link to the same inode of the original file.
     """
-    splits = deque(text.split(","))
-    path = splits.popleft()
-    if len(splits) > 0:
-        ow_policy = OverwritePolicy(splits.popleft().upper())
-    else:
-        ow_policy = OverwritePolicy.FORBID
-    if len(splits) > 0:
-        copy_policy = CopyPolicy(splits.popleft().upper())
-    else:
-        copy_policy = CopyPolicy.HARD_LINK
-
+    path, ow_policy, copy_policy = _split_and_parse_underfolder_text(text)
     return UnderfolderSink(
         Path(path), grabber=grabber, overwrite_policy=ow_policy, copy_policy=copy_policy
     )

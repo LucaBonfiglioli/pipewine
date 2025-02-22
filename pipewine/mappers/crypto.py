@@ -1,3 +1,5 @@
+"""Mappers for cryptographic operations."""
+
 import hashlib
 import pickle
 from collections.abc import Sequence, Iterable
@@ -10,7 +12,10 @@ from pipewine.sample import Sample, TypedSample
 
 
 class HashedSample(TypedSample):
+    """Sample type to represent the hash of a sample."""
+
     hash: Item[str]
+    """The hash of the sample."""
 
 
 class HashMapper(Mapper[Sample, HashedSample]):
@@ -19,6 +24,21 @@ class HashMapper(Mapper[Sample, HashedSample]):
     def __init__(
         self, algorithm: str = "sha256", keys: str | Sequence[str] | None = None
     ) -> None:
+        """
+        Args:
+            algorithm (str, optional): Hash algorithm to use, must be one of the
+                algorithms available in `hashlib.algorithms_available`. Defaults to
+                "sha256".
+            keys (str | Sequence[str] | None, optional): Keys of the sample to use for
+                computing the hash. If a string is provided, it is treated as a single
+                key. If a sequence is provided, it is treated as a list of keys. If
+                `None` is provided, all keys in the sample are used. Defaults to `None`.
+
+        Raises:
+            ValueError: If the provided algorithm is not available in `hashlib` or if it
+                requires parameters. Currently, the only two algorithms that require
+                parameters (and thus are not supported) are "shake_128" and "shake_256".
+        """
         super().__init__()
         algorithms_with_parameters = ["shake_128", "shake_256"]
         if (

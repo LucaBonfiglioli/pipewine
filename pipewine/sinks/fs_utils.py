@@ -1,3 +1,5 @@
+"""Utilities for file system operations"""
+
 import os
 import shutil
 from collections.abc import Callable
@@ -13,7 +15,7 @@ class CopyPolicy(str, Enum):
     cases, some operations may be avoided, trading off data consistency for speed.
     """
 
-    REWRITE = "SERIALIZE_AND_WRITE"
+    REWRITE = "REWRITE"
     """Do not copy anything, ever, even if the data is untouched. Treat every write
     alike: serialize the object, encode it and write to a new file. This is the slowest
     option but also the safest."""
@@ -66,8 +68,20 @@ def _try_copy(
 def write_item_to_file(
     item: Item, file: Path, copy_policy: CopyPolicy = CopyPolicy.HARD_LINK
 ) -> None:
+    """Write an item to a file, using the specified copy policy.
+
+    Args:
+        item (Item): The item to write to the file.
+        file (Path): The path to the file to write to.
+        copy_policy (CopyPolicy, optional): The copy policy to use when Pipewine
+            infers that the item is a copy of an existing file. Defaults to
+            CopyPolicy.HARD_LINK.
+
+    Raises:
+        IOError: If the item cannot be written to the file.
+    """
     if isinstance(item, CachedItem):
-        item = item.source_recursive()
+        item = item.source_recursive
 
     errors: list[tuple] = []
     if (

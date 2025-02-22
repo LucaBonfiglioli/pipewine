@@ -1,3 +1,5 @@
+"""Parsers for image data."""
+
 import io
 from collections.abc import Iterable, Mapping
 from typing import Any
@@ -10,6 +12,16 @@ from pipewine.parsers.base import Parser
 
 
 class ImageParser(Parser[np.ndarray]):
+    """Base class for image data parsers that use the `imageio` library.
+
+    Subclasses should only need to implement the `extensions` method to specify the
+    file extensions that the parser can handle.
+
+    Optionally, the `_save_options` method can be implemented to provide additional
+    options to the `imwrite` function when dumping data, e.g., compression level for PNG
+    files.
+    """
+
     def parse(self, data: bytes) -> np.ndarray:
         return np.array(iio.imread(data, extension="." + next(iter(self.extensions()))))
 
@@ -23,16 +35,21 @@ class ImageParser(Parser[np.ndarray]):
         )
 
     def _save_options(self) -> Mapping[str, Any]:
+        """Additional options to pass to the `imwrite` function when dumping data."""
         return {}
 
 
 class BmpParser(ImageParser):
+    """Parser for BMP image data."""
+
     @classmethod
     def extensions(cls) -> Iterable[str]:
         return ["bmp"]
 
 
 class PngParser(ImageParser):
+    """Parser for PNG image data."""
+
     @classmethod
     def extensions(cls) -> Iterable[str]:
         return ["png"]
@@ -42,6 +59,8 @@ class PngParser(ImageParser):
 
 
 class JpegParser(ImageParser):
+    """Parser for JPEG image data."""
+
     def _save_options(self) -> Mapping[str, Any]:
         return {"quality": 80}
 
@@ -51,6 +70,8 @@ class JpegParser(ImageParser):
 
 
 class TiffParser(ImageParser):
+    """Parser for TIFF image data."""
+
     def _save_options(self) -> Mapping[str, Any]:
         return {"compression": "zlib", "photometric": True}
 

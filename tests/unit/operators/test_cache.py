@@ -15,6 +15,9 @@ from pipewine import (
     MRUCache,
     RRCache,
     TypelessSample,
+    ItemCacheOp,
+    CachedItem,
+    MemorizeEverythingOp,
 )
 
 
@@ -439,6 +442,7 @@ class TestCacheOp:
         op = CacheOp(MemoCache)
         dataset = MyDataset()
         cached = op(dataset)
+        assert dataset.getitem_called == 0
         for _ in range(5):
             cached[0]
         assert dataset.getitem_called == 1
@@ -448,3 +452,25 @@ class TestCacheOp:
 
     def test_output_type(self) -> None:
         assert issubclass(CacheOp(MemoCache).output_type, Dataset)
+
+
+class TestItemCacheOp:
+    def test_cal(self) -> None:
+        op = ItemCacheOp()
+        dataset = MyDataset()
+        cached = op(dataset)
+        for sample in cached:
+            for item in sample.values():
+                assert isinstance(item, CachedItem)
+
+
+class TestMemorizeEverythingOp:
+    def test_call(self) -> None:
+        op = MemorizeEverythingOp()
+        dataset = MyDataset()
+        assert dataset.getitem_called == 0
+        cached = op(dataset)
+        assert dataset.getitem_called == len(dataset)
+        for _ in range(5):
+            cached[0]
+        assert dataset.getitem_called == len(dataset)
