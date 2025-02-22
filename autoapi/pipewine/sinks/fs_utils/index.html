@@ -2250,7 +2250,7 @@ cases, some operations may be avoided, trading off data consistency for speed.</
 </span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15"></a><span class="sd">    cases, some operations may be avoided, trading off data consistency for speed.</span>
 </span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16"></a><span class="sd">    &quot;&quot;&quot;</span>
 </span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17"></a>
-</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18"></a>    <span class="n">REWRITE</span> <span class="o">=</span> <span class="s2">&quot;SERIALIZE_AND_WRITE&quot;</span>
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18"></a>    <span class="n">REWRITE</span> <span class="o">=</span> <span class="s2">&quot;REWRITE&quot;</span>
 </span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Do not copy anything, ever, even if the data is untouched. Treat every write</span>
 </span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20"></a><span class="sd">    alike: serialize the object, encode it and write to a new file. This is the slowest</span>
 </span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21"></a><span class="sd">    option but also the safest.&quot;&quot;&quot;</span>
@@ -2364,7 +2364,7 @@ explicitly configured to do so, making this option relatively safe to use.</p>
 
 
 <h3 id="pipewine.sinks.fs_utils.CopyPolicy.REWRITE" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">REWRITE</span> <span class="o">=</span> <span class="s1">&#39;SERIALIZE_AND_WRITE&#39;</span></code>
+            <code class="highlight language-python"><span class="n">REWRITE</span> <span class="o">=</span> <span class="s1">&#39;REWRITE&#39;</span></code>
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
