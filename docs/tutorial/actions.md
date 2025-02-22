@@ -6,7 +6,7 @@ In this section you will learn what are the main operational abstractions that d
 
 !!! note
 
-    This section assumes you already know the basics on the way the data model is structured. If you haven't already, go take a look at the [Data Model](../data) section. 
+    This section assumes you already know the basics on the way the data model is structured. If you haven't already, go take a look at the [Data Model](data.md) section. 
 
 The main components that are explained in this section include:
 
@@ -61,7 +61,7 @@ Pipewine `Bundle[T]` are objects that have the following characteristics:
 
 !!! note
 
-    You may already have encountered the `Bundle` type without noticing when we introduced the [TypedSample](../data#typedsample). `TypedSample` is a `Bundle[Item]`.
+    You may already have encountered the `Bundle` type without noticing when we introduced the [TypedSample](data.md#typedsample). `TypedSample` is a `Bundle[Item]`.
 
 !!! example
 

@@ -1,3 +1,5 @@
+"""CLI for running workflows."""
+
 from collections.abc import Callable
 from dataclasses import dataclass
 import functools
@@ -17,23 +19,23 @@ from pipewine.workflows import Workflow, draw_workflow
 
 
 @dataclass
-class WfInfo:
+class _WfInfo:
     tui: bool
     draw: Optional[Path]
 
 
-global_wf_info: list[WfInfo] = []
+_global_wf_info: list[_WfInfo] = []
 
 tui_help = "Show workflow progress in a TUI while executing the command."
 draw_help = "Draw workflow to a SVG file and exit."
 
 
-def wf_callback(
+def _wf_callback(
     ctx: Context,
     tui: Annotated[bool, Option(..., help=tui_help)] = True,
     draw: Annotated[Optional[Path], Option(..., help=draw_help)] = None,
 ) -> None:
-    global_wf_info.append(WfInfo(tui, draw))
+    _global_wf_info.append(_WfInfo(tui, draw))
 
 
 def _generate_wf_command[
@@ -42,7 +44,7 @@ def _generate_wf_command[
     @functools.wraps(fn)
     def decorated(*args, **kwargs):
         wf = fn(*args, **kwargs)
-        wf_info = global_wf_info[-1]
+        wf_info = _global_wf_info[-1]
         if wf_info.draw is not None:
             draw_workflow(wf, wf_info.draw)
             return
@@ -54,13 +56,23 @@ def _generate_wf_command[
 
 
 wf_app = Typer(
-    callback=wf_callback,
+    callback=_wf_callback,
     name="wf",
     help="Run a pipewine workflow.",
     invoke_without_command=True,
     no_args_is_help=True,
 )
+"""The main CLI application for workflows."""
 
 
 def wf_cli[T](name: str | None = None) -> Callable[[T], T]:
+    """Decorator to generate a CLI command for a dataset workflow.
+
+    Decorated functions must follwo the rules of Typer CLI commands, returning a
+    `Workflow` object to be run.
+
+    Args:
+        name (str, optional): The name of the command. Defaults to None, in which case
+            the function name is used.
+    """
     return functools.partial(_generate_wf_command, name=name)  # type: ignore

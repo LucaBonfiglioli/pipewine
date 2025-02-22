@@ -1,3 +1,5 @@
+"""This module contains the implementation necessary for the execution of workflows."""
+
 import gc
 from abc import ABC, abstractmethod
 from collections.abc import Mapping, Sequence
@@ -55,18 +57,43 @@ def _on_exit_cb(queue: EventQueue | None, node: Node, loop_id: str) -> None:
 
 
 class WorkflowExecutor(ABC):
-    @abstractmethod
-    def execute(self, workflow: Workflow) -> None: ...
+    """Abstract class for workflow executors, which are responsible for executing
+    the actions contained in a workflow in the correct order.
+
+    Subclasses must implement the `execute`, `attach`, and `detach` methods.
+    """
 
     @abstractmethod
-    def attach(self, event_queue: EventQueue) -> None: ...
+    def execute(self, workflow: Workflow) -> None:
+        """Executes the given workflow.
+
+        Args:
+            workflow (Workflow): The workflow to execute.
+        """
+        pass
 
     @abstractmethod
-    def detach(self) -> None: ...
+    def attach(self, event_queue: EventQueue) -> None:
+        """Attaches the executor to an event queue, allowing it to emit events.
+
+        Args:
+            event_queue (EventQueue): The event queue to attach to.
+        """
+        pass
+
+    @abstractmethod
+    def detach(self) -> None:
+        """Detaches the executor from the event queue."""
+        pass
 
 
 class SequentialWorkflowExecutor(WorkflowExecutor):
+    """A workflow executor that executes the actions in a workflow in a sequential
+    manner, respecting the dependencies between the nodes.
+    """
+
     def __init__(self) -> None:
+        """Initializes the executor."""
         super().__init__()
         self._eq: EventQueue | None = None
         self._def_cache = True

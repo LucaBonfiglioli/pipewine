@@ -1,3 +1,5 @@
+"""Workflow events and queues."""
+
 from abc import ABC, abstractmethod
 from multiprocessing import Queue, get_context
 from queue import Empty
@@ -8,28 +10,70 @@ from pipewine.grabber import InheritedData
 
 
 class Event:
+    """Marker class for events."""
+
     pass
 
 
 class EventQueue(ABC):
-    @abstractmethod
-    def start(self) -> None: ...
+    """Base class for event queues, which are used to communicate events between
+    the workflow executor and trackers.
+    """
 
     @abstractmethod
-    def emit(self, event: Event) -> None: ...
+    def start(self) -> None:
+        """Start the event queue thread. This method should be called once before
+        the first emit call.
+        """
+        pass
 
     @abstractmethod
-    def capture(self) -> Event | None: ...
+    def emit(self, event: Event) -> None:
+        """Emit an event to the queue.
+
+        Args:
+            event (Event): The event to emit.
+        """
+        pass
 
     @abstractmethod
-    def capture_blocking(self, timeout: float | None = None) -> Event | None: ...
+    def capture(self) -> Event | None:
+        """Capture an event from the queue, if available.
+
+        Returns:
+            Event | None: The captured event, or None if no event is available.
+        """
+        pass
 
     @abstractmethod
-    def close(self) -> None: ...
+    def capture_blocking(self, timeout: float | None = None) -> Event | None:
+        """Capture an event from the queue, blocking until an event is available or the
+        timeout is reached.
+
+        Args:
+            timeout (float | None, optional): The timeout in seconds. Defaults to None,
+                in which case the method blocks indefinitely.
+
+        Returns:
+            Event | None: The captured event, or None if no event is available.
+        """
+        pass
+
+    @abstractmethod
+    def close(self) -> None:
+        """Close the event queue thread. This method should be called once after the
+        last emit call.
+        """
+        pass
 
 
 class ProcessSharedEventQueue(EventQueue):
+    """Event queue that uses a multiprocessing.Queue to communicate events between
+    the workflow executor and trackers.
+    """
+
     def __init__(self) -> None:
+        """Initialize the event queue."""
         super().__init__()
         self._mp_q: Queue | None = None
         self._id = uuid1().hex

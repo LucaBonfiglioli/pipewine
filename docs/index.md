@@ -33,5 +33,5 @@ Key development decisions behind Pipewine:
 - **Type-Safety**: The library heavily relies on Python type annotations to achieve a desirable level of type safety at development-time. Runtime type checking is limited to external data validation to not hinder the performance too much. The user should be able to rely on any modern static type checker to notice and correct bugs. 
 - **Pydantic**: Limit the use of Pydantic for stuff that is not strictly external data validation. When serialization and runtime validation are not needed, plain dataclasses are a perfect alternative.
 - **CLI Segregation**: The CLI is merely a tool to quickly access some of the core library functionalities, no core component should ever depend on it. 
-- **Limited Compatibility** Pipewine should be able to read data written by Pipelime and potentially be used alonside it, but it is not intended to be a backward-compatible update, it is in fact a separate project with a separate development cycle.
+- **Limited Compatibility** Pipewine should be able to read data written by Pipelime and potentially be used alongside it, but it is not intended to be a backward-compatible update, it is in fact a separate project with a separate development cycle.
 - **Feature Pruning** Avoid including complex features that no one is going to use, instead, focus on keeping the library easy to extend. 

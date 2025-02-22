@@ -1,3 +1,5 @@
+"""Dynamic imports of Python modules from files, class paths, or source code."""
+
 import hashlib
 import importlib
 import importlib.util

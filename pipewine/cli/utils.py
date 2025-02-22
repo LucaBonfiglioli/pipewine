@@ -1,3 +1,5 @@
+"""CLI utilities for Pipewine."""
+
 import traceback
 from collections import deque
 from collections.abc import Sequence
@@ -18,6 +20,7 @@ from pipewine.workflows import CursesTracker, Workflow, run_workflow
 
 
 def deep_get(sample: Sample, key: str) -> Any:
+    """Get a value from a nested dictionary using a dot-separated key."""
     sep = "."
     sub_keys = key.split(sep)
     item_key, other_keys = sub_keys[0], deque(sub_keys[1:])
@@ -85,14 +88,43 @@ def parse_source(
     grabber: Grabber,
     sample_type: type[Sample],
 ) -> DatasetSource:
+    """Parse a dataset source from a format string and a text string.
+
+    Args:
+        format_ (str): A string representing the format of the dataset source.
+        text (str): The text to parse into a dataset source.
+        grabber (Grabber): The grabber to use with the dataset source.
+        sample_type (type[Sample]): The type of sample to use with the dataset source.
+
+    Returns:
+        DatasetSource: The parsed dataset source.
+    """
     return _parse_source_or_sink(format_, text, SourceCLIRegistry, grabber, sample_type)
 
 
 def parse_sink(format_: str, text: str, grabber: Grabber) -> DatasetSink:
+    """Parse a dataset sink from a format string and a text string.
+
+    Args:
+        format_ (str): A string representing the format of the dataset sink.
+        text (str): The text to parse into a dataset sink.
+        grabber (Grabber): The grabber to use with the dataset sink.
+
+    Returns:
+        DatasetSink: The parsed dataset sink.
+    """
     return _parse_source_or_sink(format_, text, SinkCLIRegistry, grabber)
 
 
 def parse_grabber(value: str) -> Grabber:
+    """Parse a grabber from a string.
+
+    Args:
+        value (str): A string representing the grabber.
+
+    Returns:
+        Grabber: The parsed grabber
+    """
     sep = ","
     if sep in value:
         worker_str, _, prefetch_str = value.partition(sep)
@@ -123,6 +155,14 @@ def _print_workflow_panel(
 
 
 def run_cli_workflow(workflow: Workflow, tui: bool = True) -> None:
+    """Wrapper around the `run_workflow` function that handles exceptions and prints a
+    panel with the workflow status.
+
+    Args:
+        workflow (Workflow): The workflow to run.
+        tui (bool, optional): Whether to use a text-based user interface. Defaults to
+            True
+    """
     start_time = datetime.now()
     try:
         run_workflow(workflow, tracker=CursesTracker() if tui else None)

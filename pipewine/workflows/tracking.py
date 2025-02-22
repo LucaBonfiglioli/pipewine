@@ -1,3 +1,5 @@
+"""Progress tracking utilities for workflows."""
+
 import curses
 import time
 from abc import ABC, abstractmethod
@@ -11,50 +13,96 @@ from pipewine.workflows.events import Event, EventQueue
 
 @dataclass
 class TrackingEvent(Event):
+    """Base class for tracking events."""
+
     task_id: str
+    """The unique identifier of the task."""
 
 
 @dataclass
 class TaskStartEvent(TrackingEvent):
+    """Event that signals the start of a task."""
+
     total: int
+    """The total number of units in the task."""
 
 
 @dataclass
 class TaskUpdateEvent(TrackingEvent):
+    """Event that signals the update of a task."""
+
     unit: int
+    """The index of the unit that was updated."""
 
 
 @dataclass
 class TaskCompleteEvent(TrackingEvent):
+    """Event that signals the completion of a task."""
+
     pass
 
 
 class Tracker(ABC):
-    @abstractmethod
-    def attach(self, event_queue: EventQueue) -> None: ...
+    """Base class for tracking the progress of a workflow.
+
+    Subclasses should implement the `attach` and `detach` methods.
+    """
 
     @abstractmethod
-    def detach(self, graceful: bool = True) -> None: ...
+    def attach(self, event_queue: EventQueue) -> None:
+        """Attach the tracker to an event queue.
+
+        Args:
+            event_queue (EventQueue): The event queue to attach to.
+        """
+        pass
+
+    @abstractmethod
+    def detach(self, graceful: bool = True) -> None:
+        """Detach the tracker from the event queue.
+
+        Args:
+            graceful (bool, optional): Whether to wait for the event queue to be empty
+                before detaching. Defaults to True.
+        """
+        pass
 
 
 @dataclass
 class Task:
+    """Data container that represents the state of a task."""
+
     name: str
+    """The name of the task."""
     units: list[bool]
+    """A list of booleans that represent the completion state of each unit."""
     complete: bool = False
+    """Whether the task is complete."""
 
 
 @dataclass
 class TaskGroup:
+    """Data container that represents a group of tasks."""
+
     name: str
+    """The name of the group."""
     groups: OrderedDict[str, "TaskGroup"] = field(default_factory=OrderedDict)
+    """A dictionary of subgroups."""
     tasks: OrderedDict[str, Task] = field(default_factory=OrderedDict)
+    """A dictionary of tasks."""
 
 
 class CursesTracker(Tracker):
+    """A tracker that uses curses to display the progress of a workflow in a terminal."""
+
     MAX_COLOR = 1000
 
     def __init__(self, refresh_rate: float = 0.1) -> None:
+        """
+        Args:
+            refresh_rate (float, optional): The refresh rate of the display in seconds.
+                Defaults to 0.1.
+        """
         super().__init__()
         self._refresh_rate = refresh_rate
         self._n_shades = 10

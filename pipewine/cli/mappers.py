@@ -1,3 +1,5 @@
+"""CLI commands for dataset mappers."""
+
 import inspect
 from collections.abc import Callable
 from functools import partial
@@ -6,7 +8,7 @@ from uuid import uuid1
 
 from typer import Option, Typer
 
-from pipewine.cli.ops import _param_to_str, _single_op_workflow, op_callback
+from pipewine.cli.ops import _param_to_str, _single_op_workflow, _op_callback
 from pipewine.mappers import *
 from pipewine.operators import MapOp
 from pipewine.parsers import Parser, ParserRegistry
@@ -61,16 +63,29 @@ def {gen_fn_name}(
 
 
 def map_cli[T](name: str | None = None) -> Callable[[T], T]:
+    """Decorator to generate a CLI command for a dataset mapper.
+
+    Decorated functions must follow the rules of Typer CLI commands, returning a
+    `Mapper` object.
+
+    The decorated function must be correctly annotated with the type of mapper it
+    returns.
+
+    Args:
+        name (str, optional): The name of the command. Defaults to None, in which case
+            the function name is used.
+    """
     return partial(_generate_command, name=name)  # type: ignore
 
 
 map_app = Typer(
-    callback=op_callback,
+    callback=_op_callback,
     name="map",
     help="Run a pipewine dataset mapper.",
     invoke_without_command=True,
     no_args_is_help=True,
 )
+"""Typer app for the Pipewine map CLI."""
 
 
 algo_help = "Hashing algorithm, see 'hashlib' documentation for a full list."

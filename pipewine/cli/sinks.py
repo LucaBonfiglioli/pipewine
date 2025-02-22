@@ -1,3 +1,5 @@
+"""CLI for dataset sinks."""
+
 from collections import deque
 from collections.abc import Callable
 from pathlib import Path
@@ -7,12 +9,27 @@ from pipewine.sinks import CopyPolicy, DatasetSink, OverwritePolicy, Underfolder
 
 
 class SinkCLIRegistry:
+    """Registry for known types of dataset sinks."""
+
     registered: dict[str, Callable[[str, Grabber], DatasetSink]] = {}
 
 
 def sink_cli[
     T: Callable[[str, Grabber], DatasetSink]
 ](name: str | None = None) -> Callable[[T], T]:
+    """Decorator to register a type of dataset sink to the CLI.
+
+    The decorated function must take a string and a grabber and return a dataset sink
+    that can be called with a single dataset.
+
+    The decorated function must be correctly annotated with the type of dataset sink it
+    returns.
+
+    Args:
+        name (str, optional): The name of the sink. Defaults to None, in which case
+            the function name is used.
+    """
+
     def inner(fn: T) -> T:
         fn_name = name or fn.__name__
         SinkCLIRegistry.registered[fn_name] = fn

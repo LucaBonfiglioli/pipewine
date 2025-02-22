@@ -1,3 +1,5 @@
+"""CLI commands for dataset operators."""
+
 import inspect
 import random
 import sys
@@ -47,7 +49,7 @@ class _DictBundle[T](Bundle[T]):
 
 
 @dataclass
-class OpInfo:
+class _OpInfo:
     input_format: str
     output_format: str
     grabber: Grabber
@@ -58,7 +60,7 @@ class OpInfo:
 def _single_op_workflow(
     ctx: Context, operator: DatasetOperator, *args, **kwargs
 ) -> None:
-    opinfo = cast(OpInfo, ctx.obj)
+    opinfo = cast(_OpInfo, ctx.obj)
     i_hint = inspect.get_annotations(operator.__call__, eval_str=True).get("x")
     o_hint = inspect.get_annotations(operator.__call__, eval_str=True).get("return")
     i_orig, o_orig = origin_type(i_hint), origin_type(o_hint)
@@ -312,6 +314,19 @@ def {gen_fn_name}(
 
 
 def op_cli[T](name: str | None = None) -> Callable[[T], T]:
+    """Decorator to generate a CLI command for a dataset operator.
+
+    Decorated functions must follow the rules of Typer CLI commands, returning a
+    `DatasetOperator` object.
+
+    The decorated function must be correctly annotated with the type of operator it
+    returns.
+
+    Args:
+        name (str, optional): The name of the command. Defaults to None, in which case
+            the function name is used.
+    """
+
     return partial(_generate_op_command, name=name)  # type: ignore
 
 
@@ -359,7 +374,7 @@ tui_help = "Show workflow progress in a TUI while executing the command."
 format_help_help = "Show a help message on data input/output formats and exit."
 
 
-def op_callback(
+def _op_callback(
     ctx: Context,
     input_format: Annotated[
         str, Option(..., "-I", "--input-format", help=input_format_help)
@@ -377,7 +392,7 @@ def op_callback(
     if format_help:
         _print_format_help_panel()
         exit()
-    ctx.obj = OpInfo(
+    ctx.obj = _OpInfo(
         input_format,
         output_format,
         grabber or Grabber(),
@@ -386,12 +401,13 @@ def op_callback(
 
 
 op_app = Typer(
-    callback=op_callback,
+    callback=_op_callback,
     name="op",
     help="Run a pipewine dataset operator.",
     invoke_without_command=True,
     no_args_is_help=True,
 )
+"""Typer app for the Pipewine op CLI."""
 
 
 key_help = "Filter by the value of key (e.g. metadata.mylist.12.foo)."

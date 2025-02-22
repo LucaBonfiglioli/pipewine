@@ -1,3 +1,5 @@
+"""Main module for Pipewine CLI, containing the main entry point and the main CLI app."""
+
 import sys
 from typing import Annotated
 
@@ -15,7 +17,7 @@ module_help = (
 )
 
 
-def main_callback(
+def _main_callback(
     version: Annotated[bool, Option(help=version_help, is_eager=True)] = False,
     module: Annotated[list[str], Option(..., "-m", "--module", help=module_help)] = [],
 ) -> None:
@@ -31,14 +33,16 @@ pipewine_app = Typer(
     pretty_exceptions_enable=False,
     add_completion=False,
     no_args_is_help=True,
-    callback=main_callback,
+    callback=_main_callback,
 )
+"""Typer app for the main Pipewine CLI."""
 pipewine_app.add_typer(op_app)
 pipewine_app.add_typer(map_app)
 pipewine_app.add_typer(wf_app)
 
 
 def main() -> None:  # pragma: no cover
+    """Pipewine CLI entry point."""
     command_names = [x.name for x in pipewine_app.registered_commands]
     for i, token in enumerate(sys.argv):
         if token in command_names:
