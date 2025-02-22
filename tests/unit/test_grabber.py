@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+import time
 from typing import overload
 
 import pytest
@@ -34,6 +35,7 @@ class TestGrabber:
     def test_call(
         self, sequence: Sequence, workers: int, prefetch: int, keep_order: bool
     ) -> None:
+        time.sleep(0.5)
         grabber: Grabber = Grabber(
             num_workers=workers, prefetch=prefetch, keep_order=keep_order
         )
@@ -48,6 +50,7 @@ class TestGrabber:
     def test_call_raises(
         self, workers: int, prefetch: int, keep_order: bool, exc: Exception
     ) -> None:
+        time.sleep(0.5)
         grabber = Grabber(num_workers=workers, prefetch=prefetch, keep_order=keep_order)
         seq = RaisingSequence(exc)
         with pytest.raises(type(exc)):
