@@ -1,4 +1,5 @@
 import contextlib
+import time
 from pipewine import (
     UnderfolderSink,
     ListDataset,
@@ -77,6 +78,8 @@ class TestUnderfolderSink:
         overwrite_policy: OverwritePolicy,
     ) -> None:
         folder = tmp_path / "folder"
+        if grabber.num_workers > 0:
+            time.sleep(0.5)
         sink = UnderfolderSink(
             folder, grabber=grabber, overwrite_policy=overwrite_policy
         )
