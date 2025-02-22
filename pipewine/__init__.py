@@ -13,7 +13,7 @@ The API Reference assumes that the developer is familiar with the basic concepts
 the Pipewine library, available in the "Usage" section of the documentation.
 """
 
-__version__ = "0.0.0"
+__version__ = "0.1.0"
 """Pipewine package version."""
 
 from pipewine.bundle import Bundle, BundleMeta
