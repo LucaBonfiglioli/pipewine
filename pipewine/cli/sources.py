@@ -5,7 +5,7 @@ from pathlib import Path
 
 from pipewine.grabber import Grabber
 from pipewine.sample import Sample
-from pipewine.sources import DatasetSource, UnderfolderSource
+from pipewine.sources import DatasetSource, UnderfolderSource, ImagesFolderSource
 
 
 class SourceCLIRegistry:
@@ -14,9 +14,9 @@ class SourceCLIRegistry:
     registered: dict[str, Callable[[str, Grabber, type[Sample]], DatasetSource]] = {}
 
 
-def source_cli[
-    T: Callable[[str, Grabber, type[Sample]], DatasetSource]
-](name: str | None = None) -> Callable[[T], T]:
+def source_cli[T: Callable[[str, Grabber, type[Sample]], DatasetSource]](
+    name: str | None = None,
+) -> Callable[[T], T]:
     """Decorator to register a type of dataset source to the CLI.
 
     The decorated function must take a string, a grabber, and a sample type and return a
@@ -44,3 +44,15 @@ def underfolder(
 ) -> UnderfolderSource:
     """PATH: Path to the dataset folder."""
     return UnderfolderSource(Path(text), sample_type=sample_type)
+
+
+@source_cli()
+def images_folder(
+    text: str, grabber: Grabber, sample_type: type[Sample]
+) -> ImagesFolderSource:
+    """PATH[,recursive]: Path to the folder where the images are stored."""
+    path, _, recursive = text.rpartition(",")
+    if recursive == "recursive":
+        return ImagesFolderSource(Path(path), recursive=True)
+    else:
+        return ImagesFolderSource(Path(text))

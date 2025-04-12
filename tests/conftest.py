@@ -21,6 +21,13 @@ class UnderfolderFixture:
     type_: type
 
 
+@dataclass
+class ImagesFolderFixture:
+    folder: Path
+    recursive: bool
+    size: int
+
+
 class LetterMetadata(BaseModel):
     letter: str
     color: str
@@ -43,6 +50,22 @@ def underfolder(request, sample_data: Path) -> UnderfolderFixture:
         folder=sample_data / "underfolders" / folder,
         size=size,
         type_=type_,
+    )
+
+
+@pytest.fixture(
+    params=[
+        ("folder_0", True, 26),
+        ("folder_0", False, 26),
+        ("folder_1", True, 26),
+        ("folder_1/vowels", True, 5),
+        ("folder_1/vowels", False, 5),
+    ]
+)
+def images_folder(request, sample_data: Path) -> ImagesFolderFixture:
+    folder, recur, size = request.param
+    return ImagesFolderFixture(
+        folder=sample_data / "images_folders" / folder, recursive=recur, size=size
     )
 
 
