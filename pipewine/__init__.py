@@ -1,8 +1,8 @@
 """Pipewine root package, containing all the core classes and functions of the library.
 
-Everything except the `pipewine.workflows` and `pipewine.cli` modules is imported here, 
+Everything except the `pipewine.workflows` and `pipewine.cli` modules is imported here,
 so that the user can conveniently access the most important classes and functions
-directly from the `pipewine` package. 
+directly from the `pipewine` package.
 
 The Pipewine API reference documentation is available as docstrings in every public
 module, class, function and attribute. This form of documentation assumes is intended to
@@ -13,7 +13,7 @@ The API Reference assumes that the developer is familiar with the basic concepts
 the Pipewine library, available in the "Usage" section of the documentation.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 """Pipewine package version."""
 
 from pipewine.bundle import Bundle, BundleMeta
@@ -74,3 +74,4 @@ from pipewine.sinks.fs_utils import CopyPolicy, write_item_to_file
 from pipewine.sinks.underfolder import CopyPolicy, OverwritePolicy, UnderfolderSink
 from pipewine.sources.base import DatasetSource
 from pipewine.sources.underfolder import UnderfolderSource
+from pipewine.sources.images_folder import ImageSample, ImagesFolderSource

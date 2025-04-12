@@ -267,7 +267,9 @@ Let's see an example of how a `Grabber` works.
 
 Pipewine offers built-in support for *Underfolder* datasets, a flexible dataset format inherited by Pipelime that works well with many small-sized multi-modal datasets with arbitrary content. 
 
-While Underfolder is the only format supported by Pipewine (currently), you are strongly encouraged to create custom dataset sources and sinks for whatever format you like.
+In order to provide a simple yet effective alternative to just read a dataset of images from a directory tree, pipewine also provides you the "Images Folder" format.
+
+You are strongly encouraged to create custom dataset sources and sinks for whatever format you like.
 
 ### Underfolder
 
@@ -356,9 +358,36 @@ Pros and cons of the Underfolder dataset format:
     sink(dataset) # <-- Writes data to the specified path.
     ```
 
+### Images Folders
+
+Images folder are a much simpler alternative when the input dataset only consists of unstructured image files contained in a directory tree. 
+
+By default, `ImagesFolderSource` looks at image files inside the specified directory
+path. If used with the `recursive` argument set to true, it will also look recursively
+into subfolders. The image files are sorted in lexicographic order to ensure that the result is always
+deterministic.
+
+Contrary to the Underfolder format, which can accept and parse any type of sample, this source forces its samples to be `ImageSample` objects, i.e. samples that only contain an `image` item represented by a numpy array.
+
+!!! example
+
+    Basic `ImagesFolderSource` usage:
+
+    ``` py
+    # Create the source object from an existing directory Path.
+    path = Path("tests/sample_data/images_folders/folder_1")
+    source = ImagesFolderSource(path, recursive=True)
+
+    # Call the source object to create a new Dataset instance.
+    dataset = source()
+
 ### Custom Formats
 
 You can add custom implementations of the `DatasetSource` and `DatasetSink` interfaces that allow reading and writing datasets with custom formats. To better illustrate how to do so, this section will walk you through an example use case of a source and a sink for folders containing JPEG image files.
+
+!!! warning
+
+    In case you really need to read images from an unstructured folder, just use the `ImagesFolderSource` class, without having to write it yourself. This is just a simplified example to help you understand how these components work.
 
 Before you start, you should always think of the type of datasets you are going to read. Some formats may be flexible enough to support any kind of dataset, while others may be restricted to only a specific type. Pipewine gives you the tools to choose any of the two options in a type-safe way, but also to completely ignore all the typing part and to always return un-typed structures as it was with the old Pipelime.
 
