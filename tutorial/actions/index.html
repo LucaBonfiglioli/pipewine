@@ -619,75 +619,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#custom-formats" class="md-nav__link">
+  <a href="#images-folders" class="md-nav__link">
     <span class="md-ellipsis">
-      Custom Formats
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#operators" class="md-nav__link">
-    <span class="md-ellipsis">
-      Operators
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Operators">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#built-in-operators" class="md-nav__link">
-    <span class="md-ellipsis">
-      Built-in Operators
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#custom-operators" class="md-nav__link">
-    <span class="md-ellipsis">
-      Custom Operators
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#mappers" class="md-nav__link">
-    <span class="md-ellipsis">
-      Mappers
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Mappers">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#built-in-mappers" class="md-nav__link">
-    <span class="md-ellipsis">
-      Built-in Mappers
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#custom-mappers" class="md-nav__link">
-    <span class="md-ellipsis">
-      Custom Mappers
+      Images Folders
     </span>
   </a>
   
@@ -1940,6 +1874,27 @@
   
   
     <li class="md-nav__item">
+      <a href="../../autoapi/pipewine/sources/images_folder/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    images_folder
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../autoapi/pipewine/sources/underfolder/" class="md-nav__link">
         
   
@@ -2248,75 +2203,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#custom-formats" class="md-nav__link">
+  <a href="#images-folders" class="md-nav__link">
     <span class="md-ellipsis">
-      Custom Formats
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#operators" class="md-nav__link">
-    <span class="md-ellipsis">
-      Operators
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Operators">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#built-in-operators" class="md-nav__link">
-    <span class="md-ellipsis">
-      Built-in Operators
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#custom-operators" class="md-nav__link">
-    <span class="md-ellipsis">
-      Custom Operators
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#mappers" class="md-nav__link">
-    <span class="md-ellipsis">
-      Mappers
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Mappers">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#built-in-mappers" class="md-nav__link">
-    <span class="md-ellipsis">
-      Built-in Mappers
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#custom-mappers" class="md-nav__link">
-    <span class="md-ellipsis">
-      Custom Mappers
+      Images Folders
     </span>
   </a>
   
@@ -2602,7 +2491,8 @@
 <h2 id="sources-and-sinks">Sources and Sinks</h2>
 <p><code>DatasetSource</code> and <code>DatasetSink</code> are the two base classes for every Pipewine action that respectively reads or writes datasets (or collections of datasets) from/to external storages.</p>
 <p>Pipewine offers built-in support for <em>Underfolder</em> datasets, a flexible dataset format inherited by Pipelime that works well with many small-sized multi-modal datasets with arbitrary content. </p>
-<p>While Underfolder is the only format supported by Pipewine (currently), you are strongly encouraged to create custom dataset sources and sinks for whatever format you like.</p>
+<p>In order to provide a simple yet effective alternative to just read a dataset of images from a directory tree, pipewine also provides you the "Images Folder" format.</p>
+<p>You are strongly encouraged to create custom dataset sources and sinks for whatever format you like.</p>
 <h3 id="underfolder">Underfolder</h3>
 <p>An underfolder dataset is a directory located anywhere on the file system, with no constraint on its name. Every underfolder must contain a subfolder named <code>data</code>, plus some additional files.</p>
 <p>Every file contained in the <code>data</code> subfolder corresponds to an item and must be named: <code>$INDEX_$KEY.$EXTENSION</code>, where:</p>
@@ -2677,8 +2567,29 @@
 </span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="n">sink</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span> <span class="c1"># &lt;-- Writes data to the specified path.</span>
 </span></code></pre></div>
 </div>
+<h3 id="images-folders">Images Folders</h3>
+<p>Images folder are a much simpler alternative when the input dataset only consists of unstructured image files contained in a directory tree. </p>
+<p>By default, <code>ImagesFolderSource</code> looks at image files inside the specified directory
+path. If used with the <code>recursive</code> argument set to true, it will also look recursively
+into subfolders. The image files are sorted in lexicographic order to ensure that the result is always
+deterministic.</p>
+<p>Contrary to the Underfolder format, which can accept and parse any type of sample, this source forces its samples to be <code>ImageSample</code> objects, i.e. samples that only contain an <code>image</code> item represented by a numpy array.</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<p>Basic <code>ImagesFolderSource</code> usage:</p>
+<p>``` py</p>
+<h1 id="create-the-source-object-from-an-existing-directory-path">Create the source object from an existing directory Path.</h1>
+<p>path = Path("tests/sample_data/images_folders/folder_1")
+source = ImagesFolderSource(path, recursive=True)</p>
+<h1 id="call-the-source-object-to-create-a-new-dataset-instance">Call the source object to create a new Dataset instance.</h1>
+<p>dataset = source()</p>
+</div>
 <h3 id="custom-formats">Custom Formats</h3>
 <p>You can add custom implementations of the <code>DatasetSource</code> and <code>DatasetSink</code> interfaces that allow reading and writing datasets with custom formats. To better illustrate how to do so, this section will walk you through an example use case of a source and a sink for folders containing JPEG image files.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>In case you really need to read images from an unstructured folder, just use the <code>ImagesFolderSource</code> class, without having to write it yourself. This is just a simplified example to help you understand how these components work.</p>
+</div>
 <p>Before you start, you should always think of the type of datasets you are going to read. Some formats may be flexible enough to support any kind of dataset, while others may be restricted to only a specific type. Pipewine gives you the tools to choose any of the two options in a type-safe way, but also to completely ignore all the typing part and to always return un-typed structures as it was with the old Pipelime.</p>
 <div class="admonition example">
 <p class="admonition-title">Example</p>
